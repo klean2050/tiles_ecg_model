@@ -19,3 +19,20 @@ You will also need to install the ``libsndfile`` library:
 ```
 conda install -c conda-forge libsndfile
 ```
+
+## Project Structure
+
+```
+VCMR/
+├─ config/              # configuration files for each train session
+├─ data/                # where datasets are downloaded (not included)
+├─ tests/               # sample scripts to test functionalities
+├─ vcmr/                # main project directory
+│  ├─ index.js
+├─ .gitignore
+├─ export.py            # script to export model to ONNX
+├─ LICENSE
+├─ main.py              # driver script to run
+├─ README.md
+├─ requirements.txt
+```
