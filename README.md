@@ -1,10 +1,9 @@
 <div align="center">
 
 # VCMR: Video-Conditioned Music Representations
+This repository is the official implementation of the project.
   
 </div>
-
-This repository is the official implementation of the project.
 
 ## Installation
 
