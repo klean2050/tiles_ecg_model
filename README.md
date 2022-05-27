@@ -25,7 +25,6 @@ conda install -c conda-forge libsndfile
 ```
 VCMR/
 ├─ config/              # configuration files for each train session
-├─ data/                # where datasets are downloaded (not included)
 ├─ tests/               # sample scripts to test functionalities
 ├─ vcmr/                # main project directory
 │  ├─ loaders/          # pytorch dataset classes
