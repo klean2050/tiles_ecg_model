@@ -1,4 +1,4 @@
-<p align="center">
+<div align="center">
     # VCMR: Video-Conditioned Music Representations
-</p>
+</div>
 Let me know if you like the name :P
