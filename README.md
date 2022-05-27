@@ -7,7 +7,7 @@ This repository is the official implementation of the project.
 
 ## Installation
 
-We recommend using a conda environment with ``Python 3.9``:
+We recommend using a conda environment with ``Python >= 3.9`` :
 ```
 conda create -n vcmr python=3.9
 conda activate vcmr
