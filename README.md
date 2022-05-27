@@ -51,19 +51,27 @@ VCMR is trained on a large-scaled dataset of 4857 music video clips downloaded f
 
 ### 1. Music Pre-Training
 
-...
+```
+python scripts/mus_pretrain.py --dataset audio
+```
 
 ### 2. Video-Conditioned Pre-Training
 
-...
+```
+python scripts/vid_pretrain.py --dataset audio_visual --ckpt runs/path/to/mus_checkpoint.ckpt
+```
 
 ### 3. Supervised Fine-Tuning
 
-...
+```
+python scripts/supervised.py --dataset <dataset_name> --ckpt runs/path/to/vid_checkpoint.ckpt
+```
 
 ### 4. Model Evaluation
 
-...
+```
+python scripts/evaluation.py --dataset <dataset_name> --ckpt runs/path/to/sup_checkpoint.ckpt
+```
 
 ## Tensorboard
 
