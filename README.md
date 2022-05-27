@@ -40,6 +40,12 @@ VCMR/
 ├─ requirements.txt     # required packages
 ```
 
+## Demo Auto-Tagging
+
+```
+main.py --audio /path/to/audio/file.wav [--flags]
+```
+
 ## Getting the Data
 
 VCMR is trained on a large-scaled dataset of 4857 music video clips downloaded from YouTube.
