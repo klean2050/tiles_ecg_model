@@ -78,7 +78,7 @@ python scripts/evaluation.py --dataset <dataset_name> --ckpt runs/path/to/sup_ch
 
 ## Tensorboard
 
-To view results in TensorBoard, run:
+To view results in TensorBoard run:
 ```
 tensorboard --logdir ./runs
 ```
