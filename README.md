@@ -49,19 +49,19 @@ VCMR is trained on a large-scaled dataset of 4857 music video clips downloaded f
 
 ## The VCMR Framework
 
-### Music Pre-Training
+### 1. Music Pre-Training
 
 ...
 
-### Video-Conditioned Pre-Training
+### 2. Video-Conditioned Pre-Training
 
 ...
 
-### Supervised Fine-Tuning
+### 3. Supervised Fine-Tuning
 
 ...
 
-### Model Evaluation
+### 4. Model Evaluation
 
 ...
 
@@ -76,7 +76,7 @@ tensorboard --logdir ./runs
 
 ...
 
-## Acknowledgement
+## Acknowledgements
 
 Some of the code is adapted from the following repositories:
 
