@@ -34,10 +34,7 @@ VCMR/
 │  ├─ utils/               # miscellaneous scripts and methods
 ├─ .gitignore           # ignore data/ and runs/ folders
 ├─ export.py            # script to export model to ONNX
-├─ LICENSE              # MIT License
 ├─ main.py              # driver script to run
-├─ README.md            # project introduction and description
-├─ requirements.txt     # required packages
 ```
 
 ## Demo Auto-Tagging
