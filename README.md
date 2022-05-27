@@ -43,7 +43,7 @@ VCMR/
 ## Demo Auto-Tagging
 
 ```
-main.py --audio /path/to/audio/file.wav [--flags]
+python main.py --audio /path/to/audio/file.wav [--flags]
 ```
 
 ## Getting the Data
