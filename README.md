@@ -39,3 +39,7 @@ VCMR/
 ├─ README.md            # project introduction and description
 ├─ requirements.txt     # required packages
 ```
+
+## Data & Pre-processing
+
+VCMR is trained on a large-scaled dataset of 4857 music video clips downloaded from YouTube.
