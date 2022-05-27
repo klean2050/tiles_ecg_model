@@ -14,8 +14,7 @@ conda activate vcmr
 ```
 Clone the repository and install the dependencies:
 ```
-git clone https://github.com/klean2050/VCMR
-cd VCMR 
+git clone https://github.com/klean2050/VCMR && cd VCMR 
 pip install -r requirements.txt
 ```
 
