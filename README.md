@@ -8,7 +8,7 @@ This repository is the official implementation of the project.
 
 ## Installation
 
-Clone the repository and install the dependencies. We recommend using a custom conda environment with Python 3.9+.
+Clone the repository and install the dependencies. We recommend using a conda environment with Python 3.9+.
 ```
 git clone https://github.com/klean2050/VCMR
 cd VCMR 
