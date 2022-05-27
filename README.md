@@ -24,17 +24,17 @@ conda install -c conda-forge libsndfile
 
 ```
 VCMR/
-├─ config/              # configuration files for each train session
-├─ tests/               # sample scripts to test functionalities
-├─ vcmr/                # main project directory
-│  ├─ loaders/             # pytorch dataset classes
-│  ├─ models/              # backbone neural network models
-│  ├─ scripts/             # preprocess, training and evaluation
-│  ├─ trainers/            # lightning classes for each train session
-│  ├─ utils/               # miscellaneous scripts and methods
-├─ .gitignore           # ignore data/ and runs/ folders
-├─ export.py            # script to export model to ONNX
-├─ main.py              # driver script to run
+├── config/              # configuration files for each train session
+├── tests/               # sample scripts to test functionalities
+├── vcmr/                # main project directory
+│   ├── loaders/             # pytorch dataset classes
+│   ├── models/              # backbone neural network models
+│   ├── scripts/             # preprocess, training and evaluation
+│   ├── trainers/            # lightning classes for each train session
+│   └── utils/               # miscellaneous scripts and methods
+├── .gitignore           # ignore data/ and runs/ folders
+├── export.py            # script to export model to ONNX
+└── main.py              # driver script to run
 ```
 
 ## Demo Auto-Tagging
