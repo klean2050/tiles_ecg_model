@@ -28,11 +28,15 @@ VCMR/
 ├─ data/                # where datasets are downloaded (not included)
 ├─ tests/               # sample scripts to test functionalities
 ├─ vcmr/                # main project directory
-│  ├─ index.js
-├─ .gitignore
+│  ├─ loaders/          # pytorch dataset classes
+│  ├─ models/           # backbone neural network models
+│  ├─ scripts/          # preprocess, training and evaluation
+│  ├─ trainers/         # lightning classes for each train session
+│  ├─ utils/            # miscellaneous scripts and methods
+├─ .gitignore           # ignore data/ and runs/ folders
 ├─ export.py            # script to export model to ONNX
-├─ LICENSE
+├─ LICENSE              # MIT License
 ├─ main.py              # driver script to run
-├─ README.md
-├─ requirements.txt
+├─ README.md            # project introduction and description
+├─ requirements.txt     # required packages
 ```
