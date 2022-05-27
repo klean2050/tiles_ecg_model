@@ -47,27 +47,21 @@ python main.py --audio /path/to/audio/file.wav [--flags]
 
 VCMR is trained on a large-scaled dataset of 4857 music video clips downloaded from YouTube.
 
-## Music Pre-Training
+## The VCMR Framework
+
+### Music Pre-Training
 
 ...
 
-## Video-Conditioned Pre-Training
+### Video-Conditioned Pre-Training
 
 ...
 
-## Supervised Fine-Tuning
+### Supervised Fine-Tuning
 
 ...
 
-## Model Evaluation
-
-...
-
-## Results
-
-...
-
-## Pre-Trained Models
+### Model Evaluation
 
 ...
 
@@ -77,6 +71,10 @@ To view results in TensorBoard, run:
 ```
 tensorboard --logdir ./runs
 ```
+
+## Results & Checkpoints
+
+...
 
 ## Acknowledgement
 
