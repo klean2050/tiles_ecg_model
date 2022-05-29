@@ -1,0 +1,14 @@
+# base options
+dataset_dir: "/project/shrikann_35/rajatheb/music/"
+audio_length: 59049
+sample_rate: 22050
+workers: 4
+
+# training options
+seed: 42
+batch_size: 128
+projection_dim: 128
+optimizer: "Adam"
+learning_rate: 0.001
+weight_decay: 1e-6
+temperature: 0.1

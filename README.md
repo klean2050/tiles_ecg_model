@@ -12,7 +12,7 @@ Clone the repository and install the dependencies. We recommend using a conda en
 ```
 git clone https://github.com/klean2050/VCMR
 cd VCMR 
-pip install -r requirements.txt
+pip install -e .
 ```
 
 You will also need to install the ``libsndfile`` library:
@@ -73,20 +73,18 @@ python scripts/supervised.py --dataset <dataset_name> --ckpt runs/path/to/vid_ch
 python scripts/evaluation.py --dataset <dataset_name> --ckpt runs/path/to/sup_checkpoint.ckpt
 ```
 
-## Tensorboard
+## Results & Checkpoints
+
+...
 
 To view results in TensorBoard, run:
 ```
 tensorboard --logdir ./runs
 ```
 
-## Results & Checkpoints
-
-...
-
 ## Acknowledgements
 
-Some of the code is adapted from the following repositories:
+In this study we made use of the following repositories:
 
 * CLMR
 * Video Feature Extractor

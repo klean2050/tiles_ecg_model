@@ -1,7 +1,10 @@
 .vscode
 __pycache__
-/data
+data/
 runs/
+build/
+dist/
+*.egg-info
 
 # Compiled source #
 ###################
