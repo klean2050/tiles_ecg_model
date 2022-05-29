@@ -1,16 +1,20 @@
 <div align="center">
 
 # VCMR: Video-Conditioned Music Representations
+This repository is the official implementation of the project.
   
 </div>
 
-This repository is the official implementation of the project.
-
 ## Installation
 
-Clone the repository and install the dependencies. We recommend using a conda environment with Python 3.9+.
+We recommend using a conda environment with ``Python >= 3.9`` :
 ```
-git clone https://github.com/klean2050/VCMR
+conda create -n vcmr python=3.9
+conda activate vcmr
+```
+Clone the repository and install the dependencies:
+```
+git clone https://github.com/klean2050/VCMR && cd VCMR
 cd VCMR 
 pip install -e .
 ```
@@ -77,7 +81,7 @@ python scripts/evaluation.py --dataset <dataset_name> --ckpt runs/path/to/sup_ch
 
 ...
 
-To view results in TensorBoard, run:
+To view results in TensorBoard run:
 ```
 tensorboard --logdir ./runs
 ```
@@ -88,6 +92,7 @@ In this study we made use of the following repositories:
 
 * CLMR
 * Video Feature Extractor
+* ...
 
 ## Citation
 
