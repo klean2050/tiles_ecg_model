@@ -1,7 +1,7 @@
 <div align="center">
 
 # VCMR: Video-Conditioned Music Representations
-This repository is the official implementation of the project.
+This repository is the official implementation of the VCMR project.
   
 </div>
 
@@ -89,9 +89,9 @@ tensorboard --logdir ./runs
 
 In this study we made use of the following repositories:
 
-* CLMR
-* Video Feature Extractor
-* PySceneDetect
+* [CLMR](https://github.com/Spijkervet/CLMR)
+* [Video Feature Extractor](https://github.com/antoine77340/video_feature_extractor)
+* [PySceneDetect](https://github.com/Breakthrough/PySceneDetect)
 
 ## Citation
 
