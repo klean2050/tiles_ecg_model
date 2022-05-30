@@ -10,9 +10,9 @@ def get_dataset(dataset, dataset_dir, subset, download=False):
 
     os.makedirs(dataset_dir, exist_ok=True)
     if dataset == "audio":
-        return AUDIO(root=dataset_dir)
+        return AUDIO(root=dataset_dir, subset=subset)
     elif dataset == "audio_visual":
-        return AUDIOVISUAL(root=dataset_dir)
+        return AUDIOVISUAL(root=dataset_dir, subset=subset)
     elif dataset == "magnatagatune":
         return MAGNATAGATUNE(root=dataset_dir, download=download, subset=subset)
     elif dataset == "mtg-jamendo-dataset":

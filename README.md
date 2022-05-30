@@ -36,17 +36,17 @@ VCMR/
 │   ├── trainers/            # lightning classes for each train session
 │   └── utils/               # miscellaneous scripts and methods
 ├── .gitignore           # ignore data/ and runs/ folders
-├── export.py            # script to export model to ONNX
-└── main.py              # driver script to run
+├── main.py              # driver script to run
+└── setup.py             # package installation script
 ```
 
-## Demo Auto-Tagging
+## Demo Auto-Tagging (TBD)
 
 ```
 python main.py --audio /path/to/audio/file.wav [--flags]
 ```
 
-## Getting the Data
+## Getting the Data (TBD)
 
 VCMR is trained on a large-scaled dataset of 4857 music video clips downloaded from YouTube.
 
@@ -55,13 +55,13 @@ VCMR is trained on a large-scaled dataset of 4857 music video clips downloaded f
 ### 1. Music Pre-Training
 
 ```
-python scripts/mus_pretrain.py --dataset audio
+python scripts/mus_pretrain.py --dataset_dir /path/to/audio/folder/
 ```
 
 ### 2. Video-Conditioned Pre-Training
 
 ```
-python scripts/vid_pretrain.py --dataset audio_visual --ckpt runs/path/to/mus_checkpoint.ckpt
+python scripts/vid_pretrain.py --dataset_dir /path/to/data/folder/ --ckpt runs/path/to/mus_checkpoint.ckpt
 ```
 
 ### 3. Supervised Fine-Tuning
@@ -76,7 +76,7 @@ python scripts/supervised.py --dataset <dataset_name> --ckpt runs/path/to/vid_ch
 python scripts/evaluation.py --dataset <dataset_name> --ckpt runs/path/to/sup_checkpoint.ckpt
 ```
 
-## Results & Checkpoints
+## Results & Checkpoints (TBD)
 
 ...
 
@@ -91,7 +91,7 @@ In this study we made use of the following repositories:
 
 * CLMR
 * Video Feature Extractor
-* ...
+* PySceneDetect
 
 ## Citation
 

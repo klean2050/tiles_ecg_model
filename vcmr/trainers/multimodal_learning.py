@@ -27,6 +27,7 @@ class MultimodalLearning(LightningModule):
             if c0 > 0:
                 break
 
+        # the LSTM module is newly added
         self.temporal = nn.LSTM(2048, 512, batch_first=True, dropout=0.2)
         self.encoder2 = nn.Sequential(
             nn.Flatten(),
@@ -46,6 +47,12 @@ class MultimodalLearning(LightningModule):
         x_i, x_j, _ = batch
         loss = self.forward(x_i, x_j)
         self.log("Train/loss", loss)
+        return loss
+
+    def validation_step(self, batch, _) -> Tensor:
+        x_i, x_j, _ = batch
+        loss = self.forward(x_i, x_j)
+        self.log("Valid/loss", loss)
         return loss
 
     def configure_criterion(self) -> nn.Module:

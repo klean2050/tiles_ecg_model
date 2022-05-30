@@ -1,4 +1,4 @@
-import os, torchaudio
+import os, torchaudio, random
 from glob import glob
 from torch import Tensor
 from typing import Tuple
@@ -15,6 +15,7 @@ class AUDIO(data.Dataset):
     def __init__(
         self,
         root: str,
+        subset: str,
         src_ext_audio: str = ".wav",
         n_classes: int = 1,
     ) -> None:
@@ -28,6 +29,9 @@ class AUDIO(data.Dataset):
             os.path.join(self._path, "**", "*{}".format(self._src_ext_audio)),
             recursive=True,
         )
+        random.Random(42).shuffle(self.fl)
+        bound = int(0.8 * len(self.fl))
+        self.fl = self.fl[:bound] if subset == "train" else self.fl[bound:]
 
         if len(self.fl) == 0:
             raise RuntimeError(

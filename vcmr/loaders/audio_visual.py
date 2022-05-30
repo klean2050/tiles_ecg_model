@@ -1,5 +1,5 @@
 import os, torch, numpy as np
-import torchaudio, math
+import torchaudio, math, random
 from glob import glob
 from torch import Tensor
 from typing import Tuple
@@ -15,6 +15,7 @@ class AUDIOVISUAL(data.Dataset):
     def __init__(
         self,
         root: str,
+        subset: str,
         n_classes: int = 1,
     ) -> None:
         super(AUDIOVISUAL, self).__init__(root)
@@ -33,6 +34,13 @@ class AUDIOVISUAL(data.Dataset):
             recursive=True,
         )
         self.fl2 = sorted(self.fl2)
+
+        # train-validation splits
+        random.Random(42).shuffle(self.fl1)
+        random.Random(42).shuffle(self.fl2)
+        bound = int(0.8 * len(self.fl))
+        self.fl1 = self.fl1[:bound] if subset == "train" else self.fl1[bound:]
+        self.fl2 = self.fl2[:bound] if subset == "train" else self.fl2[bound:]
 
         if len(self.fl1) == 0:
             raise RuntimeError(

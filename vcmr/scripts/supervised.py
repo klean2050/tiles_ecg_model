@@ -10,7 +10,7 @@ from torchaudio_augmentations import (
     RandomResizedCrop,
 )
 
-from vcmr.loaders import ContrastiveDataset, get_dataset
+from vcmr.loaders import Contrastive, get_dataset
 from vcmr.models import SampleCNN
 from vcmr.trainers import ContrastiveLearning, SupervisedLearning, MultimodalLearning
 from vcmr.utils import yaml_config_hook
@@ -44,14 +44,14 @@ if __name__ == "__main__":
     valid_dataset = get_dataset(args.dataset, args.dataset_dir, subset="valid")
 
     input_shape = args.audio_length
-    contrastive_train_dataset = ContrastiveDataset(
+    contrastive_train_dataset = Contrastive(
         train_dataset,
         input_shape=(1, input_shape),
         transform=ComposeMany(
             train_transform, num_augmented_samples=1
         ),
     )
-    contrastive_valid_dataset = ContrastiveDataset(
+    contrastive_valid_dataset = Contrastive(
         valid_dataset,
         input_shape=(1, input_shape),
         transform=ComposeMany(

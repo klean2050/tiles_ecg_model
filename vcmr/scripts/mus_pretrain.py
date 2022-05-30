@@ -1,6 +1,7 @@
-import argparse, pytorch_lightning as pl
+import argparse, pytorch_lightning as pl, os
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.strategies.ddp import DDPStrategy
 from torch.utils.data import DataLoader
 from torchaudio_augmentations import (
     RandomApply,
@@ -111,6 +112,7 @@ if __name__ == "__main__":
     # TRAINING
     # --------
     module = ContrastiveLearning(args, encoder)
+    os.environ['CUDA_VISIBLE_DEVICES'] = '2,3'
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,
@@ -118,8 +120,8 @@ if __name__ == "__main__":
         max_epochs=20,
         log_every_n_steps=10,
         check_val_every_n_epoch=1,
+        strategy="ddp_find_unused_parameters_false",
         accelerator="gpu",
-        strategy="ddp",
-        devices=2
+        devices="auto"
     )
     trainer.fit(module, train_loader, valid_loader)

@@ -28,6 +28,12 @@ class ContrastiveLearning(LightningModule):
         self.log("Train/loss", loss)
         return loss
 
+    def validation_step(self, batch, _):
+        x, _ = batch
+        loss = self.forward(x[:, 0, :], x[:, 1, :])
+        self.log("Valid/loss", loss)
+        return loss
+
     def configure_criterion(self) -> nn.Module:
         # PL aggregates differently in DP mode
         if self.hparams.accelerator == "dp" and self.hparams.gpus:
