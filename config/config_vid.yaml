@@ -1,5 +1,5 @@
 # base options
-dataset_dir: "/project/shrikann_35/rajatheb/music/"
+dataset_dir: "/data/avramidi/video_clip_data_NEW/"
 audio_length: 59049
 sample_rate: 22050
 workers: 4
@@ -12,3 +12,15 @@ optimizer: "Adam"
 learning_rate: 0.001
 weight_decay: 1e-6
 temperature: 0.1
+
+# augmentation options
+transforms_polarity: 0.8
+transforms_noise: 0.01
+transforms_gain: 0.3
+transforms_filters: 0.8
+transforms_delay: 0.3
+transforms_pitch: 0.6
+transforms_reverb: 0.6
+
+# checkpoint paths
+checkpoint_path: "version_16/checkpoints/epoch=29-step=29700.ckpt"

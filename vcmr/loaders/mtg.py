@@ -68,7 +68,7 @@ class MTG(Dataset):
 if __name__ == "__main__":
 
     dataset = MTG(
-        root="/data/avramidi/music-videos/clmr/data/mtg-jamendo-dataset",
+        root="/data/avramidi/mtg-jamendo-dataset",
         audio_root="/data/avramidi/mtg",
         split=0,
         subset="moodtheme",

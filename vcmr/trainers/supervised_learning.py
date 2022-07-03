@@ -24,7 +24,6 @@ class SupervisedLearning(LightningModule):
         )
 
     def forward(self, x, y):
-        x = x[:, 0, :]  # we only have 1 sample, no augmentations
         x = self.model(x)
         preds = self.projector(x).squeeze()
         loss = self.criterion(preds, y)
@@ -54,8 +53,8 @@ class SupervisedLearning(LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(
             self.projector.parameters(),
-            lr=self.hparams.finetuner_learning_rate,
-            weight_decay=self.hparams.weight_decay,
+            lr=self.hparams.learning_rate,
+            weight_decay=float(self.hparams.weight_decay),
         )
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,

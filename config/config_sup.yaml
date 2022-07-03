@@ -1,6 +1,8 @@
 # base options
 audio_length: 59049
 sample_rate: 22050
+dataset: "mtg-jamendo-dataset"
+dataset_dir: "/data/avramidi/mtg-jamendo-dataset"
 workers: 4
 
 # training options
@@ -11,3 +13,6 @@ optimizer: "Adam"
 learning_rate: 0.001
 weight_decay: 1e-6
 temperature: 0.1
+
+checkpoint_path1: "version_16/checkpoints/epoch=29-step=29700.ckpt"
+checkpoint_path2: "version_1/checkpoints/epoch=29-step=16980.ckpt"

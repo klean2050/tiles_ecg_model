@@ -70,14 +70,14 @@ if __name__ == "__main__":
 
     contrastive_train_dataset = Contrastive(
         train_dataset,
-        input_shape=(1, 220500),
+        input_shape=(1, args.sample_rate * 15),
         transform=ComposeMany(
             train_transform, num_augmented_samples=num_augmented_samples
         ),
     )
     contrastive_valid_dataset = Contrastive(
         valid_dataset,
-        input_shape=(1, 220500),
+        input_shape=(1, args.sample_rate * 15),
         transform=ComposeMany(
             train_transform, num_augmented_samples=num_augmented_samples
         ),
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         args,
         logger=logger,
         sync_batchnorm=True,
-        max_epochs=20,
+        max_epochs=30,
         log_every_n_steps=10,
         check_val_every_n_epoch=1,
         strategy="ddp_find_unused_parameters_false",

@@ -13,10 +13,10 @@ if __name__ == "__main__":
     # -----------
     # ARGS PARSER
     # -----------
-    parser = argparse.ArgumentParser(description="CLMR")
+    parser = argparse.ArgumentParser(description="VCMR")
     parser = Trainer.add_argparse_args(parser)
 
-    config = yaml_config_hook("config/config.yaml")
+    config = yaml_config_hook("config/config_sup.yaml")
     for k, v in config.items():
         parser.add_argument(f"--{k}", default=v, type=type(v))
 
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # ----------
     encoder = SampleCNN(
         strides=[3, 3, 3, 3, 3, 3, 3, 3, 3],
-        supervised=args.supervised,
+        supervised=1,
         out_dim=train_dataset.n_classes,
     )
     pretrained = ContrastiveLearning(args, encoder, pre=True)

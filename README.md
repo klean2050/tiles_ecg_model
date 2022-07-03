@@ -36,7 +36,6 @@ VCMR/
 │   ├── trainers/            # lightning classes for each train session
 │   └── utils/               # miscellaneous scripts and methods
 ├── .gitignore           # ignore data/ and runs/ folders
-├── main.py              # driver script to run
 └── setup.py             # package installation script
 ```
 
@@ -46,11 +45,15 @@ VCMR/
 python main.py --audio /path/to/audio/file.wav [--flags]
 ```
 
-## Getting the Data (TBD)
+## Getting the Data
 
-VCMR is trained on a large-scaled dataset of 4857 music video clips downloaded from YouTube.
+VCMR is trained on a large-scale dataset of 20150 music video clips, downloaded from YouTube in MPEG-4 high-resolution format. The unique codes of the utilized videos can be found at ``video_list.txt``. To reproduce the dataset, run ``preprocess_data.py``.
+
+For each video we isolate the middle 2 minutes of its content. To avoid non-official clips (e.g., amateur covers, lyric videos) we keep track of the scenes and discard those clips that include a scene of more than 30 seconds. For the music encoder we extract the audio component in WAV mono format at 22050 Hz and split it at 8 segments of 15 seconds. For the visual encoder we extract CLIP embeddings from frames at 5 fps and average the resulting 512-D feature vectors per second.
 
 ## The VCMR Framework
+
+The 2 pre-training phases run on the custom datasets called ``audio`` and ``audio_visual`` respectively, so user needs just to specify the path to the data. The fine-tuning phase requires user to specify the dataset of interest.
 
 ### 1. Music Pre-Training
 
