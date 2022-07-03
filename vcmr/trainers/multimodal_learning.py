@@ -21,17 +21,17 @@ class MultimodalLearning(LightningModule):
                 for param in block.parameters():
                     param.requires_grad = False
                 c1 += 1
-                if c1 > 4:
+                if c1 > 3:
                     break
             c0 += 1
             if c0 > 0:
                 break
 
         # the LSTM module is newly added
-        self.temporal = nn.LSTM(2048, 512, batch_first=True, dropout=0.2)
+        self.temporal = nn.LSTM(512, 512, num_layers=2, batch_first=True, dropout=0.2)
         self.encoder2 = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(3072, 2048),
+            nn.Linear(7680, 2048),
             nn.ReLU(),
             nn.Linear(2048, self.n_features),
         )
@@ -68,7 +68,7 @@ class MultimodalLearning(LightningModule):
     def configure_optimizers(self) -> dict:
         scheduler = None
         if self.hparams.optimizer == "Adam":
-            optimizer = torch.optim.AdamW(self.parameters(), lr=5e-4)#self.hparams.learning_rate)
+            optimizer = torch.optim.Adam(self.parameters(), lr=5e-4)#self.hparams.learning_rate)
         elif self.hparams.optimizer == "LARS":
             # optimized using LARS with linear learning rate scaling
             # (i.e. LearningRate = 0.3 × BatchSize/256) and weight decay of 1e−6.

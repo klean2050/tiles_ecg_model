@@ -21,10 +21,10 @@ if __name__ == "__main__":
     # -----------
     # ARGS PARSER
     # -----------
-    parser = argparse.ArgumentParser(description="CLMR")
+    parser = argparse.ArgumentParser(description="VCMR")
     parser = Trainer.add_argparse_args(parser)
 
-    config = yaml_config_hook("config/config.yaml")
+    config = yaml_config_hook("config/config_sup.yaml")
     for k, v in config.items():
         parser.add_argument(f"--{k}", default=v, type=type(v))
 
@@ -47,16 +47,18 @@ if __name__ == "__main__":
     contrastive_train_dataset = Contrastive(
         train_dataset,
         input_shape=(1, input_shape),
-        transform=ComposeMany(
-            train_transform, num_augmented_samples=1
-        ),
+        transform=RandomResizedCrop(n_samples=args.audio_length)
+        #transform=ComposeMany(
+        #    train_transform, num_augmented_samples=1
+        #),
     )
     contrastive_valid_dataset = Contrastive(
         valid_dataset,
         input_shape=(1, input_shape),
-        transform=ComposeMany(
-            train_transform, num_augmented_samples=1
-        ),
+        transform=RandomResizedCrop(n_samples=args.audio_length)
+        #transform=ComposeMany(
+        #    train_transform, num_augmented_samples=1
+        #),
     )
 
     train_loader = DataLoader(
@@ -79,18 +81,21 @@ if __name__ == "__main__":
     # ---------------------
     encoder = SampleCNN(
         strides=[3, 3, 3, 3, 3, 3, 3, 3, 3],
-        supervised=args.supervised,
+        supervised=1,
         out_dim=train_dataset.n_classes,
     )
 
-    logger = TensorBoardLogger("runs", name="CLMRmusvid-{}-90".format(args.dataset))
+
+    checkpoint_path1 = "runs/VCMR-audio/" + args.checkpoint_path1
+    checkpoint_path2 = "runs/VCMR-audio_visual/" + args.checkpoint_path2
+    logger = TensorBoardLogger("runs", name="VCMR-{}".format(args.dataset))
     proxy = ContrastiveLearning(args, encoder, pre=True)
     proxy = proxy.load_from_checkpoint(
-        args.checkpoint_path1, encoder=encoder, output_dim=train_dataset.n_classes
+        checkpoint_path1, encoder=encoder, output_dim=train_dataset.n_classes
     )
     pretrained = MultimodalLearning(args, encoder)
     pretrained = pretrained.load_from_checkpoint(
-        args.checkpoint_path2, enc1=encoder, output_dim=train_dataset.n_classes
+        checkpoint_path2, enc1=encoder, output_dim=train_dataset.n_classes
     )
 
     # --------
@@ -109,8 +114,8 @@ if __name__ == "__main__":
         max_epochs=30,
         log_every_n_steps=10,
         check_val_every_n_epoch=1,
-        gpus=[0, 1],
+        strategy="ddp_find_unused_parameters_false",
         accelerator="gpu",
-        # strategy="ddp",
+        devices="auto"
     )
     trainer.fit(module, train_loader, valid_loader)

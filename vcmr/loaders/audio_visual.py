@@ -18,10 +18,10 @@ class AUDIOVISUAL(data.Dataset):
         subset: str,
         n_classes: int = 1,
     ) -> None:
-        super(AUDIOVISUAL, self).__init__(root)
+        super(AUDIOVISUAL, self).__init__()
 
-        self.audio_path = os.path.join(root, "audios")
-        self.video_path = os.path.join(root, "videos")
+        self.audio_path = os.path.join(root, "audios_00_splitted")
+        self.video_path = os.path.join(root, "videos_00_clipped")
         self.n_classes = n_classes
 
         self.fl1 = glob(
@@ -29,18 +29,18 @@ class AUDIOVISUAL(data.Dataset):
             recursive=True,
         )
         self.fl1 = sorted(self.fl1)
-        self.fl2 = glob(
-            os.path.join(self.video_path, "*.npy"),
-            recursive=True,
-        )
-        self.fl2 = sorted(self.fl2)
+        #self.fl2 = glob(
+        #    os.path.join(self.video_path, "*.npy"),
+        #    recursive=True,
+        #)
+        #self.fl2 = sorted(self.fl2)
 
         # train-validation splits
         random.Random(42).shuffle(self.fl1)
-        random.Random(42).shuffle(self.fl2)
-        bound = int(0.8 * len(self.fl))
+        #random.Random(42).shuffle(self.fl2)
+        bound = int(0.9 * len(self.fl1))
         self.fl1 = self.fl1[:bound] if subset == "train" else self.fl1[bound:]
-        self.fl2 = self.fl2[:bound] if subset == "train" else self.fl2[bound:]
+        #self.fl2 = self.fl2[:bound] if subset == "valid" else self.fl2[bound:]
 
         if len(self.fl1) == 0:
             raise RuntimeError(
@@ -58,12 +58,12 @@ class AUDIOVISUAL(data.Dataset):
         audio, _ = torchaudio.load(filepath)
 
         matching_video, interval = filepath[-19:-8], int(filepath[-7:-4])
-        matching_video = os.path.join(self.video_path, f"video-{matching_video}.npy")
+        matching_video = os.path.join(self.video_path, f"clip_{matching_video}.npy")
         video = torch.from_numpy(np.load(matching_video)).float()
 
-        # 10 sec from features of 1.5 sec
-        start = math.ceil(interval*10/1.5)
-        aligned_segment = video[start : start + 6]
+        # 15 sec from features of 1 sec
+        start = math.ceil(interval*15)
+        aligned_segment = video[start : start + 15]
         return audio, aligned_segment, []
 
     def __len__(self) -> int:

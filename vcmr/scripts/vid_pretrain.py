@@ -9,7 +9,7 @@ from torchaudio_augmentations import (
     RandomResizedCrop,
 )
 
-from vcmr.loaders import get_dataset, MultimodalDataset
+from vcmr.loaders import get_dataset, MultiContrastive
 from vcmr.models import SampleCNN
 from vcmr.trainers import MultimodalLearning, ContrastiveLearning
 from vcmr.utils import yaml_config_hook
@@ -17,10 +17,10 @@ from vcmr.utils import yaml_config_hook
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="CLMR")
+    parser = argparse.ArgumentParser(description="VCMR")
     parser = Trainer.add_argparse_args(parser)
 
-    config = yaml_config_hook("config/config.yaml")
+    config = yaml_config_hook("config/config_vid.yaml")
     for k, v in config.items():
         parser.add_argument(f"--{k}", default=v, type=type(v))
 
@@ -35,15 +35,25 @@ if __name__ == "__main__":
 
     # ------------
     # dataloaders
-    # ------------
-    train_dataset = get_dataset(args.dataset, args.dataset_dir, subset="train")
-    contrastive_train_dataset = MultimodalDataset(
+    # ------------"
+    train_dataset = get_dataset("audio_visual", args.dataset_dir, subset="train")
+    valid_dataset = get_dataset("audio_visual", args.dataset_dir, subset="valid")
+
+    contrastive_train_dataset = MultiContrastive(
         train_dataset,
-        input_shape=(1, 220500),
+        input_shape=(1, args.sample_rate * 15),
         transform=ComposeMany(
             train_transform, num_augmented_samples=num_augmented_samples
         ),
     )
+    contrastive_valid_dataset = MultiContrastive(
+        valid_dataset,
+        input_shape=(1, args.sample_rate * 15),
+        transform=ComposeMany(
+            train_transform, num_augmented_samples=num_augmented_samples
+        ),
+    )
+
     train_loader = DataLoader(
         contrastive_train_dataset,
         batch_size=args.batch_size,
@@ -51,25 +61,33 @@ if __name__ == "__main__":
         drop_last=True,
         shuffle=True,
     )
+    valid_loader = DataLoader(
+        contrastive_valid_dataset,
+        batch_size=args.batch_size,
+        num_workers=args.workers,
+        drop_last=True,
+        shuffle=False,
+    )
 
     # ------------
     # encoder
     # ------------
     encoder = SampleCNN(
         strides=[3, 3, 3, 3, 3, 3, 3, 3, 3],
-        supervised=args.supervised,
+        supervised=0,
         out_dim=train_dataset.n_classes,
     )
 
     # ------------
     # model
     # ------------
+    checkpoint = "runs/VCMR-audio/" + args.checkpoint_path
     pretrained = ContrastiveLearning(args, encoder, pre=True)
     pretrained = pretrained.load_from_checkpoint(
-        args.checkpoint_path1, encoder=encoder, output_dim=train_dataset.n_classes
+        checkpoint, encoder=encoder, output_dim=train_dataset.n_classes
     )
     module = MultimodalLearning(args, encoder, ckpt=pretrained)
-    logger = TensorBoardLogger("runs", name="CLMRvid-{}".format(args.dataset))
+    logger = TensorBoardLogger("runs", name="VCMR-audio_visual")
 
     # ------------
     # training
@@ -79,11 +97,11 @@ if __name__ == "__main__":
         args,
         logger=logger,
         sync_batchnorm=True,
-        max_epochs=40,
+        max_epochs=50,
         log_every_n_steps=10,
         check_val_every_n_epoch=1,
-        gpus=[0,1],
+        strategy="ddp_find_unused_parameters_false",
         accelerator="gpu",
-        #strategy="ddp"
+        devices="auto"
     )
-    trainer.fit(module, train_loader, None)
+    trainer.fit(module, train_loader, valid_loader)
