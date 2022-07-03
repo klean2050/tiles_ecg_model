@@ -30,7 +30,7 @@ class AUDIO(data.Dataset):
             recursive=True,
         )
         random.Random(42).shuffle(self.fl)
-        bound = int(0.8 * len(self.fl))
+        bound = int(0.9 * len(self.fl))
         self.fl = self.fl[:bound] if subset == "train" else self.fl[bound:]
 
         if len(self.fl) == 0:

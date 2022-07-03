@@ -48,18 +48,9 @@ class MultiContrastive(Dataset):
         self.dataset = dataset
         self.transform = transform
         self.input_shape = input_shape
-        self.ignore_idx = []
 
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
-        if idx in self.ignore_idx:
-            return self[idx + 1]
-
         audio, video, label = self.dataset[idx]
-
-        if audio.shape[1] < self.input_shape[1]:
-            self.ignore_idx.append(idx)
-            return self[idx + 1]
-
         if self.transform:
             audio = self.transform(audio).squeeze(dim=1)
         return audio, video, label
