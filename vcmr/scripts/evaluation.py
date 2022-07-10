@@ -1,11 +1,11 @@
 import argparse, pytorch_lightning as pl
 from pytorch_lightning import Trainer
-from torchaudio_augmentations import RandomResizedCrop, ComposeMany
+from torchaudio_augmentations import RandomResizedCrop
 
-from vcmr.loaders import get_dataset, ContrastiveDataset
+from vcmr.loaders import get_dataset, Contrastive
 from vcmr.models import SampleCNN
-from vcmr.trainers import ContrastiveLearning, SupervisedLearning, MultimodalLearning
-from vcmr.utils import yaml_config_hook, evaluate, get_ckpt
+from vcmr.trainers import ContrastiveLearning, SupervisedLearning
+from vcmr.utils import yaml_config_hook, evaluate
 
 
 if __name__ == "__main__":
@@ -32,25 +32,25 @@ if __name__ == "__main__":
         supervised=1,
         out_dim=train_dataset.n_classes,
     )
-    pretrained = ContrastiveLearning(args, encoder, pre=True)
+    #pretrained = ContrastiveLearning(args, encoder, pre=True)
 
-    ckpt_path = "/data/avramidi/music-videos/clmr/runs/"
-    module = SupervisedLearning(args, encoder, pretrained, output_dim=train_dataset.n_classes)
-    module = module.load_from_checkpoint(
-        ckpt_path + args.checkpoint_path3, enc1=encoder, output_dim=train_dataset.n_classes
-     )
+    checkpoint = f"runs/VCMR-{args.dataset}/" + args.checkpoint_path3
+    module = SupervisedLearning(
+        args, encoder, output_dim=train_dataset.n_classes
+    ).load_from_checkpoint(
+        checkpoint, enc1=encoder, output_dim=train_dataset.n_classes
+    )
 
-    transform = [RandomResizedCrop(n_samples=args.audio_length)]
-    contrastive_test_dataset = ContrastiveDataset(
+    contrastive_test_dataset = Contrastive(
         get_dataset(args.dataset, args.dataset_dir, subset="test"),
         input_shape=(1, args.audio_length),
-        transform=ComposeMany(transform, num_augmented_samples=1),
+        transform=RandomResizedCrop(n_samples=args.audio_length)
     )
     results = evaluate(
         module,
         contrastive_test_dataset,
         args.dataset,
         args.audio_length,
-        device="cuda",
+        device="cuda"
     )
     print(results)

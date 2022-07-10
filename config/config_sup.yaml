@@ -16,3 +16,4 @@ temperature: 0.1
 
 checkpoint_path1: "version_16/checkpoints/epoch=29-step=29700.ckpt"
 checkpoint_path2: "version_1/checkpoints/epoch=29-step=16980.ckpt"
+checkpoint_path3: "version_3/checkpoints/epoch=29-step=1020.ckpt"
