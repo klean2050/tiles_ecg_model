@@ -1,4 +1,4 @@
-"""Script for tuning hyperparameters of SampleCNN."""
+"""Script for generating valid input sizes of SampleCNN."""
 
 
 import numpy as np
