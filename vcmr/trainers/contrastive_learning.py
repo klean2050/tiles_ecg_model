@@ -1,5 +1,9 @@
+"""Contains PyTorch Lightning LightningModule class for contrastive learning (SimCLR model)."""
+
+
 import torch, torch.nn as nn
 from torch import Tensor
+# OLD CODE:
 from simclr import SimCLR
 from simclr.modules import NT_Xent, LARS
 from pytorch_lightning import LightningModule
@@ -10,18 +14,52 @@ class ContrastiveLearning(LightningModule):
         super().__init__()
         self.save_hyperparameters(args)
 
+        # backbone encoder:
         self.encoder = encoder
-        self.n_features = 512 #if pre #else self.encoder.fc.in_features
+        # dimensionality of representation:
+        # OLD CODE:
+        self.n_features = 512
+        # NEW CODE:
+        """
+        self.n_features = self.encoder.output_size
+        """
+
+        # OLD CODE:
+        """
         if pre:
             self.encoder.fc = nn.Identity()
-        
+        """
+
+        # OLD CODE:
         self.model = SimCLR(self.encoder, self.hparams.projection_dim, self.n_features)
+        # NEW CODE:
+        """
+        # projection head:
+        self.projector = nn.Sequential(
+            nn.Linear(self.n_features, self.n_features, bias=False),
+            nn.ReLU(),
+            nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
+        )
+        """
+
+        # criterion function:
         self.criterion = self.configure_criterion()
-
+    
     def forward(self, x_i: Tensor, x_j: Tensor) -> Tensor:
+        # OLD CODE:
         _, _, z_i, z_j = self.model(x_i, x_j)
-        return self.criterion(z_i, z_j)
+        # NEW CODE:
+        """
+        # pass through encoder:
+        h_i = self.encoder(x_i)
+        h_j = self.encoder(x_j)
+        # pass through projection head:
+        z_i = self.projector(h_i)
+        z_j = self.projector(h_j)
+        """
 
+        return self.criterion(z_i, z_j)
+    
     def training_step(self, batch, _) -> Tensor:
         x, _ = batch
         loss = self.forward(x[:, 0, :], x[:, 1, :])
@@ -68,3 +106,4 @@ class ContrastiveLearning(LightningModule):
             return {"optimizer": optimizer, "lr_scheduler": scheduler}
         else:
             return {"optimizer": optimizer}
+

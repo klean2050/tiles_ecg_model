@@ -1,3 +1,6 @@
+"""Contains PyTorch Lightning LightningModule class for multimodal contrastive learning."""
+
+
 import torch, torch.nn as nn
 from torch import Tensor
 from simclr.modules import NT_Xent, LARS
@@ -8,13 +11,17 @@ class MultimodalLearning(LightningModule):
     def __init__(self, args, enc1: nn.Module, ckpt=None):
         super().__init__()
         self.save_hyperparameters(args)
-        self.criterion = self.configure_criterion()
 
-        self.n_features = 512
+        # audio encoder:
         self.encoder1 = ckpt.model.encoder if ckpt else enc1
-        self.projector1 = nn.Linear(self.n_features, self.hparams.projection_dim)
-
-        # keep first 4 conv blocks frozen
+        # dimensionality of representation:
+        # OLD CODE:
+        self.n_features = 512
+        # NEW CODE:
+        """
+        self.n_features = self.encoder.output_size
+        """
+        # keep first 4 conv blocks frozen:
         c0, c1 = 0, 0
         for child in self.encoder1.children():
             for block in child.children():
@@ -26,8 +33,19 @@ class MultimodalLearning(LightningModule):
             c0 += 1
             if c0 > 0:
                 break
+        # audio projection head:
+        # OLD CODE:
+        self.projector1 = nn.Linear(self.n_features, self.hparams.projection_dim)
+        # NEW CODE:
+        """
+        self.projector1 = nn.Sequential(
+            nn.Linear(self.n_features, self.n_features, bias=False),
+            nn.ReLU(),
+            nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
+        )
+        """
 
-        # the LSTM module is newly added
+        # video encoder (LSTM module is newly added):
         self.temporal = nn.LSTM(512, 512, num_layers=2, batch_first=True, dropout=0.2)
         self.encoder2 = nn.Sequential(
             nn.Flatten(),
@@ -35,8 +53,21 @@ class MultimodalLearning(LightningModule):
             nn.ReLU(),
             nn.Linear(2048, self.n_features),
         )
+        # video projection head:
+         # OLD CODE:
         self.projector2 = nn.Linear(self.n_features, self.hparams.projection_dim)
+        # NEW CODE:
+        """
+        self.projector2 = nn.Sequential(
+            nn.Linear(self.n_features, self.n_features, bias=False),
+            nn.ReLU(),
+            nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
+        )
+        """
 
+        # criterion function:
+        self.criterion = self.configure_criterion()
+    
     def forward(self, x_i: Tensor, x_j: Tensor) -> Tensor:
         z_i = self.projector1(self.encoder1(x_i))
         x_j, _ = self.temporal(x_j)
