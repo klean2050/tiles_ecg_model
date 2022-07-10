@@ -1,14 +1,9 @@
 import argparse, os, pytorch_lightning as pl
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader
-
-# Audio Augmentations
-from torchaudio_augmentations import (
-    ComposeMany,
-    RandomResizedCrop,
-)
+from torchaudio_augmentations import RandomResizedCrop
 
 from vcmr.loaders import Contrastive, get_dataset
 from vcmr.models import SampleCNN
@@ -31,12 +26,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     pl.seed_everything(args.seed)
 
-    # -------------
-    # AUGMENTATIONS
-    # -------------
-    train_transform = [RandomResizedCrop(n_samples=args.audio_length)]
-    # train_transform = []
-
     # -----------
     # DATALOADERS
     # -----------
@@ -48,17 +37,11 @@ if __name__ == "__main__":
         train_dataset,
         input_shape=(1, input_shape),
         transform=RandomResizedCrop(n_samples=args.audio_length)
-        #transform=ComposeMany(
-        #    train_transform, num_augmented_samples=1
-        #),
     )
     contrastive_valid_dataset = Contrastive(
         valid_dataset,
         input_shape=(1, input_shape),
         transform=RandomResizedCrop(n_samples=args.audio_length)
-        #transform=ComposeMany(
-        #    train_transform, num_augmented_samples=1
-        #),
     )
 
     train_loader = DataLoader(
@@ -85,10 +68,8 @@ if __name__ == "__main__":
         out_dim=train_dataset.n_classes,
     )
 
-
     checkpoint_path1 = "runs/VCMR-audio/" + args.checkpoint_path1
     checkpoint_path2 = "runs/VCMR-audio_visual/" + args.checkpoint_path2
-    logger = TensorBoardLogger("runs", name="VCMR-{}".format(args.dataset))
     proxy = ContrastiveLearning(args, encoder, pre=True)
     proxy = proxy.load_from_checkpoint(
         checkpoint_path1, encoder=encoder, output_dim=train_dataset.n_classes
@@ -105,6 +86,7 @@ if __name__ == "__main__":
         args, encoder, pretrained, output_dim=train_dataset.n_classes
     )
     early_stopping = EarlyStopping(monitor="Valid/loss", patience=5)
+    logger = TensorBoardLogger("runs", name=f"VCMR-{args.dataset}")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "1,3"
     trainer = Trainer.from_argparse_args(

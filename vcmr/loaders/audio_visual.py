@@ -24,25 +24,18 @@ class AUDIOVISUAL(data.Dataset):
         self.video_path = os.path.join(root, "videos_00_clipped")
         self.n_classes = n_classes
 
-        self.fl1 = glob(
+        self.fl = glob(
             os.path.join(self.audio_path, "**", "*.wav"),
             recursive=True,
         )
-        self.fl1 = sorted(self.fl1)
-        #self.fl2 = glob(
-        #    os.path.join(self.video_path, "*.npy"),
-        #    recursive=True,
-        #)
-        #self.fl2 = sorted(self.fl2)
+        self.fl = sorted(self.fl)
 
         # train-validation splits
-        random.Random(42).shuffle(self.fl1)
-        #random.Random(42).shuffle(self.fl2)
-        bound = int(0.9 * len(self.fl1))
-        self.fl1 = self.fl1[:bound] if subset == "train" else self.fl1[bound:]
-        #self.fl2 = self.fl2[:bound] if subset == "valid" else self.fl2[bound:]
+        random.Random(42).shuffle(self.fl)
+        bound = int(0.9 * len(self.fl))
+        self.fl = self.fl[:bound] if subset == "train" else self.fl[bound:]
 
-        if len(self.fl1) == 0:
+        if len(self.fl) == 0:
             raise RuntimeError(
                 "Dataset not found. Please place files in the {} folder.".format(
                     self.audio_path
@@ -51,7 +44,7 @@ class AUDIOVISUAL(data.Dataset):
 
     def file_path(self, n: int) -> str:
         n = n - 1 if n else n
-        return self.fl1[n]
+        return self.fl[n]
 
     def __getitem__(self, n: int) -> Tuple[Tensor, Tensor]:
         filepath = self.file_path(n)
@@ -67,4 +60,4 @@ class AUDIOVISUAL(data.Dataset):
         return audio, aligned_segment, []
 
     def __len__(self) -> int:
-        return len(self.fl1)
+        return len(self.fl)

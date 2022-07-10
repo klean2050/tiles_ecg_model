@@ -1,7 +1,6 @@
 import argparse, pytorch_lightning as pl, os
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.strategies.ddp import DDPStrategy
 from torch.utils.data import DataLoader
 from torchaudio_augmentations import (
     RandomApply,
@@ -98,20 +97,20 @@ if __name__ == "__main__":
         shuffle=False,
     )
 
-    # ---------------------
-    # ENCODER & CHECKPOINTS
-    # ---------------------
+    # ---------------
+    # ENCODER & MODEL
+    # ---------------
     encoder = SampleCNN(
         strides=[3, 3, 3, 3, 3, 3, 3, 3, 3],
         supervised=0,
         out_dim=train_dataset.n_classes,
     )
+    module = ContrastiveLearning(args, encoder)
     logger = TensorBoardLogger("runs", name="VCMR-audio")
 
     # --------
     # TRAINING
     # --------
-    module = ContrastiveLearning(args, encoder)
     os.environ['CUDA_VISIBLE_DEVICES'] = '2,3'
     trainer = Trainer.from_argparse_args(
         args,

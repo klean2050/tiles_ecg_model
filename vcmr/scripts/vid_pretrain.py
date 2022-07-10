@@ -2,12 +2,7 @@ import argparse, os, pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
-
-# Audio Augmentations
-from torchaudio_augmentations import (
-    ComposeMany,
-    RandomResizedCrop,
-)
+from torchaudio_augmentations import RandomResizedCrop
 
 from vcmr.loaders import get_dataset, MultiContrastive
 from vcmr.models import SampleCNN
@@ -28,30 +23,20 @@ if __name__ == "__main__":
     pl.seed_everything(args.seed)
 
     # ------------
-    # augmentations
-    # ------------
-    train_transform = [RandomResizedCrop(n_samples=args.audio_length)]
-    num_augmented_samples = 1
-
-    # ------------
     # dataloaders
-    # ------------"
+    # ------------
     train_dataset = get_dataset("audio_visual", args.dataset_dir, subset="train")
     valid_dataset = get_dataset("audio_visual", args.dataset_dir, subset="valid")
 
     contrastive_train_dataset = MultiContrastive(
         train_dataset,
         input_shape=(1, args.sample_rate * 15),
-        transform=ComposeMany(
-            train_transform, num_augmented_samples=num_augmented_samples
-        ),
+        transform=RandomResizedCrop(n_samples=args.audio_length)
     )
     contrastive_valid_dataset = MultiContrastive(
         valid_dataset,
         input_shape=(1, args.sample_rate * 15),
-        transform=ComposeMany(
-            train_transform, num_augmented_samples=num_augmented_samples
-        ),
+        transform=RandomResizedCrop(n_samples=args.audio_length)
     )
 
     train_loader = DataLoader(
