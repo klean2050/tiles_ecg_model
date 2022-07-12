@@ -3,14 +3,13 @@
 
 import torch, torch.nn as nn
 from torch import Tensor
-# OLD CODE:
-from simclr import SimCLR
+
 from simclr.modules import NT_Xent, LARS
 from pytorch_lightning import LightningModule
 
 
 class ContrastiveLearning(LightningModule):
-    def __init__(self, args, encoder: nn.Module, pre=False):
+    def __init__(self, args, encoder: nn.Module):
         super().__init__()
         self.save_hyperparameters(args)
 
@@ -24,49 +23,30 @@ class ContrastiveLearning(LightningModule):
         self.n_features = self.encoder.output_size
         """
 
-        # OLD CODE:
-        """
-        if pre:
-            self.encoder.fc = nn.Identity()
-        """
-
-        # OLD CODE:
-        self.model = SimCLR(self.encoder, self.hparams.projection_dim, self.n_features)
-        # NEW CODE:
-        """
         # projection head:
         self.projector = nn.Sequential(
             nn.Linear(self.n_features, self.n_features, bias=False),
             nn.ReLU(),
             nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
         )
-        """
+
+        self.model = nn.Sequential(self.encoder, self.projector)
 
         # criterion function:
         self.criterion = self.configure_criterion()
-    
-    def forward(self, x_i: Tensor, x_j: Tensor) -> Tensor:
-        # OLD CODE:
-        _, _, z_i, z_j = self.model(x_i, x_j)
-        # NEW CODE:
-        """
-        # pass through encoder:
-        h_i = self.encoder(x_i)
-        h_j = self.encoder(x_j)
-        # pass through projection head:
-        z_i = self.projector(h_i)
-        z_j = self.projector(h_j)
-        """
 
+    def forward(self, x_i: Tensor, x_j: Tensor) -> Tensor:
+        z_i = self.model(x_i)
+        z_j = self.model(x_j)
         return self.criterion(z_i, z_j)
-    
+
     def training_step(self, batch, _) -> Tensor:
         x, _ = batch
         loss = self.forward(x[:, 0, :], x[:, 1, :])
         self.log("Train/loss", loss)
         return loss
 
-    def validation_step(self, batch, _):
+    def validation_step(self, batch, _) -> Tensor:
         x, _ = batch
         loss = self.forward(x[:, 0, :], x[:, 1, :])
         self.log("Valid/loss", loss)
@@ -106,4 +86,3 @@ class ContrastiveLearning(LightningModule):
             return {"optimizer": optimizer, "lr_scheduler": scheduler}
         else:
             return {"optimizer": optimizer}
-

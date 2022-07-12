@@ -1,5 +1,6 @@
 import torch.nn as nn
 
+
 class SampleCNN(nn.Module):
     def __init__(self, strides, supervised, out_dim):
         super(SampleCNN, self).__init__()
@@ -52,7 +53,7 @@ class SampleCNN(nn.Module):
 
         if self.supervised:
             self.dropout = nn.Dropout(0.5)
-        self.fc = nn.Linear(512, out_dim)
+            self.fc = nn.Linear(512, out_dim)
 
     def forward(self, x):
         out = self.sequential(x)
@@ -60,5 +61,5 @@ class SampleCNN(nn.Module):
             out = self.dropout(out)
 
         out = out.reshape(x.shape[0], out.size(1) * out.size(2))
-        logit = self.fc(out)
-        return logit
+        # logit = self.fc(out)
+        return self.fc(out) if self.supervised else out
