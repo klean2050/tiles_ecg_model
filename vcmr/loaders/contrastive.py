@@ -16,16 +16,7 @@ class Contrastive(Dataset):
         self.ignore_idx = []
 
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
-        # check if ignored
-        if idx in self.ignore_idx:
-            return self[idx + 1]
-        # load the sample
         audio, label = self.dataset[idx]
-        # check if you should ignore
-        if audio.shape[1] < self.input_shape[1]:
-            self.ignore_idx.append(idx)
-            return self[idx + 1]
-        # apply transformation
         if self.transform:
             audio = self.transform(audio)
         return audio, label

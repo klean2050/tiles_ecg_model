@@ -43,7 +43,6 @@ class AUDIOVISUAL(data.Dataset):
             )
 
     def file_path(self, n: int) -> str:
-        n = n - 1 if n else n
         return self.fl[n]
 
     def __getitem__(self, n: int) -> Tuple[Tensor, Tensor]:
