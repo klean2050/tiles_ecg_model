@@ -42,11 +42,8 @@ class AUDIOVISUAL(data.Dataset):
                 )
             )
 
-    def file_path(self, n: int) -> str:
-        return self.fl[n]
-
     def __getitem__(self, n: int) -> Tuple[Tensor, Tensor]:
-        filepath = self.file_path(n)
+        filepath = self.fl[n]
         audio, _ = torchaudio.load(filepath)
 
         matching_video, interval = filepath[-19:-8], int(filepath[-7:-4])
