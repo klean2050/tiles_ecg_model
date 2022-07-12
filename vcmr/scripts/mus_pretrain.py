@@ -111,7 +111,7 @@ if __name__ == "__main__":
     # --------
     # TRAINING
     # --------
-    os.environ['CUDA_VISIBLE_DEVICES'] = '2,3'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1,2,3'
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,
