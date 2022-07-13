@@ -55,34 +55,25 @@ if __name__ == "__main__":
     )
 
     # ------------
-    # encoder
-    # ------------
-    encoder = SampleCNN(
-        strides=[3, 3, 3, 3, 3, 3, 3, 3, 3],
-        supervised=0,
-        out_dim=train_dataset.n_classes,
-    )
-
-    # ------------
     # model
     # ------------
+    encoder = SampleCNN(strides=[3, 3, 3, 3, 3, 3, 3, 3, 3])
     checkpoint = "runs/VCMR-audio/" + args.checkpoint_path
-    pretrained = ContrastiveLearning(args, encoder, pre=True)
-    pretrained = pretrained.load_from_checkpoint(
+    pretrained = ContrastiveLearning(args, encoder).load_from_checkpoint(
         checkpoint, encoder=encoder, output_dim=train_dataset.n_classes
     )
-    module = MultimodalLearning(args, encoder, ckpt=pretrained)
+    module = MultimodalLearning(args, pretrained.encoder)
     logger = TensorBoardLogger("runs", name="VCMR-audio_visual")
 
     # ------------
     # training
     # ------------
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1,3'
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.n_cuda
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,
         sync_batchnorm=True,
-        max_epochs=50,
+        max_epochs=args.m_epochs,
         log_every_n_steps=10,
         check_val_every_n_epoch=1,
         strategy="ddp_find_unused_parameters_false",

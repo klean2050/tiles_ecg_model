@@ -27,18 +27,12 @@ if __name__ == "__main__":
     # ----------
     # EVALUATION
     # ----------
-    encoder = SampleCNN(
-        strides=[3, 3, 3, 3, 3, 3, 3, 3, 3],
-        supervised=1,
-        out_dim=train_dataset.n_classes,
-    )
-    #pretrained = ContrastiveLearning(args, encoder, pre=True)
-
-    checkpoint = f"runs/VCMR-{args.dataset}/" + args.checkpoint_path3
+    encoder = SampleCNN(strides=[3, 3, 3, 3, 3, 3, 3, 3, 3])
+    checkpoint = f"runs/VCMR-{args.dataset}/" + args.checkpoint_eval
     module = SupervisedLearning(
         args, encoder, output_dim=train_dataset.n_classes
     ).load_from_checkpoint(
-        checkpoint, enc1=encoder, output_dim=train_dataset.n_classes
+        checkpoint, encoder=encoder, output_dim=train_dataset.n_classes
     )
 
     contrastive_test_dataset = Contrastive(

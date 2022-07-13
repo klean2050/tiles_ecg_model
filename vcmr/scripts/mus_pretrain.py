@@ -98,23 +98,19 @@ if __name__ == "__main__":
     # ---------------
     # ENCODER & MODEL
     # ---------------
-    encoder = SampleCNN(
-        strides=[3, 3, 3, 3, 3, 3, 3, 3, 3],
-        supervised=0,
-        out_dim=train_dataset.n_classes,
-    )
+    encoder = SampleCNN(strides=[3, 3, 3, 3, 3, 3, 3, 3, 3])
     module = ContrastiveLearning(args, encoder)
     logger = TensorBoardLogger("runs", name="VCMR-audio")
 
     # --------
     # TRAINING
     # --------
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,
         sync_batchnorm=True,
-        max_epochs=30,
+        max_epochs=args.m_epochs,
         log_every_n_steps=10,
         check_val_every_n_epoch=1,
         strategy="ddp_find_unused_parameters_false",

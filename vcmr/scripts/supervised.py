@@ -1,5 +1,6 @@
 import argparse, os, pytorch_lightning as pl
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.callbacks import EarlyStopping
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader
@@ -62,38 +63,31 @@ if __name__ == "__main__":
     # ---------------------
     # ENCODER & CHECKPOINTS
     # ---------------------
-    encoder = SampleCNN(
-        strides=[3, 3, 3, 3, 3, 3, 3, 3, 3],
-        supervised=1,
-        out_dim=train_dataset.n_classes,
-    )
+    encoder = SampleCNN(strides=[3, 3, 3, 3, 3, 3, 3, 3, 3])
+    checkpoint = "runs/" + args.checkpoint_path
+    pretrained = MultimodalLearning(args, encoder).load_from_checkpoint(
+        checkpoint, encoder=encoder, output_dim=train_dataset.n_classes
+    ) if "visual" in checkpoint else ContrastiveLearning(args, encoder).load_from_checkpoint(
+        checkpoint, encoder=encoder, output_dim=train_dataset.n_classes
+    ) 
 
-    checkpoint_path1 = "runs/VCMR-audio/" + args.checkpoint_path1
-    checkpoint_path2 = "runs/VCMR-audio_visual/" + args.checkpoint_path2
-    proxy = ContrastiveLearning(args, encoder, pre=True)
-    proxy = proxy.load_from_checkpoint(
-        checkpoint_path1, encoder=encoder, output_dim=train_dataset.n_classes
+    module = SupervisedLearning(
+        args, encoder=pretrained.encoder, output_dim=train_dataset.n_classes
     )
-    pretrained = MultimodalLearning(args, encoder)
-    pretrained = pretrained.load_from_checkpoint(
-        checkpoint_path2, enc1=encoder, output_dim=train_dataset.n_classes
-    )
+    logger = TensorBoardLogger("runs", name=f"VCMR-{args.dataset}")
 
     # --------
     # TRAINING
     # --------
-    module = SupervisedLearning(
-        args, encoder, pretrained, output_dim=train_dataset.n_classes
-    )
-    early_stopping = EarlyStopping(monitor="Valid/loss", patience=5)
-    logger = TensorBoardLogger("runs", name=f"VCMR-{args.dataset}")
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1,3"
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
+    stop = EarlyStopping(monitor="Valid/loss", mode="min", patience=10)
+    restore = ModelCheckpoint(save_top_k=1, monitor="Valid/loss", mode="min")
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,
         sync_batchnorm=True,
-        max_epochs=30,
+        max_epochs=100,
+        callbacks=[stop, restore],
         log_every_n_steps=10,
         check_val_every_n_epoch=1,
         strategy="ddp_find_unused_parameters_false",
