@@ -22,10 +22,9 @@ def evaluate(
         for idx in tqdm(range(len(test_dataset))):
             _, label = test_dataset[idx]
             batch = test_dataset.concat_clip(idx, audio_length)
-            batch = batch.to(device)
+            batch = batch.squeeze(1).to(device)
 
-            output = encoder(batch)
-            # we always return logits, so we need a sigmoid here for multi-label classification
+            output = encoder.model(batch)
             if dataset_name in ["magnatagatune", "mtg-jamendo-dataset"]:
                 output = torch.sigmoid(output)
             else:
