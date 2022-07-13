@@ -56,9 +56,7 @@ if __name__ == "__main__":
             ],
             p=args.transforms_pitch,
         ),
-        RandomApply(
-            [Reverb(sample_rate=args.sample_rate)], p=args.transforms_reverb
-        ),
+        RandomApply([Reverb(sample_rate=args.sample_rate)], p=args.transforms_reverb),
     ]
 
     # -----------
@@ -111,7 +109,7 @@ if __name__ == "__main__":
     # --------
     # TRAINING
     # --------
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1,2,3'
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,
@@ -121,6 +119,6 @@ if __name__ == "__main__":
         check_val_every_n_epoch=1,
         strategy="ddp_find_unused_parameters_false",
         accelerator="gpu",
-        devices="auto"
+        devices="auto",
     )
     trainer.fit(module, train_loader, valid_loader)
