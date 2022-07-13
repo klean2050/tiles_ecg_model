@@ -2,20 +2,24 @@
 
 
 import numpy as np
+import pandas as pd
+
+
+# csv file for saving results:
+save_file = "experiments/sampleCNN_input_size_tuning/sample_cnn_input_sizes.csv"
+# sampling rate:
+Fs = 22050
+# range of input sizes to try:
+input_size_range_sec = np.array([2.5, 6.5])
+input_size_range = np.around(Fs * input_size_range_sec).astype(int)
+# choices of (relevant) model architecture hyperparameters:
+pool_size_choices = np.arange(2, 4+1, dtype=int)
+first_block_params_conv_size_choices = np.arange(2, 4+1, dtype=int)
 
 
 if __name__ == "__main__":
     print("\n\n")
-    
-    # sampling frequency:
-    Fs = 22050
-    # range of input sizes to try:
-    input_size_range_sec = np.array([2.0, 10.0])
-    input_size_range = np.around(Fs * input_size_range_sec).astype(int)
-    # choices of (relevant) model architecture hyperparameters:
-    pool_size_choices = np.arange(2, 4+1, dtype=int)
-    first_block_params_conv_size_choices = np.arange(2, 4+1, dtype=int)
-    
+
     # find valid input sizes in specified range:
     print("Finding valid input sizes in range [{} s, {} s] = [{} samples, {} samples]...".format(input_size_range_sec[0], input_size_range_sec[1], input_size_range[0], input_size_range[1]))
     hyperparam_choices = {}
@@ -62,5 +66,9 @@ if __name__ == "__main__":
         config = hyperparam_choices[config_num]
         print(config)
     
+    # save all valid model architecture configurations to csv file:
+    df = pd.DataFrame.from_dict(hyperparam_choices, orient="index")
+    df.to_csv(path_or_buf=save_file)
+
     print("\n\n")
 
