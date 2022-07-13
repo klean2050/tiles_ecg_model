@@ -39,12 +39,6 @@ VCMR/
 └── setup.py             # package installation script
 ```
 
-## Demo Auto-Tagging (TBD)
-
-```
-python main.py --audio /path/to/audio/file.wav [--flags]
-```
-
 ## Getting the Data
 
 VCMR is trained on a large-scale dataset of 20150 music video clips, downloaded from YouTube in MPEG-4 high-resolution format. The unique codes of the utilized videos can be found at ``video_list.txt``. To reproduce the dataset, run ``preprocess_data.py``.
@@ -64,19 +58,19 @@ python vcmr/scripts/mus_pretrain.py --dataset_dir /path/to/audio/folder/
 ### 2. Video-Conditioned Pre-Training
 
 ```
-python vcmr/scripts/vid_pretrain.py --dataset_dir /path/to/data/folder/ --ckpt runs/path/to/mus_checkpoint.ckpt
+python vcmr/scripts/vid_pretrain.py --dataset_dir /path/to/data/folder/
 ```
 
 ### 3. Supervised Fine-Tuning
 
 ```
-python vcmr/scripts/supervised.py --dataset <dataset_name> --ckpt runs/path/to/vid_checkpoint.ckpt
+python vcmr/scripts/supervised.py --dataset <dataset_name>
 ```
 
 ### 4. Model Evaluation
 
 ```
-python vcmr/scripts/evaluation.py --dataset <dataset_name> --ckpt runs/path/to/sup_checkpoint.ckpt
+python vcmr/scripts/evaluation.py --dataset <dataset_name>
 ```
 
 ## Results & Checkpoints (TBD)
@@ -93,7 +87,7 @@ tensorboard --logdir ./runs
 In this study we made use of the following repositories:
 
 * [CLMR](https://github.com/Spijkervet/CLMR)
-* [Video Feature Extractor](https://github.com/antoine77340/video_feature_extractor)
+* [MoviePy](https://github.com/Zulko/moviepy)
 * [PySceneDetect](https://github.com/Breakthrough/PySceneDetect)
 
 ## Citation
