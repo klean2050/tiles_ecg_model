@@ -2,11 +2,10 @@ import torch.nn as nn
 
 
 class SampleCNN(nn.Module):
-    def __init__(self, strides, supervised, out_dim):
+    def __init__(self, strides):
         super(SampleCNN, self).__init__()
 
         self.strides = strides
-        self.supervised = supervised
         self.sequential = [
             nn.Sequential(
                 nn.Conv1d(1, 128, kernel_size=3, stride=3, padding=0),
@@ -51,15 +50,6 @@ class SampleCNN(nn.Module):
 
         self.sequential = nn.Sequential(*self.sequential)
 
-        if self.supervised:
-            self.dropout = nn.Dropout(0.5)
-            self.fc = nn.Linear(512, out_dim)
-
     def forward(self, x):
         out = self.sequential(x)
-        if self.supervised:
-            out = self.dropout(out)
-
-        out = out.reshape(x.shape[0], out.size(1) * out.size(2))
-        # logit = self.fc(out)
-        return self.fc(out) if self.supervised else out
+        return out.reshape(x.shape[0], out.size(1) * out.size(2))
