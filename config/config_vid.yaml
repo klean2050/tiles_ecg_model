@@ -3,9 +3,11 @@ dataset_dir: "/data/avramidi/video_clip_data_NEW/"
 audio_length: 59049
 sample_rate: 22050
 workers: 4
+n_cuda: "1,2,3"
 
 # training options
 seed: 42
+m_epochs: 50
 batch_size: 128
 projection_dim: 128
 optimizer: "Adam"
@@ -23,4 +25,4 @@ transforms_pitch: 0.6
 transforms_reverb: 0.6
 
 # checkpoint paths
-checkpoint_path: "version_16/checkpoints/epoch=29-step=29700.ckpt"
+checkpoint_path: "version_53/checkpoints/epoch=1-step=1510.ckpt"

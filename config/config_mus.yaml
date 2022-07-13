@@ -3,9 +3,11 @@ dataset_dir: "/data/avramidi/video_clip_data_NEW/audios_00_splitted/"
 audio_length: 59049
 sample_rate: 22050
 workers: 4
+n_cuda: "1,2,3"
 
 # training options
 seed: 42
+m_epochs: 30
 batch_size: 64
 projection_dim: 128
 optimizer: "Adam"

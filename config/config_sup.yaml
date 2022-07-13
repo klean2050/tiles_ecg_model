@@ -4,6 +4,7 @@ sample_rate: 22050
 dataset: "mtg-jamendo-dataset"
 dataset_dir: "/data/avramidi/mtg-jamendo-dataset"
 workers: 4
+n_cuda: "1,2,3"
 
 # training options
 seed: 42
@@ -14,6 +15,5 @@ learning_rate: 0.001
 weight_decay: 1e-6
 temperature: 0.1
 
-checkpoint_path1: "version_16/checkpoints/epoch=29-step=29700.ckpt"
-checkpoint_path2: "version_1/checkpoints/epoch=29-step=16980.ckpt"
-checkpoint_path3: "version_3/checkpoints/epoch=29-step=1020.ckpt"
+checkpoint_path: "VCMR-audio_visual/version_1/checkpoints/epoch=4-step=1885.ckpt"
+checkpoint_eval: "version_4/checkpoints/epoch=32-step=759.ckpt"
