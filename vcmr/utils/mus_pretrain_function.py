@@ -150,7 +150,7 @@ def mus_pretrain(config_file: str, exp_name: str, exp_run_name : str = None, gpu
         args,
         logger=logger,
         sync_batchnorm=True,
-        max_epochs=30,
+        max_epochs=15,
         log_every_n_steps=10,
         check_val_every_n_epoch=1,
         strategy="ddp_find_unused_parameters_false",
