@@ -6,13 +6,13 @@ from .mtat import MAGNATAGATUNE
 from .mtg import MTG
 
 
-def get_dataset(dataset, dataset_dir, subset, download=False):
+def get_dataset(dataset, dataset_dir, subset, download=False, sr=22050):
 
     os.makedirs(dataset_dir, exist_ok=True)
     if dataset == "audio":
-        return AUDIO(root=dataset_dir, subset=subset)
+        return AUDIO(root=dataset_dir, subset=subset, sr=sr)
     elif dataset == "audio_visual":
-        return AUDIOVISUAL(root=dataset_dir, subset=subset)
+        return AUDIOVISUAL(root=dataset_dir, subset=subset, sr=sr)
     elif dataset == "magnatagatune":
         return MAGNATAGATUNE(root=dataset_dir, download=download, subset=subset)
     elif dataset == "mtg-jamendo-dataset":
@@ -22,6 +22,7 @@ def get_dataset(dataset, dataset_dir, subset, download=False):
             split=0,
             subset="moodtheme",
             mode=subset,
+            sr=sr
         )
     else:
         raise NotImplementedError("Dataset not implemented")

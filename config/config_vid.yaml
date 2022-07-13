@@ -1,7 +1,7 @@
 # base options
 dataset_dir: "/data/avramidi/video_clip_data_NEW/"
 audio_length: 59049
-sample_rate: 22050
+sample_rate: 16000
 workers: 4
 n_cuda: "1,2,3"
 

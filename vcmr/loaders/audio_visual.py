@@ -17,12 +17,14 @@ class AUDIOVISUAL(data.Dataset):
         root: str,
         subset: str,
         n_classes: int = 1,
+        sr: int = 22050,
     ) -> None:
         super(AUDIOVISUAL, self).__init__()
 
         self.audio_path = os.path.join(root, "audios_00_splitted")
         self.video_path = os.path.join(root, "videos_00_clipped")
         self.n_classes = n_classes
+        self.sr = sr
 
         self.fl = glob(
             os.path.join(self.audio_path, "**", "*.wav"),
@@ -44,7 +46,8 @@ class AUDIOVISUAL(data.Dataset):
 
     def __getitem__(self, n: int) -> Tuple[Tensor, Tensor]:
         filepath = self.fl[n]
-        audio, _ = torchaudio.load(filepath)
+        audio, sr = torchaudio.load(filepath)
+        resample = torchaudio.transforms.Resample(sr, self.sr)
 
         matching_video, interval = filepath[-19:-8], int(filepath[-7:-4])
         matching_video = os.path.join(self.video_path, f"clip_{matching_video}.npy")
@@ -53,7 +56,7 @@ class AUDIOVISUAL(data.Dataset):
         # 15 sec from features of 1 sec
         start = math.ceil(interval*15)
         aligned_segment = video[start : start + 15]
-        return audio, aligned_segment, []
+        return resample(audio), aligned_segment, []
 
     def __len__(self) -> int:
         return len(self.fl)

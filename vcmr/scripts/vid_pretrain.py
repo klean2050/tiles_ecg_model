@@ -25,8 +25,8 @@ if __name__ == "__main__":
     # ------------
     # dataloaders
     # ------------
-    train_dataset = get_dataset("audio_visual", args.dataset_dir, subset="train")
-    valid_dataset = get_dataset("audio_visual", args.dataset_dir, subset="valid")
+    train_dataset = get_dataset("audio_visual", args.dataset_dir, subset="train", sr=args.sample_rate)
+    valid_dataset = get_dataset("audio_visual", args.dataset_dir, subset="valid", sr=args.sample_rate)
 
     contrastive_train_dataset = MultiContrastive(
         train_dataset,

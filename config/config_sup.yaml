@@ -1,6 +1,6 @@
 # base options
 audio_length: 59049
-sample_rate: 22050
+sample_rate: 16000
 dataset: "mtg-jamendo-dataset"
 dataset_dir: "/data/avramidi/mtg-jamendo-dataset"
 workers: 4

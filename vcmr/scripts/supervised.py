@@ -30,8 +30,8 @@ if __name__ == "__main__":
     # -----------
     # DATALOADERS
     # -----------
-    train_dataset = get_dataset(args.dataset, args.dataset_dir, subset="train")
-    valid_dataset = get_dataset(args.dataset, args.dataset_dir, subset="valid")
+    train_dataset = get_dataset(args.dataset, args.dataset_dir, subset="train", sr=args.sample_rate)
+    valid_dataset = get_dataset(args.dataset, args.dataset_dir, subset="valid", sr=args.sample_rate)
 
     input_shape = args.audio_length
     contrastive_train_dataset = Contrastive(

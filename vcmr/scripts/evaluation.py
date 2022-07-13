@@ -36,7 +36,7 @@ if __name__ == "__main__":
     )
 
     contrastive_test_dataset = Contrastive(
-        get_dataset(args.dataset, args.dataset_dir, subset="test"),
+        get_dataset(args.dataset, args.dataset_dir, subset="test", sr=args.sample_rate),
         input_shape=(1, args.audio_length),
         transform=RandomResizedCrop(n_samples=args.audio_length)
     )

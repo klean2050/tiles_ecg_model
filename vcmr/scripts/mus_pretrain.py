@@ -62,8 +62,8 @@ if __name__ == "__main__":
     # -----------
     # DATALOADERS
     # -----------
-    train_dataset = get_dataset("audio", args.dataset_dir, subset="train")
-    valid_dataset = get_dataset("audio", args.dataset_dir, subset="valid")
+    train_dataset = get_dataset("audio", args.dataset_dir, subset="train", sr=args.sample_rate)
+    valid_dataset = get_dataset("audio", args.dataset_dir, subset="valid", sr=args.sample_rate)
 
     contrastive_train_dataset = Contrastive(
         train_dataset,

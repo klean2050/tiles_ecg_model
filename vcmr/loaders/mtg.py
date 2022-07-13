@@ -21,8 +21,9 @@ def preprocess_audio(source, target, sample_rate):
 
 
 class MTG(Dataset):
-    def __init__(self, root, audio_root, split, subset, mode):
+    def __init__(self, root, audio_root, split, subset, mode, sr):
         super(MTG, self).__init__()
+        self.sr = sr
         self.root = root
         self.mode = "validation" if mode == "valid" else mode
 
@@ -58,8 +59,9 @@ class MTG(Dataset):
 
     def __getitem__(self, idx):
         filepath, label = self.dataset[idx]
-        audio, _ = torchaudio.load(filepath)
-        return audio, torch.FloatTensor(label)
+        audio, sr = torchaudio.load(filepath)
+        resample = torchaudio.transforms.Resample(sr, self.sr)
+        return resample(audio), torch.FloatTensor(label)
 
     def __len__(self):
         return len(self.dataset) if self.mode != "train" else int(0.9*len(self.dataset))
