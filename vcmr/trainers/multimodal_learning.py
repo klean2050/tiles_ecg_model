@@ -8,12 +8,9 @@ from pytorch_lightning import LightningModule
 
 
 class MultimodalLearning(LightningModule):
-    def __init__(self, args, enc1: nn.Module, ckpt=None):
+    def __init__(self, args, encoder: nn.Module):
         super().__init__()
         self.save_hyperparameters(args)
-
-        # audio encoder:
-        self.encoder1 = ckpt.model.encoder if ckpt else enc1
         # dimensionality of representation:
         # OLD CODE:
         self.n_features = 512
@@ -21,9 +18,12 @@ class MultimodalLearning(LightningModule):
         """
         self.n_features = self.encoder.output_size
         """
+
+        # audio encoder:
+        self.encoder = encoder
         # keep first 4 conv blocks frozen:
         c0, c1 = 0, 0
-        for child in self.encoder1.children():
+        for child in self.encoder.children():
             for block in child.children():
                 for param in block.parameters():
                     param.requires_grad = False
@@ -33,45 +33,36 @@ class MultimodalLearning(LightningModule):
             c0 += 1
             if c0 > 0:
                 break
-        # audio projection head:
-        # OLD CODE:
-        self.projector1 = nn.Linear(self.n_features, self.hparams.projection_dim)
-        # NEW CODE:
-        """
+
+        # audio projection head
         self.projector1 = nn.Sequential(
             nn.Linear(self.n_features, self.n_features, bias=False),
             nn.ReLU(),
             nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
         )
-        """
+        self.model1 = nn.Sequential(self.encoder, self.projector1)
 
-        # video encoder (LSTM module is newly added):
-        self.temporal = nn.LSTM(512, 512, num_layers=2, batch_first=True, dropout=0.2)
+        # video encoder
+        self.temporal = nn.LSTM(512, 512, num_layers=2, batch_first=True, dropout=0.1)
         self.encoder2 = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(7680, 2048),
+            nn.Linear(7680, self.n_features),
             nn.ReLU(),
-            nn.Linear(2048, self.n_features),
         )
-        # video projection head:
-         # OLD CODE:
-        self.projector2 = nn.Linear(self.n_features, self.hparams.projection_dim)
-        # NEW CODE:
-        """
         self.projector2 = nn.Sequential(
             nn.Linear(self.n_features, self.n_features, bias=False),
             nn.ReLU(),
             nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
         )
-        """
+        self.model2 = nn.Sequential(self.encoder2, self.projector2)
 
         # criterion function:
         self.criterion = self.configure_criterion()
     
     def forward(self, x_i: Tensor, x_j: Tensor) -> Tensor:
-        z_i = self.projector1(self.encoder1(x_i))
+        z_i = self.model1(x_i)
         x_j, _ = self.temporal(x_j)
-        z_j = self.projector2(self.encoder2(x_j))
+        z_j = self.model2(x_j)
         return self.criterion(z_i, z_j)
 
     def training_step(self, batch, _) -> Tensor:
@@ -99,7 +90,7 @@ class MultimodalLearning(LightningModule):
     def configure_optimizers(self) -> dict:
         scheduler = None
         if self.hparams.optimizer == "Adam":
-            optimizer = torch.optim.Adam(self.parameters(), lr=5e-4)#self.hparams.learning_rate)
+            optimizer = torch.optim.AdamW(self.parameters(), lr=5e-4)#self.hparams.learning_rate)
         elif self.hparams.optimizer == "LARS":
             # optimized using LARS with linear learning rate scaling
             # (i.e. LearningRate = 0.3 × BatchSize/256) and weight decay of 1e−6.

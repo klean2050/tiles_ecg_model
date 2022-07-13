@@ -3,29 +3,27 @@ from pytorch_lightning import LightningModule
 
 
 class SupervisedLearning(LightningModule):
-    def __init__(self, args, enc1, ckpt=None, output_dim=50):
+    def __init__(self, args, encoder, output_dim=50):
         super().__init__()
         self.save_hyperparameters(args)
         self.criterion = self.configure_criterion()
         self.average_precision = torchmetrics.AveragePrecision(pos_label=1)
 
-        try:
-            self.model = ckpt.model.encoder if ckpt else enc1
-        except:
-            self.model = ckpt.encoder1 if ckpt else enc1
-        self.model.eval()
-        for param in self.model.parameters():
+        self.encoder = encoder
+        self.encoder.eval()
+        for param in self.encoder.parameters():
             param.requires_grad = False
 
         self.projector = nn.Sequential(
+            nn.Dropout(0.3),
             nn.Linear(512, self.hparams.projection_dim),
             nn.ReLU(),
             nn.Linear(self.hparams.projection_dim, output_dim),
         )
+        self.model = nn.Sequential(self.encoder, self.projector)
 
     def forward(self, x, y):
-        x = self.model(x)
-        preds = self.projector(x).squeeze()
+        preds = self.model(x).squeeze()
         loss = self.criterion(preds, y)
         return loss, preds
 
