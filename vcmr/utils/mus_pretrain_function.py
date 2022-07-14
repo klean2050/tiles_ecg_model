@@ -22,17 +22,15 @@ LOG_DIR = "runs/"
 # constants:
 NUM_AUG_SAMPLES = 2
 AUDIO_CHUNK_LENGTH_SEC = 15
-GPUS_DEFAULT = "1, 2, 3"
 
 
-def mus_pretrain(config_file: str, exp_name: str, exp_run_name : str = None, gpus_to_use: str = None, model_summary_info : List[str] = ["input_size", "output_size", "num_params"], verbose : bool = 1) -> None:
+def mus_pretrain(config_file: str, exp_name: str, exp_run_name : str = None, model_summary_info : List[str] = ["input_size", "output_size", "num_params"], verbose : bool = 1) -> None:
     """Performs music (audio) pretraining.
 
     Args:
         config_file: Path of config (yaml) file.
         exp_name: Name of experiment (used to name logs subdirectory).
         exp_run_name: Name of experiment run (used to name logs subdirectory).
-        gpus_to_use: Which GPUs (as numbers) to use.
         model_summary_info: What information to include in model summary.
         verbose: Level of information to display.
     
@@ -86,8 +84,8 @@ def mus_pretrain(config_file: str, exp_name: str, exp_run_name : str = None, gpu
         print("\nSetting up data loaders...")
     
     # get training/validation datasets:
-    train_dataset = get_dataset("audio", args.dataset_dir, subset="train")
-    valid_dataset = get_dataset("audio", args.dataset_dir, subset="valid")
+    train_dataset = get_dataset("audio", args.dataset_dir, subset="train", sr=args.sample_rate)
+    valid_dataset = get_dataset("audio", args.dataset_dir, subset="valid", sr=args.sample_rate)
 
     # set up contrastive learning training/validation datasets:
     contrastive_train_dataset = Contrastive(
@@ -140,17 +138,14 @@ def mus_pretrain(config_file: str, exp_name: str, exp_run_name : str = None, gpu
     # --------
 
     # select GPUs to use:
-    if gpus_to_use is not None:
-        os.environ["CUDA_VISIBLE_DEVICES"] = gpus_to_use
-    else:
-        os.environ["CUDA_VISIBLE_DEVICES"] = GPUS_DEFAULT
-    
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
+
     # create PyTorch Lightning trainer:
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,
+        max_epochs=args.m_epochs,
         sync_batchnorm=True,
-        max_epochs=15,
         log_every_n_steps=10,
         check_val_every_n_epoch=1,
         strategy="ddp_find_unused_parameters_false",

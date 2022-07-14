@@ -7,10 +7,10 @@ from vcmr.utils.mus_pretrain_function import mus_pretrain
 if __name__ == "__main__":
 
     # config file:
-    config_file = "experiments/sampleCNN_input_size_tuning/pool_size=3/n_blocks=9/version_1/config_mus.yaml"
+    config_file = "experiments/sampleCNN_input_size_tuning/pool_size=3/n_blocks=9/version_0/config_mus.yaml"
     # log directory naming:
     exp_name = "sampleCNN_input_size_tuning"
-    exp_run_name = "pool_size=3/n_blocks=9/version_1"
+    exp_run_name = "pool_size=3/n_blocks=9/version_0"
     # verbosity:
     verbose = 1
 
