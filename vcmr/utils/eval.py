@@ -1,4 +1,4 @@
-import torch, torch.nn as nn
+import torch, torch.nn as nn, pickle
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from tqdm import tqdm
@@ -13,8 +13,8 @@ def evaluate(
     device,
 ) -> dict:
 
-    est_array = []
-    gt_array = []
+    est_array, gt_array = [], []
+    features = []
 
     encoder = encoder.to(device)
     encoder.eval()
@@ -25,28 +25,44 @@ def evaluate(
             batch = batch.squeeze(1).to(device)
 
             output = encoder.model(batch)
+            feat = encoder.encoder(batch)
+            
             if dataset_name in ["magnatagatune", "mtg-jamendo-dataset"]:
                 output = torch.sigmoid(output)
             else:
                 output = F.softmax(output, dim=1)
 
             track_prediction = output.mean(dim=0)
+            features.append(feat.mean(dim=0))
             est_array.append(track_prediction)
             gt_array.append(label)
 
     if dataset_name in ["magnatagatune", "mtg-jamendo-dataset"]:
+        features = torch.stack(features, dim=0).cpu().numpy()
         est_array = torch.stack(est_array, dim=0).cpu().numpy()
         gt_array = torch.stack(gt_array, dim=0).cpu().numpy()
-        roc_aucs = metrics.roc_auc_score(gt_array, est_array, average="macro")
-        pr_aucs = metrics.average_precision_score(gt_array, est_array, average="macro")
-        return {
-            "PR-AUC": pr_aucs,
-            "ROC-AUC": roc_aucs,
+
+        overall_dict = {
+            "PR-AUC": metrics.average_precision_score(gt_array, est_array, average="macro"),
+            "ROC-AUC": metrics.roc_auc_score(gt_array, est_array, average="macro"),
         }
+        with open(f"data/{dataset_name}_overall_dict.pickle", "wb") as fp:
+            pickle.dump(overall_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
+
+        labels = test_dataset.dataset.label2idx.keys()
+        labels = [name.split("---")[-1] for name in labels]
+
+        prs = metrics.average_precision_score(gt_array, est_array, average=None)
+        rcs = metrics.roc_auc_score(gt_array, est_array, average=None)
+        classes_dict = {
+            name: [v1, v2] for name, v1, v2 in zip(labels, prs, rcs)
+        }
+        with open(f"data/{dataset_name}_classes_dict.pickle", "wb") as fp:
+            pickle.dump(classes_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
+
+        return overall_dict, classes_dict, features, gt_array
     else:
         est_array = torch.stack(est_array, dim=0)
         _, est_array = torch.max(est_array, 1)
         accuracy = metrics.accuracy_score(gt_array, est_array)
-        return {
-            "Accuracy": accuracy
-        }
+        return {"Accuracy": accuracy}

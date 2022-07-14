@@ -1,4 +1,7 @@
 import os, yaml, torch.nn as nn, random
+import numpy as np, matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.manifold import TSNE
 
 class RandomResizedCrop(nn.Module):
     def __init__(self, n_samples):
@@ -28,3 +31,29 @@ def yaml_config_hook(config_file):
         del cfg["defaults"]
 
     return cfg
+
+def visualize(dataset, features, labels, name):
+        tsne = TSNE(
+            n_components=2,
+            perplexity=50,
+            learning_rate=130,
+            metric="cosine",
+            init="pca"
+        ).fit_transform(features)
+        tx = MinMaxScaler().fit_transform(tsne[:, 0].reshape(-1, 1))[:, 0]
+        ty = MinMaxScaler().fit_transform(tsne[:, 1].reshape(-1, 1))[:, 0]
+
+        fig = plt.figure(dpi=200)
+        cm = plt.get_cmap('plasma')
+
+        ax = fig.add_subplot(111)
+        for label in range(labels.shape[1]):
+            # find the samples of this class
+            indices = [i for (i, l) in enumerate(labels) if l[label]]
+            curr_tx, curr_ty = np.take(tx, indices), np.take(ty, indices)
+            ax.scatter(curr_tx, curr_ty, color=cm(label*4), marker=".")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        
+        fig.savefig(f"data/{dataset}_{name}")
+        plt.close()
