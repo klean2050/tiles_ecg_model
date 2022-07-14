@@ -43,8 +43,7 @@ def visualize(dataset, features, labels, name):
         tx = MinMaxScaler().fit_transform(tsne[:, 0].reshape(-1, 1))[:, 0]
         ty = MinMaxScaler().fit_transform(tsne[:, 1].reshape(-1, 1))[:, 0]
 
-        fig = plt.figure()
-        plt.rcParams["font.size"] = 10
+        fig = plt.figure(dpi=200)
         cm = plt.get_cmap('plasma')
 
         ax = fig.add_subplot(111)

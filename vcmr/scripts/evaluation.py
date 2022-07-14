@@ -79,4 +79,4 @@ if __name__ == "__main__":
         name="rcs"
     )
     # make t-SNE visuals
-    visualize(fts, lbs, name="test.png")
+    visualize(args.dataset, fts, lbs, name="test.png")
