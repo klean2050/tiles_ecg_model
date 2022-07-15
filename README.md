@@ -75,8 +75,6 @@ python vcmr/scripts/evaluation.py --dataset <dataset_name>
 
 ## Results & Checkpoints (TBD)
 
-...
-
 To view results in TensorBoard run:
 ```
 tensorboard --logdir ./runs
@@ -89,7 +87,3 @@ In this study we made use of the following repositories:
 * [CLMR](https://github.com/Spijkervet/CLMR)
 * [MoviePy](https://github.com/Zulko/moviepy)
 * [PySceneDetect](https://github.com/Breakthrough/PySceneDetect)
-
-## Citation
-
-TBD
