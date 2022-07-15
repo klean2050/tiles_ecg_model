@@ -14,7 +14,12 @@ def get_dataset(dataset, dataset_dir, subset, download=False, sr=22050):
     elif dataset == "audio_visual":
         return AUDIOVISUAL(root=dataset_dir, subset=subset, sr=sr)
     elif dataset == "magnatagatune":
-        return MAGNATAGATUNE(root=dataset_dir, download=download, subset=subset)
+        return MAGNATAGATUNE(
+            root=dataset_dir,
+            download=download,
+            subset=subset,
+            sr=sr
+        )
     elif dataset == "mtg-jamendo-dataset":
         return MTG(
             root=dataset_dir,

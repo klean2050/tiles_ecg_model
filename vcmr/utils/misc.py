@@ -43,8 +43,9 @@ def visualize(dataset, features, labels, name):
         tx = MinMaxScaler().fit_transform(tsne[:, 0].reshape(-1, 1))[:, 0]
         ty = MinMaxScaler().fit_transform(tsne[:, 1].reshape(-1, 1))[:, 0]
 
+        plt.style.use('dark_background')
         fig = plt.figure(dpi=200)
-        cm = plt.get_cmap('plasma')
+        cm = plt.get_cmap('rainbow')
 
         ax = fig.add_subplot(111)
         for label in range(labels.shape[1]):

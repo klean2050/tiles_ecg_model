@@ -1,10 +1,10 @@
 # base options
 audio_length: 59049
 sample_rate: 16000
-dataset: "mtg-jamendo-dataset"
-dataset_dir: "/data/avramidi/mtg-jamendo-dataset"
+dataset: "magnatagatune"
+dataset_dir: /data/avramidi/VCMR/data/magnatagatune #"/data/avramidi/mtg-jamendo-dataset"
 workers: 4
-n_cuda: "1,2,3"
+n_cuda: "0"
 
 # training options
 seed: 42
@@ -15,5 +15,7 @@ learning_rate: 0.001
 weight_decay: 1e-6
 temperature: 0.1
 
-checkpoint_path: "VCMR-audio_visual/version_1/checkpoints/epoch=4-step=1885.ckpt"
-checkpoint_eval: "version_4/checkpoints/epoch=32-step=759.ckpt"
+checkpoint_path: "VCMR-audio_visual/version_2/checkpoints/epoch=27-step=15848.ckpt"
+#checkpoint_path: "VCMR-audio/version_2/checkpoints/epoch=19-step=22660.ckpt"
+checkpoint_vid: "version_3/checkpoints/epoch=24-step=3650.ckpt"
+checkpoint_mus: "version_2/checkpoints/epoch=18-step=2774.ckpt"

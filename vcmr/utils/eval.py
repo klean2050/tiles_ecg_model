@@ -27,7 +27,7 @@ def evaluate(
             output = encoder.model(batch)
             feat = encoder.encoder(batch)
             
-            if dataset_name in ["magnatagatune", "mtg-jamendo-dataset"]:
+            if dataset_name.split("_")[0] in ["magnatagatune", "mtg-jamendo-dataset"]:
                 output = torch.sigmoid(output)
             else:
                 output = F.softmax(output, dim=1)
@@ -37,7 +37,7 @@ def evaluate(
             est_array.append(track_prediction)
             gt_array.append(label)
 
-    if dataset_name in ["magnatagatune", "mtg-jamendo-dataset"]:
+    if dataset_name.split("_")[0] in ["magnatagatune", "mtg-jamendo-dataset"]:
         features = torch.stack(features, dim=0).cpu().numpy()
         est_array = torch.stack(est_array, dim=0).cpu().numpy()
         gt_array = torch.stack(gt_array, dim=0).cpu().numpy()

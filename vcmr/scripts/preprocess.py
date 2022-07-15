@@ -9,9 +9,9 @@ if __name__ == "__main__":
     parser.add_argument("--sample_rate", type=int, default=22050)
     args = parser.parse_args()
 
-    train_dataset = get_dataset(args.dataset, args.dataset_dir, subset="train")
-    valid_dataset = get_dataset(args.dataset, args.dataset_dir, subset="valid")
-    test_dataset = get_dataset(args.dataset, args.dataset_dir, subset="test")
+    train_dataset = get_dataset(args.dataset, args.dataset_dir, subset="train", download=False)
+    valid_dataset = get_dataset(args.dataset, args.dataset_dir, subset="valid", download=False)
+    test_dataset = get_dataset(args.dataset, args.dataset_dir, subset="test", download=False)
 
     for i in tqdm(range(len(train_dataset))):
         train_dataset.preprocess(i, args.sample_rate)

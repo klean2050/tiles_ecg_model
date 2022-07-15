@@ -9,7 +9,7 @@ from typing import Tuple, List
 
 
 class Contrastive(Dataset):
-    def __init__(self, dataset: Dataset, input_shape: List[int], transform: Compose):
+    def __init__(self, dataset: Dataset, input_shape: List[int], transform: Compose = None):
         self.dataset = dataset
         self.transform = transform
         self.input_shape = input_shape

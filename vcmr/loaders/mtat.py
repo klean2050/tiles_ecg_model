@@ -1,4 +1,4 @@
-import os, numpy as np, torchaudio
+import os, numpy as np, torchaudio, subprocess
 from typing import Tuple, Optional
 from torch.utils.data import Dataset
 
@@ -9,7 +9,7 @@ from torchaudio.datasets.utils import (
     extract_archive,
 )
 
-FOLDER_IN_ARCHIVE = "magnatagatune"
+FOLDER_IN_ARCHIVE = ""
 _CHECKSUMS = {
     "http://mi.soi.city.ac.uk/datasets/magnatagatune/mp3.zip.001": "",
     "http://mi.soi.city.ac.uk/datasets/magnatagatune/mp3.zip.002": "",
@@ -84,9 +84,11 @@ class MAGNATAGATUNE(Dataset):
         download: Optional[bool] = False,
         subset: Optional[str] = None,
         split: Optional[str] = "pons2017",
+        sr: int = 22050,
     ) -> None:
 
-        super(MAGNATAGATUNE, self).__init__(root)
+        super(MAGNATAGATUNE, self).__init__()
+        self.sr=sr
         self.root = root
         self.folder_in_archive = folder_in_archive
         self.download = download
@@ -99,6 +101,7 @@ class MAGNATAGATUNE(Dataset):
         )
 
         self._path = os.path.join(root, folder_in_archive)
+        self.label_list = np.load(self._path + "tags.npy")
 
         if download:
             if not os.path.isdir(self._path):
@@ -142,20 +145,38 @@ class MAGNATAGATUNE(Dataset):
             )
 
         self.fl, self.binary = get_file_list(self._path, self.subset, self.split)
-        self.n_classes = 50
+        self.n_classes = len(self.label_list)
+
+        self.label2idx = {}
+        for idx, label in enumerate(self.label_list):
+            self.label2idx[label] = idx
 
     def file_path(self, n: int) -> str:
         _, fp = self.fl[n].split("\t")
         return os.path.join(self._path, fp)
 
+    def target_file_path(self, n: int) -> str:
+        fp = self.file_path(n)
+        file_basename, _ = os.path.splitext(fp)
+        return file_basename + self._ext_audio
+
+    def preprocess(self, n: int, sample_rate: int):
+        fp = self.file_path(n)
+        tfp = self.target_file_path(n)
+        if not os.path.exists(tfp):
+            p = subprocess.Popen(
+                ["ffmpeg", "-i", fp, "-ar", str(sample_rate), tfp, "-loglevel", "quiet"]
+            )
+            p.wait()
+
     def __getitem__(self, n: int) -> Tuple[Tensor, Tensor]:
         clip_id, _ = self.fl[n].split("\t")
         label = self.binary[int(clip_id)]
 
-        filepath = self.file_path(n)
-        audio, _ = torchaudio.load(filepath)
-
-        return audio, FloatTensor(label)
+        filepath = self.file_path(n).replace(".mp3", ".wav")
+        audio, sr = torchaudio.load(filepath)
+        resample = torchaudio.transforms.Resample(sr, self.sr)
+        return resample(audio), FloatTensor(label)
 
     def __len__(self) -> int:
         return len(self.fl)
