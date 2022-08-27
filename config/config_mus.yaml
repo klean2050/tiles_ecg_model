@@ -1,9 +1,9 @@
 # base options
 dataset_dir: "/data/avramidi/video_clip_data_NEW/audios_00_splitted/"
-audio_length: 59049 # can go until 66049 (4.1 seconds)
+audio_length: 59049 #59049 # can go until 66049 (4.1 seconds)
 sample_rate: 16000
 workers: 4
-n_cuda: "1,2,3"
+n_cuda: "1,2"
 
 # training options
 seed: 42

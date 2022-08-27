@@ -4,7 +4,7 @@ sample_rate: 16000
 dataset: "magnatagatune"
 dataset_dir: /data/avramidi/VCMR/data/magnatagatune #"/data/avramidi/mtg-jamendo-dataset"
 workers: 4
-n_cuda: "0"
+n_cuda: "1"
 
 # training options
 seed: 42
@@ -17,5 +17,5 @@ temperature: 0.1
 
 checkpoint_path: "VCMR-audio_visual/version_2/checkpoints/epoch=27-step=15848.ckpt"
 #checkpoint_path: "VCMR-audio/version_2/checkpoints/epoch=19-step=22660.ckpt"
-checkpoint_vid: "version_3/checkpoints/epoch=24-step=3650.ckpt"
 checkpoint_mus: "version_2/checkpoints/epoch=18-step=2774.ckpt"
+checkpoint_vid: "version_3/checkpoints/epoch=21-step=3212.ckpt"
