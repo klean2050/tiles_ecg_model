@@ -1,0 +1,39 @@
+
+
+# base options:
+dataset_dir: "/data/avramidi/video_clip_data_NEW/audios_00_splitted/"
+audio_length: 65536
+sample_rate: 16000
+workers: 4
+n_cuda: "1, 2, 3"
+
+# encoder architecture options:
+n_blocks: 7
+n_channels: [128, 128, 256, 256, 256, 512, 512]
+output_size: 512
+conv_kernel_size: 3
+pool_size: 4
+activation: "relu"
+first_out_channels: 128
+first_conv_size: 4
+# dimensionality of projection:
+projection_dim: 128
+
+# training options:
+m_epochs: 15
+batch_size: 64
+optimizer: "Adam"
+learning_rate: 0.001
+weight_decay: 1e-6
+temperature: 0.1
+seed: 42
+
+# augmentation options:
+transforms_polarity: 0.8
+transforms_noise: 0.01
+transforms_gain: 0.3
+transforms_filters: 0.8
+transforms_delay: 0.3
+transforms_pitch: 0.6
+transforms_reverb: 0.6
+

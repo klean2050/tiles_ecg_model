@@ -2,20 +2,20 @@
 
 # base options:
 dataset_dir: "/data/avramidi/video_clip_data_NEW/audios_00_splitted/"
-audio_length: 78732
+audio_length: 49152
 sample_rate: 16000
 workers: 4
 n_cuda: "1, 2, 3"
 
 # encoder architecture options:
-n_blocks: 9
-n_channels: [128, 128, 256, 256, 256, 256, 256, 512, 512]
+n_blocks: 7
+n_channels: [128, 128, 256, 256, 256, 512, 512]
 output_size: 512
 conv_kernel_size: 3
-pool_size: 3
+pool_size: 4
 activation: "relu"
 first_out_channels: 128
-first_conv_size: 4
+first_conv_size: 3
 # dimensionality of projection:
 projection_dim: 128
 

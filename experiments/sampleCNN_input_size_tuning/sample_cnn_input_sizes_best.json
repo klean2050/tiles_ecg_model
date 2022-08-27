@@ -1,0 +1,12 @@
+
+{
+    "config_4": {"pool_size": 2, "first_conv_size": 5, "n_blocks": 13, "input_size": 40960, "input_size_sec": 2.56},
+
+    "config_5": {"pool_size": 3, "first_conv_size": 3, "n_blocks": 9, "input_size": 59049, "input_size_sec": 3.69},
+
+    "config_6": {"pool_size": 4, "first_conv_size": 3, "n_blocks": 7, "input_size": 49152, "input_size_sec": 3.07},
+    "config_7": {"pool_size": 4, "first_conv_size": 4, "n_blocks": 7, "input_size": 65536, "input_size_sec": 4.1},
+    
+    "config_8": {"pool_size": 5, "first_conv_size": 3, "n_blocks": 6, "input_size": 46875, "input_size_sec": 2.93},
+    "config_9": {"pool_size": 5, "first_conv_size": 4, "n_blocks": 6, "input_size": 62500, "input_size_sec": 3.91}
+}

@@ -6,15 +6,15 @@ import pandas as pd
 
 
 # csv file for saving results:
-save_file = "experiments/sampleCNN_input_size_tuning/sample_cnn_input_sizes.csv"
+save_file = "experiments/sampleCNN_input_size_tuning/sample_cnn_input_sizes_all.csv"
 # sampling rate:
-Fs = 22050
+Fs = 16000
 # range of input sizes to try:
-input_size_range_sec = np.array([2.5, 6.5])
+input_size_range_sec = np.array([2.5, 4.2])
 input_size_range = np.around(Fs * input_size_range_sec).astype(int)
 # choices of (relevant) model architecture hyperparameters:
-pool_size_choices = np.arange(2, 4+1, dtype=int)
-first_block_params_conv_size_choices = np.arange(2, 4+1, dtype=int)
+pool_size_choices = np.arange(2, 5+1, dtype=int)
+first_block_params_conv_size_choices = np.arange(2, 5+1, dtype=int)
 
 
 if __name__ == "__main__":
