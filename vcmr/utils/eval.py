@@ -1,31 +1,31 @@
 import torch, torch.nn as nn, pickle
-import torch.nn.functional as F
+import torch.nn.functional as F, numpy as np
 from torch.utils.data import Dataset
 from tqdm import tqdm
 from sklearn import metrics
 
 
 def evaluate(
-    encoder: nn.Module,
+    network: nn.Module,
     test_dataset: Dataset,
     dataset_name: str,
     audio_length: int,
     device,
-) -> dict:
+):
 
     est_array, gt_array = [], []
     features = []
 
-    encoder = encoder.to(device)
-    encoder.eval()
+    network = network.to(device)
+    network.eval()
     with torch.no_grad():
         for idx in tqdm(range(len(test_dataset))):
             _, label = test_dataset[idx]
             batch = test_dataset.concat_clip(idx, audio_length)
             batch = batch.squeeze(1).to(device)
 
-            output = encoder.model(batch)
-            feat = encoder.encoder(batch)
+            output = network.model(batch)
+            feat = network.encoder(batch)
             
             if dataset_name.split("_")[0] in ["magnatagatune", "mtg-jamendo-dataset"]:
                 output = torch.sigmoid(output)
@@ -37,11 +37,14 @@ def evaluate(
             est_array.append(track_prediction)
             gt_array.append(label)
 
-    if dataset_name.split("_")[0] in ["magnatagatune", "mtg-jamendo-dataset"]:
-        features = torch.stack(features, dim=0).cpu().numpy()
-        est_array = torch.stack(est_array, dim=0).cpu().numpy()
-        gt_array = torch.stack(gt_array, dim=0).cpu().numpy()
+    features = torch.stack(features, dim=0).cpu().numpy()
+    est_array = torch.stack(est_array, dim=0).cpu().numpy()
+    gt_array = torch.stack(gt_array, dim=0).cpu().numpy()
 
+    np.save(f"data/{dataset_name}_fts.npy", features)
+    np.save(f"data/{dataset_name}_lbs.npy", gt_array)
+
+    if dataset_name.split("_")[0] in ["magnatagatune", "mtg-jamendo-dataset"]:
         overall_dict = {
             "PR-AUC": metrics.average_precision_score(gt_array, est_array, average="macro"),
             "ROC-AUC": metrics.roc_auc_score(gt_array, est_array, average="macro"),
@@ -59,10 +62,8 @@ def evaluate(
         }
         with open(f"data/{dataset_name}_classes_dict.pickle", "wb") as fp:
             pickle.dump(classes_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
-
-        return overall_dict, classes_dict, features, gt_array
     else:
         est_array = torch.stack(est_array, dim=0)
         _, est_array = torch.max(est_array, 1)
         accuracy = metrics.accuracy_score(gt_array, est_array)
-        return {"Accuracy": accuracy}
+        print({"Accuracy": accuracy})
