@@ -1,16 +1,20 @@
 import os
 from tqdm import tqdm
 
-audio_path = "/data/avramidi/video_clip_data_NEW/audios_00_clipped/"
+audio_path = "/data/avramidi/video_clip_data_NEW/audios_00_splitted/"
 
-def split_audio(source, code):
-    new_path = os.path.join(audio_path.replace("clipped", "splitted"), code)
-    os.makedirs(new_path, exist_ok=True)
-    os.system(f"ffmpeg -n -loglevel error -threads 1 -i {source} -segment_time 00:00:15 -f segment -ar 22050 -ac 1 {new_path}/{code}-%03d.wav")
+def process_audio(input, output):
+    os.system(
+        f"ffmpeg -n -loglevel error -threads 0 -i {input} -ar 16000 -ac 1 {output}"
+    )
 
 if __name__ == "__main__":
-    for i in tqdm(os.listdir(audio_path)):
-        code = i.replace("audio-", "").replace(".wav", "")
-        assert len(code) == 11
-        source = os.path.join(audio_path, i)
-        split_audio(source, code)
+    for code in tqdm(os.listdir(audio_path)[::-1]):
+        track_path = os.path.join(audio_path, code)
+        new_path = track_path.replace("splitted", "reduced")
+        os.makedirs(new_path, exist_ok=True)
+
+        for wav_sample in os.listdir(track_path):
+            input = os.path.join(track_path, wav_sample)
+            output = os.path.join(new_path, wav_sample)
+            process_audio(input, output)
