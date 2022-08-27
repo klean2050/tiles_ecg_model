@@ -36,12 +36,10 @@ if __name__ == "__main__":
     input_shape = args.audio_length
     contrastive_train_dataset = Contrastive(
         train_dataset,
-        input_shape=(1, input_shape),
         transform=RandomResizedCrop(n_samples=args.audio_length)
     )
     contrastive_valid_dataset = Contrastive(
         valid_dataset,
-        input_shape=(1, input_shape),
         transform=RandomResizedCrop(n_samples=args.audio_length)
     )
 
@@ -81,7 +79,7 @@ if __name__ == "__main__":
     # --------
     os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
     stop = EarlyStopping(monitor="Valid/loss", mode="min", patience=10)
-    restore = ModelCheckpoint(save_top_k=1, monitor="Valid/loss", mode="min")
+    restore = ModelCheckpoint(save_top_k=2, monitor="Valid/pr_auc", mode="max")
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,
@@ -92,6 +90,7 @@ if __name__ == "__main__":
         check_val_every_n_epoch=1,
         strategy="ddp_find_unused_parameters_false",
         accelerator="gpu",
+        precision=16,
         devices="auto"
     )
     trainer.fit(module, train_loader, valid_loader)

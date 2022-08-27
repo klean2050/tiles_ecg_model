@@ -46,7 +46,7 @@ class MultimodalLearning(LightningModule):
         self.temporal = nn.LSTM(512, 512, num_layers=2, batch_first=True, dropout=0.1)
         self.encoder2 = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(7680, self.n_features),
+            nn.Linear(512 * 5, self.n_features),
             nn.ReLU(),
         )
         self.projector2 = nn.Sequential(

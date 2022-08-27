@@ -67,14 +67,12 @@ if __name__ == "__main__":
 
     contrastive_train_dataset = Contrastive(
         train_dataset,
-        input_shape=(1, args.sample_rate * 15),
         transform=ComposeMany(
             train_transform, num_augmented_samples=num_augmented_samples
         ),
     )
     contrastive_valid_dataset = Contrastive(
         valid_dataset,
-        input_shape=(1, args.sample_rate * 15),
         transform=ComposeMany(
             train_transform, num_augmented_samples=num_augmented_samples
         ),
@@ -115,6 +113,7 @@ if __name__ == "__main__":
         check_val_every_n_epoch=1,
         strategy="ddp_find_unused_parameters_false",
         accelerator="gpu",
+        precision=16,
         devices="auto",
     )
     trainer.fit(module, train_loader, valid_loader)
