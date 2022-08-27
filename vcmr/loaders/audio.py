@@ -18,11 +18,9 @@ class AUDIO(data.Dataset):
         subset: str,
         src_ext_audio: str = ".wav",
         n_classes: int = 1,
-        sr: int = 22050
     ) -> None:
         super(AUDIO, self).__init__()
 
-        self.sr = sr
         self._path = root
         self._src_ext_audio = src_ext_audio
         self.n_classes = n_classes
@@ -44,9 +42,8 @@ class AUDIO(data.Dataset):
 
     def __getitem__(self, n: int) -> Tuple[Tensor, Tensor]:
         filepath = self.fl[n]
-        audio, sr = torchaudio.load(filepath)
-        resample = torchaudio.transforms.Resample(sr, self.sr)
-        return resample(audio), []
+        audio, _ = torchaudio.load(filepath)
+        return audio, []
 
     def __len__(self) -> int:
         return len(self.fl)
