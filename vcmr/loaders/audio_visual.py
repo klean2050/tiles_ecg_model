@@ -20,7 +20,7 @@ class AUDIOVISUAL(data.Dataset):
     ) -> None:
         super(AUDIOVISUAL, self).__init__()
 
-        self.audio_path = os.path.join(root, "audios_00_splitted")
+        self.audio_path = os.path.join(root, "audios_00_reduced")
         self.video_path = os.path.join(root, "videos_00_clipped")
         self.n_classes = n_classes
 

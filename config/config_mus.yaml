@@ -1,5 +1,5 @@
 # base options
-dataset_dir: "/data/avramidi/video_clip_data_NEW/audios_00_splitted/"
+dataset_dir: "/data/avramidi/video_clip_data_NEW/audios_00_reduced/"
 audio_length: 59049 #59049 # can go until 66049 (4.1 seconds)
 sample_rate: 16000
 workers: 4

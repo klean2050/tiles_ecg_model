@@ -9,7 +9,7 @@ def process_audio(input, output):
     )
 
 if __name__ == "__main__":
-    for code in tqdm(os.listdir(audio_path)[::-1]):
+    for code in tqdm(os.listdir(audio_path)):
         track_path = os.path.join(audio_path, code)
         new_path = track_path.replace("splitted", "reduced")
         os.makedirs(new_path, exist_ok=True)
