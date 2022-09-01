@@ -6,7 +6,7 @@ import pandas as pd
 
 
 # csv file for saving results:
-save_file = "experiments/sampleCNN_input_size_tuning/sample_cnn_input_sizes_all.csv"
+save_file = "experiments/sampleCNN_input_size_tuning_old/sample_cnn_input_sizes_all.csv"
 # sampling rate:
 Fs = 16000
 # range of input sizes to try:
