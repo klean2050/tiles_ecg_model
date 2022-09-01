@@ -10,10 +10,10 @@ save_file = "experiments/sampleCNN_input_size_tuning/sample_cnn_input_sizes_all.
 # sampling rate:
 Fs = 16000
 # range of input sizes to try:
-input_size_range_sec = np.array([2.5, 4.2])
+input_size_range_sec = np.array([3.0, 8.2])
 input_size_range = np.around(Fs * input_size_range_sec).astype(int)
 # choices of (relevant) model architecture hyperparameters:
-pool_size_choices = np.arange(2, 5+1, dtype=int)
+pool_size_choices = np.arange(2, 4+1, dtype=int)
 first_block_params_conv_size_choices = np.arange(2, 5+1, dtype=int)
 
 
@@ -38,8 +38,8 @@ if __name__ == "__main__":
                 # save model architecture hyperparameters:
                 hyperparam_choices["config_" + str(count)] = {
                     "pool_size": pool_size,
-                    "first_conv_size": first_conv_size,
                     "n_blocks": n_blocks,
+                    "first_conv_size": first_conv_size,
                     "input_size": input_size,
                     "input_size_sec": "{:.3}".format(input_size / Fs)
                 }
