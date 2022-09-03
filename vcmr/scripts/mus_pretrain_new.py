@@ -17,7 +17,7 @@ from vcmr.trainers.contrastive_learning import ContrastiveLearning
 
 
 # script options:
-config_file = "SQuEm/configs/config_triplet_ProjectorLSTM.yaml"
+config_file = "config/config_mus_new.yaml"
 model_summary_info = ["input_size", "output_size", "num_params"]
 verbose = 1
 
@@ -78,25 +78,21 @@ if __name__ == "__main__":
     train_dataset = get_dataset(
         "audio",
         args.dataset_dir,
-        subset="train",
-        sr=args.sample_rate
+        subset="train"
     )
     valid_dataset = get_dataset(
         "audio",
         args.dataset_dir,
-        subset="valid",
-        sr=args.sample_rate
+        subset="valid"
     )
 
     # set up contrastive learning training/validation datasets:
     contrastive_train_dataset = Contrastive(
         train_dataset,
-        input_shape=(1, args.sample_rate * args.audio_chunk_length_sec),
         transform=ComposeMany(train_transform, num_augmented_samples=NUM_AUG_SAMPLES)
     )
     contrastive_valid_dataset = Contrastive(
         valid_dataset,
-        input_shape=(1, args.sample_rate * args.audio_chunk_length_sec),
         transform=ComposeMany(train_transform, num_augmented_samples=NUM_AUG_SAMPLES)
     )
 
@@ -162,12 +158,13 @@ if __name__ == "__main__":
         args,
         logger=logger,
         max_epochs=args.m_epochs,
-        check_val_every_n_epoch=args.check_val_every_n_epoch,
-        log_every_n_steps=args.log_every_n_steps,
+        check_val_every_n_epoch=args.val_freq,
+        log_every_n_steps=args.log_freq,
         sync_batchnorm=True,
+        strategy="ddp_find_unused_parameters_false",
         accelerator="gpu",
         devices="auto",
-        strategy="ddp_find_unused_parameters_false"
+        precision=args.bit_precision
 
         # maybe set this for consistent training runs?:
         # deterministic=True
