@@ -5,7 +5,7 @@
 
 ---
 # dataset options:
-dataset_dir: "/data/avramidi/video_clip_data_NEW/audios_00_reduced/"
+dataset_dir: "/data/avramidi/video_clip_data_NEW/audios_00_reduced"
 sample_rate: 16000
 audio_length: 59049     # must be an int
 
