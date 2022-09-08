@@ -6,11 +6,11 @@ import pandas as pd
 
 
 # csv file for saving results:
-save_file = "experiments/sampleCNN_input_size_tuning_old/sample_cnn_input_sizes_all.csv"
+save_file = "experiments/sampleCNN_input_size_tuning/sample_cnn_input_sizes_all.csv"
 # sampling rate:
 Fs = 16000
 # range of input sizes to try:
-input_size_range_sec = np.array([3.0, 8.2])
+input_size_range_sec = np.array([3.0, 7.1])
 input_size_range = np.around(Fs * input_size_range_sec).astype(int)
 # choices of (relevant) model architecture hyperparameters:
 pool_size_choices = np.arange(2, 4+1, dtype=int)
