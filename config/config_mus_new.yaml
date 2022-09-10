@@ -8,7 +8,7 @@
 dataset_dir: "/data/avramidi/video_clip_data_NEW/audios_00_reduced"
 sample_rate: 16000
 # audio_chunk_length_sec: 15     # must be an int
-audio_length: 59049     # must be an int
+audio_length: 98415     # must be an int
 
 # model options:
 # encoder architecture:
@@ -20,7 +20,7 @@ pool_size: 3
 activation: "relu"
 first_block_params:
   out_channels: 128
-  conv_size: 3
+  conv_size: 5
 # dimensionality of projection:
 projection_dim: 128
 
