@@ -1,4 +1,4 @@
-"""Contains function to perform music (audio) pretraining."""
+"""Script to perform music (audio) pre-training."""
 
 
 import os
