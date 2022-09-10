@@ -1,6 +1,6 @@
 
 
-# Config file for music pre-training.
+# Config file for music (audio) pre-training.
 
 
 ---
@@ -42,7 +42,7 @@ ckpt_path: null     # path of checkpoint from which to resume training (not used
 # logging options:
 # note: logs are saved to log_dir/experiment_name/experiment_version/
 log_dir: "runs"
-experiment_name: "vcmr"
+experiment_name: "music_pretraining"
 experiment_version: null     # automatic versioning if set to null (recommended)
 
 # audio augmentation options:
