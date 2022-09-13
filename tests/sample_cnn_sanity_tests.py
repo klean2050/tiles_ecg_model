@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # """
     # testing old (non-configurable) SampleCNN class:
     print("Testing old SampleCNN class...\n")
-    sample_cnn_old = SampleCNNOld(strides=n_blocks*[conv_kernel_size], supervised=False, out_dim=output_size)
+    sample_cnn_old = SampleCNNOld(strides=n_blocks*[conv_kernel_size])
     summary(sample_cnn_old, input_size=(batch_size, 1, input_size), depth=summary_depth)
     print("\n")
     # """
