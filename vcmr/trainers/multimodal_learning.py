@@ -1,16 +1,17 @@
 """Contains PyTorch Lightning LightningModule class for multimodal contrastive learning."""
 
 
-import torch, torch.nn as nn
-from torch import Tensor
-from simclr.modules import NT_Xent, LARS
 from pytorch_lightning import LightningModule
+import torch
+from torch import nn, Tensor
+from simclr.modules import NT_Xent, LARS
 
 
 class MultimodalLearning(LightningModule):
-    def __init__(self, args, encoder: nn.Module):
+    def __init__(self, args, encoder: nn.Module, video_crop_length_sec: int, video_n_features: int):
         super().__init__()
         self.save_hyperparameters(args)
+
         # dimensionality of representation:
         # OLD CODE:
         self.n_features = 512
@@ -21,7 +22,7 @@ class MultimodalLearning(LightningModule):
 
         # audio encoder:
         self.encoder = encoder
-        # keep first 4 conv blocks frozen:
+        # keep first 4 convolutional blocks frozen:
         c0, c1 = 0, 0
         for child in self.encoder.children():
             for block in child.children():
@@ -33,36 +34,48 @@ class MultimodalLearning(LightningModule):
             c0 += 1
             if c0 > 0:
                 break
-
-        # audio projection head
-        self.projector1 = nn.Sequential(
+        
+        # audio projector:
+        self.audio_projector = nn.Sequential(
             nn.Linear(self.n_features, self.n_features, bias=False),
             nn.ReLU(),
             nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
         )
-        self.model1 = nn.Sequential(self.encoder, self.projector1)
+        # full audio model:
+        self.audio_model = nn.Sequential(self.encoder, self.audio_projector)
 
-        # video encoder
-        self.temporal = nn.LSTM(512, 512, num_layers=2, batch_first=True, dropout=0.1)
-        self.encoder2 = nn.Sequential(
+        # video LSTM:
+        # self.video_temporal = nn.LSTM(512, 512, num_layers=2, batch_first=True, dropout=0.1)
+        self.video_temporal = nn.LSTM(
+            input_size=video_n_features,
+            hidden_size=video_n_features,
+            num_layers=2,
+            batch_first=True,
+            dropout=0.1
+        )
+        # video encoder:
+        self.video_encoder = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(512 * 5, self.n_features),
+            nn.Linear(video_crop_length_sec * video_n_features, self.n_features),
             nn.ReLU(),
         )
-        self.projector2 = nn.Sequential(
+
+        # video projector:
+        self.video_projector = nn.Sequential(
             nn.Linear(self.n_features, self.n_features, bias=False),
             nn.ReLU(),
             nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
         )
-        self.model2 = nn.Sequential(self.encoder2, self.projector2)
+        # full video model:
+        self.video_model = nn.Sequential(self.video_encoder, self.video_projector)
 
         # criterion function:
         self.criterion = self.configure_criterion()
     
     def forward(self, x_i: Tensor, x_j: Tensor) -> Tensor:
-        z_i = self.model1(x_i)
-        x_j, _ = self.temporal(x_j)
-        z_j = self.model2(x_j)
+        z_i = self.audio_model(x_i)
+        x_j, _ = self.video_temporal(x_j)
+        z_j = self.video_model(x_j)
         return self.criterion(z_i, z_j)
 
     def training_step(self, batch, _) -> Tensor:
