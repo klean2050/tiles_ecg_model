@@ -41,11 +41,10 @@ class MultimodalLearning(LightningModule):
             nn.ReLU(),
             nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
         )
-        # full audio model:
+        # full audio model (encoder + projector):
         self.audio_model = nn.Sequential(self.encoder, self.audio_projector)
-
-        # video LSTM:
-        # self.video_temporal = nn.LSTM(512, 512, num_layers=2, batch_first=True, dropout=0.1)
+        
+        # video temporal model:
         self.video_temporal = nn.LSTM(
             input_size=video_n_features,
             hidden_size=video_n_features,
@@ -66,7 +65,7 @@ class MultimodalLearning(LightningModule):
             nn.ReLU(),
             nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
         )
-        # full video model:
+        # video model (encoder + projector):
         self.video_model = nn.Sequential(self.video_encoder, self.video_projector)
 
         # criterion function:
