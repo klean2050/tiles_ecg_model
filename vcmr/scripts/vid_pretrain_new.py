@@ -1,4 +1,4 @@
-"""Script to perform music (audio) pre-training."""
+"""Script to perform multimodal (audio + video) pre-training."""
 
 
 import os
@@ -12,7 +12,6 @@ import torchinfo
 from vcmr.utils import yaml_config_hook
 from vcmr.loaders import get_dataset, MultiContrastive
 from vcmr.models.sample_cnn_config import SampleCNN
-from vcmr.trainers.contrastive_learning import ContrastiveLearning
 from vcmr.trainers import ContrastiveLearning, MultimodalLearning
 
 
@@ -45,7 +44,7 @@ if __name__ == "__main__":
     # set random seed if selected:
     if args.seed:
         pl.seed_everything(args.seed, workers=True)
-    
+
 
     # ------------
     # DATA LOADERS
@@ -102,7 +101,6 @@ if __name__ == "__main__":
     if verbose:
         print("\nSetting up model and logger...")
     
-    # """
     # create backbone (audio) encoder:
     audio_encoder = SampleCNN(
         n_blocks=args.n_blocks,
@@ -114,17 +112,11 @@ if __name__ == "__main__":
         first_block_params=args.first_block_params,
         input_size=args.audio_length
     )
-    # load audio model (encoder + projector) from checkpoint:
-    pretrained_audio_model = ContrastiveLearning(args, audio_encoder).load_from_checkpoint(
+    # load pretrained audio model (encoder + projector) from checkpoint:
+    pretrained_audio_model = ContrastiveLearning.load_from_checkpoint(
         args.audio_encoder_ckpt_path,
-        encoder=audio_encoder,
-        output_dim=train_dataset.n_classes
+        encoder=audio_encoder
     )
-    # """
-    """
-    # load audio encoder/projector from checkpoint:
-    pretrained_audio_model = ContrastiveLearning.load_from_checkpoint(args.audio_encoder_ckpt_path)
-    """
 
     # create full (multimodal) model:
     full_model = MultimodalLearning(
@@ -197,18 +189,37 @@ if __name__ == "__main__":
         verbose=0
     ))
     audio_projector_summary = str(torchinfo.summary(
-        full_model.projector1,
+        full_model.audio_projector,
         input_size=(args.batch_size, full_model.n_features),
         col_names=model_summary_info,
         depth=1,
         verbose=0
     ))
 
-
     # create video model summaries:
+    video_temporal_summary = str(torchinfo.summary(
+        full_model.video_temporal,
+        input_size=(args.batch_size, contrastive_train_dataset.n_seconds, contrastive_train_dataset.video_n_features),
+        col_names=model_summary_info,
+        depth=1,
+        verbose=0
+    ))
+    video_encoder_summary = str(torchinfo.summary(
+        full_model.video_encoder,
+        input_size=(args.batch_size, contrastive_train_dataset.n_seconds, contrastive_train_dataset.video_n_features),
+        col_names=model_summary_info,
+        depth=1,
+        verbose=0
+    ))
+    video_projector_summary = str(torchinfo.summary(
+        full_model.video_projector,
+        input_size=(args.batch_size, full_model.n_features),
+        col_names=model_summary_info,
+        depth=1,
+        verbose=0
+    ))
 
-
-    # save model summaries:
+    # save audio model summaries:
     audio_encoder_summary_file = os.path.join(summaries_dir, "audio_encoder_summary.txt")
     with open(audio_encoder_summary_file, "w") as text_file:
         text_file.write(audio_encoder_summary)
@@ -216,12 +227,29 @@ if __name__ == "__main__":
     with open(audio_projector_summary_file, "w") as text_file:
         text_file.write(audio_projector_summary)
     
+    # save video model summaries:
+    video_temporal_summary_file = os.path.join(summaries_dir, "video_temporal_summary.txt")
+    with open(video_temporal_summary_file, "w") as text_file:
+        text_file.write(video_temporal_summary)
+    video_encoder_summary_file = os.path.join(summaries_dir, "video_encoder_summary.txt")
+    with open(video_encoder_summary_file, "w") as text_file:
+        text_file.write(video_encoder_summary)
+    video_projector_summary_file = os.path.join(summaries_dir, "video_projector_summary.txt")
+    with open(video_projector_summary_file, "w") as text_file:
+        text_file.write(video_projector_summary)
+    
     # display model summaries, if selected:
     if verbose >= 2:
         print("\n\nAUDIO ENCODER SUMMARY:\n")
         print(audio_encoder_summary)
         print("\n\n\n\nAUDIO PROJECTOR SUMMARY:\n")
         print(audio_projector_summary)
+        print("\n\n\n\nVIDEO TEMPORAL SUMMARY:\n")
+        print(video_temporal_summary)
+        print("\n\n\n\nVIDEO ENCODER SUMMARY:\n")
+        print(video_encoder_summary)
+        print("\n\n\n\nVIDEO PROJECTOR SUMMARY:\n")
+        print(video_projector_summary)
     
     print("\n\n")
 
