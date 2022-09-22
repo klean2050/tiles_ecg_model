@@ -108,7 +108,7 @@ class MultimodalLearning(LightningModule):
             # (i.e. LearningRate = 0.3 × BatchSize/256) and weight decay of 1e−6.
             learning_rate = 0.3 * self.hparams.batch_size / 256
             optimizer = LARS(
-                self.model.parameters(),
+                self.parameters(),
                 lr=learning_rate,
                 weight_decay=self.hparams.weight_decay,
                 exclude_from_weight_decay=["batch_normalization", "bias"],
@@ -125,3 +125,4 @@ class MultimodalLearning(LightningModule):
             return {"optimizer": optimizer, "lr_scheduler": scheduler}
         else:
             return {"optimizer": optimizer}
+
