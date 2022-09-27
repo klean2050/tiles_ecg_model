@@ -156,13 +156,13 @@ if __name__ == "__main__":
 
     # create PyTorch Lightning trainer:
     model_ckpt_callback = ModelCheckpoint(monitor="Valid/pr_auc", mode="max", save_top_k=2)
-    early_stop_callback = EarlyStopping(monitor="Valid/loss", mode="min", patience=10)     # SHOULDN'T MODEL = "MAX"???
+    early_stop_callback = EarlyStopping(monitor="Valid/loss", mode="min", patience=10)
 
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,
         max_epochs=args.m_epochs,
-        callbacks=[early_stop_callback, model_ckpt_callback],
+        callbacks=[model_ckpt_callback, early_stop_callback],
         check_val_every_n_epoch=args.val_freq,
         log_every_n_steps=args.log_freq,
         sync_batchnorm=True,
