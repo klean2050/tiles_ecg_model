@@ -183,3 +183,50 @@ if __name__ == "__main__":
         ckpt_path=args.ckpt_path
     )
 
+
+    # ---------------
+    # MODEL SUMMARIES
+    # ---------------
+
+    if verbose:
+        if verbose >= 2:
+            print("\n\n")
+        print("\n\n\nCreating model summaries...")
+    
+    # create model summaries directory:
+    summaries_dir = os.path.join(args.log_dir, args.experiment_name, "model_summaries", "")
+    os.makedirs(summaries_dir, exist_ok=True)
+
+    # create model summaries:
+    encoder_summary = str(torchinfo.summary(
+        model.encoder,
+        input_size=(args.batch_size, 1, args.audio_length),
+        col_names=model_summary_info,
+        depth=3,
+        verbose=0
+    ))
+    supervised_head_summary = str(torchinfo.summary(
+        model.projector,
+        input_size=(args.batch_size, model.encoder.output_size),
+        col_names=model_summary_info,
+        depth=1,
+        verbose=0
+    ))
+
+    # save model summaries:
+    encoder_summary_file = os.path.join(summaries_dir, "encoder_summary.txt")
+    with open(encoder_summary_file, "w") as text_file:
+        text_file.write(encoder_summary)
+    supervised_head_summary_file = os.path.join(summaries_dir, "supervised_head_summary.txt")
+    with open(supervised_head_summary_file, "w") as text_file:
+        text_file.write(supervised_head_summary)
+    
+    # display model summaries, if selected:
+    if verbose >= 2:
+        print("\n\nENCODER SUMMARY:\n")
+        print(encoder_summary)
+        print("\n\n\n\nSUPERVISED HEAD SUMMARY:\n")
+        print(supervised_head_summary)
+    
+    print("\n\n")
+
