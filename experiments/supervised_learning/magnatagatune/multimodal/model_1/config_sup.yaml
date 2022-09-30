@@ -1,0 +1,57 @@
+
+
+# Config file for supervised training for music tagging, using model pretrained on audio and video (multimodal).
+
+
+---
+# dataset options:
+# for MagnaTagATune dataset:
+dataset: "magnatagatune"
+dataset_dir: "/data/avramidi/VCMR/data/magnatagatune"
+# for MTG-Jamendo dataset:
+# dataset: "mtg-jamendo-dataset"
+# dataset_dir: "/data/avramidi/mtg-jamendo-dataset"
+sample_rate: 16000
+audio_length: 98415     # must be an int
+
+# model options:
+# type of pre-trained model for checkpoint ("multimodal" or "audio"):
+ckpt_model_type: "multimodal"
+pretrained_ckpt_path: "runs/video_pretraining/model_1/version_0/checkpoints/epoch=49-step=28300.ckpt"
+video_crop_length_sec: 6     # necessary to load multimodal model from checkpoint
+video_n_features: 512        # necessary to load multimodal model from checkpoint
+# audio encoder architecture:
+n_blocks: 9
+n_channels: [128, 128, 256, 256, 256, 256, 256, 512, 512]
+output_size: 512
+conv_kernel_size: 3
+pool_size: 3
+activation: "relu"
+first_block_params:
+  out_channels: 128
+  conv_size: 5
+# dimensionality of projection:
+projection_dim: 128
+
+# training options:
+batch_size: 128
+m_epochs: 100
+optimizer: "Adam"
+learning_rate: 0.001
+weight_decay: 1e-6
+temperature: 0.1
+val_freq: 1     # how often to validate (runs validation every val_freq epochs)
+log_freq: 10     # how often to log (logs every log_freq steps)
+workers: 4
+n_cuda: "2, 3"
+bit_precision: 16
+seed: 42
+ckpt_path: null     # path of checkpoint from which to resume training (not used if set to null)
+
+# logging options:
+# note: logs are saved to log_dir/experiment_name/experiment_version/
+log_dir: "runs"
+experiment_name: "supervised_learning/magnatagatune/multimodal/model_1"
+experiment_version: null     # automatic versioning if set to null (recommended)
+...
+
