@@ -1,0 +1,38 @@
+# Config file for evaluating supervised models at music tagging.
+
+
+# dataset options:
+sample_rate: 16000
+audio_length: 98415
+# for MagnaTagATune dataset:
+dataset: "magnatagatune"
+dataset_dir: "/data/avramidi/VCMR/data/magnatagatune"
+# for MTG-Jamendo dataset:
+# dataset: "mtg-jamendo-dataset"
+# dataset_dir: "/data/avramidi/mtg-jamendo-dataset"
+
+# model options:
+checkpoint_mus: "version_2/checkpoints/epoch=18-step=2774.ckpt"
+checkpoint_vid: "version_3/checkpoints/epoch=21-step=3212.ckpt"
+
+# audio encoder architecture:
+n_blocks: 9
+n_channels: [128, 128, 256, 256, 256, 256, 256, 512, 512]
+output_size: 512
+conv_kernel_size: 3
+pool_size: 3
+activation: "relu"
+first_block_params:
+  out_channels: 128
+  conv_size: 5
+projection_dim: 128
+
+# logging options:
+# note: logs are saved to log_dir/experiment_name/experiment_version/
+log_dir: "runs"
+experiment_name: "evaluation/magnatagatune"
+experiment_version: null     # automatic versioning if set to null (recommended)
+...
+
+
+
