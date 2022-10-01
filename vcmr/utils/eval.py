@@ -6,10 +6,10 @@ from sklearn import metrics
 
 
 def evaluate(
-    network: nn.Module,
-    test_dataset: Dataset,
-    dataset_name: str,
-    audio_length: int,
+    network,
+    test_dataset,
+    output_path,
+    audio_length,
     device,
 ):
 
@@ -26,8 +26,8 @@ def evaluate(
 
             output = network.model(batch)
             feat = network.encoder(batch)
-            
-            if dataset_name.split("_")[0] in ["magnatagatune", "mtg-jamendo-dataset"]:
+
+            if path.split("/")[1] in ["magnatagatune", "mtg-jamendo-dataset"]:
                 output = torch.sigmoid(output)
             else:
                 output = F.softmax(output, dim=1)
@@ -41,15 +41,17 @@ def evaluate(
     est_array = torch.stack(est_array, dim=0).cpu().numpy()
     gt_array = torch.stack(gt_array, dim=0).cpu().numpy()
 
-    np.save(f"data/{dataset_name}_fts.npy", features)
-    np.save(f"data/{dataset_name}_lbs.npy", gt_array)
+    np.save(output_path + "features.npy", features)
+    np.save(output_path + "labels.npy", gt_array)
 
-    if dataset_name.split("_")[0] in ["magnatagatune", "mtg-jamendo-dataset"]:
+    if path.split("/")[1] in ["magnatagatune", "mtg-jamendo-dataset"]:
         overall_dict = {
-            "PR-AUC": metrics.average_precision_score(gt_array, est_array, average="macro"),
+            "PR-AUC": metrics.average_precision_score(
+                gt_array, est_array, average="macro"
+            ),
             "ROC-AUC": metrics.roc_auc_score(gt_array, est_array, average="macro"),
         }
-        with open(f"data/{dataset_name}_overall_dict.pickle", "wb") as fp:
+        with open(output_path + "overall_dict.pickle", "wb") as fp:
             pickle.dump(overall_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
         labels = test_dataset.dataset.label2idx.keys()
@@ -57,10 +59,8 @@ def evaluate(
 
         prs = metrics.average_precision_score(gt_array, est_array, average=None)
         rcs = metrics.roc_auc_score(gt_array, est_array, average=None)
-        classes_dict = {
-            name: [v1, v2] for name, v1, v2 in zip(labels, prs, rcs)
-        }
-        with open(f"data/{dataset_name}_classes_dict.pickle", "wb") as fp:
+        classes_dict = {name: [v1, v2] for name, v1, v2 in zip(labels, prs, rcs)}
+        with open(output_path + "classes_dict.pickle", "wb") as fp:
             pickle.dump(classes_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         est_array = torch.stack(est_array, dim=0)
