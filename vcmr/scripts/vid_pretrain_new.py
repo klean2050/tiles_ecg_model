@@ -123,7 +123,8 @@ if __name__ == "__main__":
         args,
         pretrained_audio_model.encoder,
         video_crop_length_sec=contrastive_train_dataset.n_seconds,
-        video_n_features=contrastive_train_dataset.video_n_features
+        video_n_features=contrastive_train_dataset.video_n_features,
+        video_lstm_n_layers=args.video_lstm_n_layers
     )
 
     # create logger (logs are saved to /save_dir/name/version/):

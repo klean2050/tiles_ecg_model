@@ -23,6 +23,8 @@ activation: "relu"
 first_block_params:
   out_channels: 128
   conv_size: 5
+# video temporal model architecture:
+video_lstm_n_layers: 2
 # dimensionality of projection:
 projection_dim: 128
 

@@ -8,7 +8,7 @@ from simclr.modules import NT_Xent, LARS
 
 
 class MultimodalLearning(LightningModule):
-    def __init__(self, args, encoder: nn.Module, video_crop_length_sec: int, video_n_features: int):
+    def __init__(self, args, encoder: nn.Module, video_crop_length_sec: int, video_n_features: int, video_lstm_n_layers: int = 1):
         super().__init__()
         self.save_hyperparameters(args)
 
@@ -43,12 +43,12 @@ class MultimodalLearning(LightningModule):
         )
         # full audio model (encoder + projector):
         self.audio_model = nn.Sequential(self.encoder, self.audio_projector)
-        
+
         # video temporal model:
         self.video_temporal = nn.LSTM(
             input_size=video_n_features,
             hidden_size=video_n_features,
-            num_layers=2,
+            num_layers=video_lstm_n_layers,
             batch_first=True,
             dropout=0.1
         )
