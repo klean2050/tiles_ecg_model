@@ -1,0 +1,51 @@
+
+
+# Config file for multimodal (audio + video) pre-training.
+
+
+---
+# dataset options:
+dataset_dir: "/data/avramidi/video_clip_data_NEW"
+sample_rate: 16000
+audio_length: 98415     # must be an int
+
+# model options:
+# checkpoint path of pre-trained audio encoder:
+audio_encoder_ckpt_path: "runs/music_pretraining/model_1/version_0/checkpoints/epoch=49-step=56650.ckpt"
+# audio encoder architecture:
+n_blocks: 9
+n_channels: [128, 128, 256, 256, 256, 256, 256, 512, 512]
+output_size: 512
+conv_kernel_size: 3
+pool_size: 3
+activation: "relu"
+first_block_params:
+  out_channels: 128
+  conv_size: 5
+# video temporal model architecture:
+video_lstm_n_layers: 1
+# dimensionality of projection:
+projection_dim: 128
+
+# training options:
+batch_size: 128
+m_epochs: 50
+optimizer: "Adam"
+learning_rate: 0.001
+weight_decay: 1e-6
+temperature: 0.1
+val_freq: 1     # how often to validate (runs validation every val_freq epochs)
+log_freq: 10     # how often to log (logs every log_freq steps)
+workers: 4
+n_cuda: "2, 3"
+bit_precision: 16
+seed: 42
+ckpt_path: null     # path of checkpoint from which to resume training (not used if set to null)
+
+# logging options:
+# note: logs are saved to log_dir/experiment_name/experiment_version/
+log_dir: "runs"
+experiment_name: "video_pretraining/small_lstm/model_1"
+experiment_version: null     # automatic versioning if set to null (recommended)
+...
+
