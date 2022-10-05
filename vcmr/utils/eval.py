@@ -1,6 +1,5 @@
-import torch, torch.nn as nn, pickle
-import torch.nn.functional as F, numpy as np
-from torch.utils.data import Dataset
+import torch, pickle, numpy as np
+import torch.nn.functional as F
 from tqdm import tqdm
 from sklearn import metrics
 
@@ -27,7 +26,7 @@ def evaluate(
             output = network.model(batch)
             feat = network.encoder(batch)
 
-            if path.split("/")[1] in ["magnatagatune", "mtg-jamendo-dataset"]:
+            if output_path.split("/")[1] in ["magnatagatune", "mtg-jamendo-dataset"]:
                 output = torch.sigmoid(output)
             else:
                 output = F.softmax(output, dim=1)
@@ -44,7 +43,7 @@ def evaluate(
     np.save(output_path + "features.npy", features)
     np.save(output_path + "labels.npy", gt_array)
 
-    if path.split("/")[1] in ["magnatagatune", "mtg-jamendo-dataset"]:
+    if output_path.split("/")[1] in ["magnatagatune", "mtg-jamendo-dataset"]:
         overall_dict = {
             "PR-AUC": metrics.average_precision_score(
                 gt_array, est_array, average="macro"
