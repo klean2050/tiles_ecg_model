@@ -118,13 +118,19 @@ if __name__ == "__main__":
         encoder=audio_encoder
     )
 
+    # set default video_lstm_n_layers, if not provided:
+    args_dict = vars(args)
+    if args_dict.get("video_lstm_n_layers") is None:
+        video_lstm_n_layers = 2
+    else:
+        video_lstm_n_layers = args.video_lstm_n_layers
     # create full (multimodal) model:
     full_model = MultimodalLearning(
         args,
         pretrained_audio_model.encoder,
         video_crop_length_sec=contrastive_train_dataset.n_seconds,
         video_n_features=contrastive_train_dataset.video_n_features,
-        video_lstm_n_layers=args.video_lstm_n_layers
+        video_lstm_n_layers=video_lstm_n_layers
     )
 
     # create logger (logs are saved to /save_dir/name/version/):
