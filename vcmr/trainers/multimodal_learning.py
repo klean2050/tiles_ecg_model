@@ -8,7 +8,7 @@ from simclr.modules import NT_Xent, LARS
 
 
 class MultimodalLearning(LightningModule):
-    def __init__(self, args, encoder: nn.Module, video_crop_length_sec: int, video_n_features: int, video_lstm_n_layers: int = 1):
+    def __init__(self, args, encoder: nn.Module, video_crop_length_sec: int, video_n_features: int, video_lstm_n_layers: int = 2):
         super().__init__()
         self.save_hyperparameters(args)
 
