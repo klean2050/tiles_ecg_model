@@ -33,10 +33,10 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
     if device is None:
         device = torch.device("cuda")
     
-    # lists of ground-truth labels, features (embeddings), and outputs (logits) of model:
+    # lists of true labels, predicted labels, and features (embeddings):
     y_true = []
-    features = []
     y_pred = []
+    features = []
 
     # run inference:
     model = model.to(device)
@@ -48,7 +48,7 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
             # get raw audio of song, split into non-overlapping segments of length audio_length:
             audio_song = test_dataset.concat_clip(idx, audio_length)
             audio_song = audio_song.squeeze(dim=1)
-            assert len(tuple(audio_song.size())) == 3 and audio_song.size(dim=-1) == audio_length, "Error with shape of song audio."
+            assert audio_song.dim() == 3 and audio_song.size(dim=-1) == audio_length, "Error with shape of song audio."
             audio_song = audio_song.to(device)
 
             # pass song through model to get features (embeddings) and outputs (logits) of each segment:
@@ -66,20 +66,27 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
             if aggregation_method == "average":
                 pred_song = output.mean(dim=0)
             # sanity check shapes:
-            assert len(tuple(feat_song.size())) == 1 and feat_song.size(dim=0) == feat.size(dim=-1), "Error with shape of song-level feature."
-            assert len(tuple(pred_song.size())) == 1 and pred_song.size(dim=0) == output.size(dim=-1), "Error with shape of song-level output."
+            assert feat_song.dim() == 1 and feat_song.size(dim=0) == feat.size(dim=-1), "Error with shape of song-level feature."
+            assert pred_song.dim() == 1 and pred_song.size(dim=0) == output.size(dim=-1), "Error with shape of song-level output."
 
-            # save label, song-level feature, and song-level output:
+            # save true label, predicted label (song-level output), and song-level feature:
             y_true.append(label)
-            features.append(feat_song)
             y_pred.append(pred_song)
+            features.append(feat_song)
     
-    features = torch.stack(features, dim=0).cpu().numpy()
-    y_pred = torch.stack(y_pred, dim=0).cpu().numpy()
+    # convert lists to numpy arrays:
     y_true = torch.stack(y_true, dim=0).cpu().numpy()
+    y_pred = torch.stack(y_pred, dim=0).cpu().numpy()
+    features = torch.stack(features, dim=0).cpu().numpy()
+    # sanity check shapes:
+    assert y_true.ndim == 2, "Error with shape of true labels."
+    assert y_pred.ndim == 2, "Error with shape of predicted labels."
+    assert features.ndim == 2, "Error with shape of song-level features."
+    assert y_true.shape == y_pred.shape, "Error with shape of true and/or predicted labels."
 
-    np.save(os.path.join(output_dir, "features.npy"), features)
+    # save true labels and song-level feature:
     np.save(os.path.join(output_dir, "labels.npy"), y_true)
+    np.save(os.path.join(output_dir, "features.npy"), features)
 
     if dataset_name in ["magnatagatune", "mtg-jamendo-dataset"]:
         overall_dict = {
