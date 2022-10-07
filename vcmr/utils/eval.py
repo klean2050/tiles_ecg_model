@@ -4,9 +4,10 @@
 import os
 import torch
 import torch.nn.functional as F
-import numpy as np
 from sklearn import metrics
-import pickle
+import numpy as np
+import pandas as pd
+import json
 from tqdm import tqdm
 from typing import Any
 
@@ -18,6 +19,7 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
         model (pytorch_lightning.LightningModule): Supervised model to evaluate.
         test_dataset (torch.utils.data.Dataset): Test dataset.
         dataset_name (str): Name of dataset.
+            Supported values: "magnatagatune", "mtg-jamendo-dataset"
         audio_length (int): Length of raw audio input (in samples).
         output_dir (str): Path of directory for saving results.
         aggregation_method (str): Method to aggregate instance-level outputs of a song.
@@ -28,6 +30,8 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
     """
 
     # validate and set default values of parameters:
+    if dataset_name not in ["magnatagatune", "mtg-jamendo-dataset"]:
+        raise ValueError("Invalid dataset name.")
     if aggregation_method not in ["average", "max", "majority_vote"]:
         raise ValueError("Invalid aggregation method.")
     if device is None:
@@ -92,27 +96,37 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
     np.save(os.path.join(output_dir, "labels.npy"), y_true)
     np.save(os.path.join(output_dir, "features.npy"), features)
 
+    # compute performance metrics:
     if dataset_name in ["magnatagatune", "mtg-jamendo-dataset"]:
-        overall_dict = {
-            "PR-AUC": metrics.average_precision_score(
-                y_true, y_pred, average="macro"
-            ),
-            "ROC-AUC": metrics.roc_auc_score(y_true, y_pred, average="macro"),
+        # compute global metrics (average across all tags):
+        global_roc = metrics.roc_auc_score(y_true, y_pred, average="macro")
+        global_precision = metrics.average_precision_score(y_true, y_pred, average="macro")
+        # save to json file:
+        global_metrics_dict = {
+            "ROC-AUC": global_roc,
+            "PR-AUC": global_precision
         }
-        with open(os.path.join(output_dir, "overall_dict.pickle"), "wb") as fp:
-            pickle.dump(overall_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
-
-        labels = test_dataset.dataset.label2idx.keys()
-        labels = [name.split("---")[-1] for name in labels]
-
-        prs = metrics.average_precision_score(y_true, y_pred, average=None)
-        rcs = metrics.roc_auc_score(y_true, y_pred, average=None)
-        classes_dict = {name: [v1, v2] for name, v1, v2 in zip(labels, prs, rcs)}
-        with open(os.path.join(output_dir, "classes_dict.pickle"), "wb") as fp:
-            pickle.dump(classes_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(os.path.join(output_dir, "global_metrics.json"), "w") as json_file:
+            json.dump(global_metrics_dict, json_file)
+        
+        # compute tag-wise metrics:
+        tag_roc = metrics.roc_auc_score(y_true, y_pred, average=None)
+        tag_precision = metrics.average_precision_score(y_true, y_pred, average=None)
+        # save to csv file:
+        labels = list(test_dataset.dataset.label2idx.keys())
+        labels = [name.split("---")[-1] for name in labels]     # old code, probably not necessary
+        tag_metrics_dict = {name: {"ROC-AUC": roc, "PR-AUC": precision} for name, roc, precision in zip(labels, tag_roc, tag_precision)}
+        tag_metrics_df = pd.DataFrame.from_dict(tag_metrics_dict, orient="index")
+        tag_metrics_df.to_csv(os.path.join(output_dir, "tag_metrics.csv"), index_label="tag")
+    else:
+        raise ValueError("Invalid dataset name.")
+    
+    # OLD CODE:
+    """
     else:
         y_pred = torch.stack(y_pred, dim=0)
         _, y_pred = torch.max(y_pred, 1)
         accuracy = metrics.accuracy_score(y_true, y_pred)
         print({"Accuracy": accuracy})
+    """
 
