@@ -54,11 +54,15 @@ if __name__ == "__main__":
     # DATASET
     # -------
 
+    # validate datset subset:
+    if args.dataset_subset not in ["train", "valid", "test"]:
+        raise ValueError("Invalid dataset subset.")
+    
     # get test dataset:
     dataset = get_dataset(
         args.dataset,
         args.dataset_dir,
-        subset="test",
+        subset=args.dataset_subset,
         sr=args.sample_rate
     )
     test_dataset = Contrastive(

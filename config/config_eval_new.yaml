@@ -8,6 +8,7 @@
 # for MagnaTagATune dataset:
 dataset: "magnatagatune"
 dataset_dir: "/data/avramidi/VCMR/data/magnatagatune"
+dataset_subset: "valid"
 # for MTG-Jamendo dataset:
 # dataset: "mtg-jamendo-dataset"
 # dataset_dir: "/data/avramidi/mtg-jamendo-dataset"
