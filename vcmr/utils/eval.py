@@ -21,14 +21,14 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
         audio_length (int): Length of raw audio input (in samples).
         output_dir (str): Path of directory for saving results.
         aggregation_method (str): Method to aggregate instance-level outputs of a song.
-            Supported values: "average", "max"
+            Supported values: "average", "max", "majority_vote"
         device (torch.device): PyTorch device.
     
     Returns: None
     """
 
     # validate and set default values of parameters:
-    if aggregation_method not in ["average", "max"]:
+    if aggregation_method not in ["average", "max", "majority_vote"]:
         raise ValueError("Invalid aggregation method.")
     if device is None:
         device = torch.device("cuda")
@@ -64,11 +64,15 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
             feat_song = feat.mean(dim=0)
             # aggregate segment output across song = song-level output (prediction):
             if aggregation_method == "average":
-                pred_song = output.mean(dim=0)
+                pred_song = torch.mean(output, dim=0)
+            elif aggregation_method == "max":
+                pred_song = torch.amax(output, dim=0)
+            elif aggregation_method == "majority_vote":
+                pred_song = torch.mean(torch.round(output), dim=0)
             # sanity check shapes:
             assert feat_song.dim() == 1 and feat_song.size(dim=0) == feat.size(dim=-1), "Error with shape of song-level feature."
             assert pred_song.dim() == 1 and pred_song.size(dim=0) == output.size(dim=-1), "Error with shape of song-level output."
-
+            
             # save true label, predicted label (song-level output), and song-level feature:
             y_true.append(label)
             y_pred.append(pred_song)
