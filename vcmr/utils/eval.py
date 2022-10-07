@@ -12,6 +12,11 @@ from tqdm import tqdm
 from typing import Any
 
 
+# supported values of certain parameters:
+ALL_DATASET_NAMES = ["magnatagatune", "mtg-jamendo-dataset"]
+ALL_AGGREGATION_METHODS = ["average", "max", "majority_vote"]
+
+
 def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int, output_dir: str, aggregation_method: str = "average", device: torch.device = None) -> None:
     """Performs evaluation of supervised models on music tagging.
 
@@ -19,20 +24,18 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
         model (pytorch_lightning.LightningModule): Supervised model to evaluate.
         test_dataset (torch.utils.data.Dataset): Test dataset.
         dataset_name (str): Name of dataset.
-            Supported values: "magnatagatune", "mtg-jamendo-dataset"
         audio_length (int): Length of raw audio input (in samples).
         output_dir (str): Path of directory for saving results.
         aggregation_method (str): Method to aggregate instance-level outputs of a song.
-            Supported values: "average", "max", "majority_vote"
         device (torch.device): PyTorch device.
     
     Returns: None
     """
-
+    
     # validate and set default values of parameters:
-    if dataset_name not in ["magnatagatune", "mtg-jamendo-dataset"]:
+    if dataset_name not in ALL_DATASET_NAMES:
         raise ValueError("Invalid dataset name.")
-    if aggregation_method not in ["average", "max", "majority_vote"]:
+    if aggregation_method not in ALL_AGGREGATION_METHODS:
         raise ValueError("Invalid aggregation method.")
     if device is None:
         device = torch.device("cuda")
