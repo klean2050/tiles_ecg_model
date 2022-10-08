@@ -7,8 +7,7 @@ import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 import torch
 import numpy as np
-import torchinfo
-import pickle
+import json
 import warnings
 
 from vcmr.loaders import get_dataset, Contrastive
@@ -112,13 +111,14 @@ if __name__ == "__main__":
 
     # select single GPU to use:
     device = torch.device(f"cuda:{args.n_cuda}")
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
+    # os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda     # produces a CUDA error for some reason
 
     # create directories for saving results:
-    # note: main results directory = results_dir/dataset/model_name/aggregation_method/
-    main_results_dir = os.path.join(args.results_dir, args.dataset, args.model_name, args.aggregation_method, "")
-    audio_results_dir = os.path.join(main_results_dir, "music_only", "")
-    multimodal_results_dir = os.path.join(main_results_dir, "multimodal", "")
+    # note: main results directory = results_dir/dataset/model_name/
+    main_results_dir = os.path.join(args.results_dir, args.dataset, args.model_name, "")
+    # note: results subdirectory of modality x = results_dir/dataset/model_name/modality_x/x_model_version/
+    audio_results_dir = os.path.join(main_results_dir, "music_only", args.audio_model_version, "")
+    multimodal_results_dir = os.path.join(main_results_dir, "multimodal", args.multimodaL_model_version, "")
     os.makedirs(main_results_dir, exist_ok=True)
     os.makedirs(audio_results_dir, exist_ok=True)
     os.makedirs(multimodal_results_dir, exist_ok=True)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         dataset_name=args.dataset,
         audio_length=args.audio_length,
         output_dir=audio_results_dir,
-        aggregation_method=args.aggregation_method,
+        agg_methods=args.aggregation_methods,
         device=device
     )
 
@@ -145,24 +145,9 @@ if __name__ == "__main__":
         dataset_name=args.dataset,
         audio_length=args.audio_length,
         output_dir=multimodal_results_dir,
-        aggregation_method=args.aggregation_method,
+        agg_methods=args.aggregation_methods,
         device=device
     )
 
-    # load results:
-    with open(os.path.join(audio_results_dir, "overall_dict.pickle"), "rb") as pickle_file:
-        results_audio = pickle.load(pickle_file)
-    with open(os.path.join(multimodal_results_dir, "overall_dict.pickle"), "rb") as pickle_file:
-        results_multimodal = pickle.load(pickle_file)
-    
-    # print results:
-    print()
-    print("\nResults for music only model:")
-    for key in results_audio.keys():
-        print(f"{key}: {100 * np.around(results_audio[key], 3) : .1f} %")
-    print("\nResults for multimodal model:")
-    for key in results_multimodal.keys():
-        print(f"{key}: {100 * np.around(results_multimodal[key], 3) : .1f} %")
-    
     print("\n\n")
 

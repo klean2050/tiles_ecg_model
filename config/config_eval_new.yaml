@@ -33,13 +33,15 @@ first_block_params:
 projection_dim: 128
 
 # evaluation options:
-aggregation_method: "average"
-n_cuda: "0"     # must be only a single GPU index (0 only working currently)
+aggregation_methods: "all"
+n_cuda: "1"     # must be only a single GPU index
 seed: 42
 
 # saving results options:
-# note: results are saved to results_dir/dataset/model_name/aggregation_method/
+# note: results are saved to results_dir/dataset/model_name/
 results_dir: "results"
-model_name: "model_1/version_0"
+model_name: "model_1"
+audio_model_version:  "version_0"
+multimodaL_model_version: "version_0"
 ...
 
