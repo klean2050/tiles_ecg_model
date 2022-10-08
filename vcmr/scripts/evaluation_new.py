@@ -18,7 +18,6 @@ from vcmr.utils import yaml_config_hook, evaluate
 
 # script options:
 config_file = "config/config_eval_new.yaml"
-model_summary_info = ["input_size", "output_size", "num_params"]
 verbose = 1
 
 
@@ -122,7 +121,7 @@ if __name__ == "__main__":
     os.makedirs(main_results_dir, exist_ok=True)
     os.makedirs(audio_results_dir, exist_ok=True)
     os.makedirs(multimodal_results_dir, exist_ok=True)
-    
+
     # evaluate supervised model pretrained on audio only:
     if verbose:
         print("\nRunning evaluation for music only model...")
