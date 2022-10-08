@@ -122,7 +122,7 @@ if __name__ == "__main__":
     os.makedirs(main_results_dir, exist_ok=True)
     os.makedirs(audio_results_dir, exist_ok=True)
     os.makedirs(multimodal_results_dir, exist_ok=True)
-
+    
     # evaluate supervised model pretrained on audio only:
     if verbose:
         print("\nRunning evaluation for music only model...")
@@ -149,5 +149,38 @@ if __name__ == "__main__":
         device=device
     )
 
+    # print results for supervised model pretrained on audio only:
+    print()
+    print("\n\nResults for music only model:\n")
+    with open(os.path.join(audio_results_dir, "global_metrics.json"), "r") as json_file:
+        audio_global_metrics = json.load(json_file)
+    for method in audio_global_metrics.keys():
+        print(f"{method} aggregation:  ", end="")
+        print("{", end="")
+        n_metrics = len(audio_global_metrics[method].keys())
+        count = 1
+        for metric in audio_global_metrics[method].keys():
+            print(f"{metric}:{100 * np.around(audio_global_metrics[method][metric], 3) : .1f} %", end="")
+            if count != n_metrics:
+                print(", ", end="")
+            count += 1
+        print("}")
+    
+    # print results for supervised model pretrained on audio + video:
+    print("\n\nResults for multimodal model:\n")
+    with open(os.path.join(multimodal_results_dir, "global_metrics.json"), "r") as json_file:
+        multimodal_global_metrics = json.load(json_file)
+    for method in multimodal_global_metrics.keys():
+        print(f"{method} aggregation:  ", end="")
+        print("{", end="")
+        n_metrics = len(multimodal_global_metrics[method].keys())
+        count = 1
+        for metric in multimodal_global_metrics[method].keys():
+            print(f"{metric}:{100 * np.around(multimodal_global_metrics[method][metric], 3) : .1f} %", end="")
+            if count != n_metrics:
+                print(", ", end="")
+            count += 1
+        print("}")
+    
     print("\n\n")
 

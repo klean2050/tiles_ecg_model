@@ -133,6 +133,7 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
         assert len(label_names) == y_true.shape[-1], "Error with length of label names."
 
         # loop over aggregation methods:
+        global_metrics = {}
         for method in agg_methods:
             # compute global metrics (average across all tags):
             global_roc = metrics.roc_auc_score(y_true, y_pred[method], average="macro")
@@ -144,7 +145,9 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
             }
             with open(os.path.join(output_dir, method, "global_metrics.json"), "w") as json_file:
                 json.dump(global_metrics_dict, json_file)
-            
+            # save to parent dictionary:
+            global_metrics[method] = global_metrics_dict
+
             # compute tag-wise metrics:
             tag_roc = metrics.roc_auc_score(y_true, y_pred[method], average=None)
             tag_precision = metrics.average_precision_score(y_true, y_pred[method], average=None)
@@ -152,6 +155,9 @@ def evaluate(model: Any, test_dataset: Any, dataset_name: str, audio_length: int
             tag_metrics_dict = {name: {"ROC-AUC": roc, "PR-AUC": precision} for name, roc, precision in zip(label_names, tag_roc, tag_precision)}
             tag_metrics_df = pd.DataFrame.from_dict(tag_metrics_dict, orient="index")
             tag_metrics_df.to_csv(os.path.join(output_dir, method, "tag_metrics.csv"), index_label="tag")
+        # save dictionary containing metrics for all methods to json file:
+        with open(os.path.join(output_dir, "global_metrics.json"), "w") as json_file:
+            json.dump(global_metrics, json_file)
     else:
         raise ValueError("Invalid dataset name.")
     
