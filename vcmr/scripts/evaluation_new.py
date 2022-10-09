@@ -6,8 +6,6 @@ import argparse
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 import torch
-import numpy as np
-import json
 import warnings
 
 from vcmr.loaders import get_dataset, Contrastive
@@ -56,19 +54,16 @@ if __name__ == "__main__":
     if args.dataset_subset not in ["train", "valid", "test"]:
         raise ValueError("Invalid dataset subset.")
     
-    # get test dataset:
+    # get dataset:
     dataset = get_dataset(
         args.dataset,
         args.dataset_dir,
         subset=args.dataset_subset,
         sr=args.sample_rate
     )
-    test_dataset = Contrastive(
-        dataset
-    )
-
+    
     if verbose:
-        print("\nUsing test subset of {} with {} examples...".format(args.dataset, len(dataset)))
+        print("\nUsing {} subset of {} with {} examples...".format(args.dataset_subset, args.dataset, len(dataset)))
     
 
     # ------
@@ -124,62 +119,34 @@ if __name__ == "__main__":
 
     # evaluate supervised model pretrained on audio only:
     if verbose:
-        print("\nRunning evaluation for music only model...")
+        print("\n\nRunning evaluation for music only model...\n")
     evaluate(
         audio_model,
-        test_dataset=test_dataset,
+        dataset=dataset,
         dataset_name=args.dataset,
         audio_length=args.audio_length,
+        overlap_ratios=args.song_split_overlap_ratios,
         output_dir=audio_results_dir,
         agg_methods=args.aggregation_methods,
-        device=device
+        device=device,
+        verbose=verbose
     )
 
     # evaluate supervised model pretrained on audio + video:
     if verbose:
-        print("\nRunning evaluation for multimodal model...")
+        print("\n\nRunning evaluation for multimodal model...\n")
     evaluate(
         multimodal_model,
-        test_dataset=test_dataset,
+        dataset=dataset,
         dataset_name=args.dataset,
         audio_length=args.audio_length,
+        overlap_ratios=args.song_split_overlap_ratios,
         output_dir=multimodal_results_dir,
         agg_methods=args.aggregation_methods,
-        device=device
+        device=device,
+        verbose=verbose
     )
 
-    # print results for supervised model pretrained on audio only:
-    print()
-    print("\n\nResults for music only model:\n")
-    with open(os.path.join(audio_results_dir, "global_metrics.json"), "r") as json_file:
-        audio_global_metrics = json.load(json_file)
-    for method in audio_global_metrics.keys():
-        print(f"{method} aggregation:  ", end="")
-        print("{", end="")
-        n_metrics = len(audio_global_metrics[method].keys())
-        count = 1
-        for metric in audio_global_metrics[method].keys():
-            print(f"{metric}:{100 * np.around(audio_global_metrics[method][metric], 3) : .1f} %", end="")
-            if count != n_metrics:
-                print(", ", end="")
-            count += 1
-        print("}")
-    
-    # print results for supervised model pretrained on audio + video:
-    print("\n\nResults for multimodal model:\n")
-    with open(os.path.join(multimodal_results_dir, "global_metrics.json"), "r") as json_file:
-        multimodal_global_metrics = json.load(json_file)
-    for method in multimodal_global_metrics.keys():
-        print(f"{method} aggregation:  ", end="")
-        print("{", end="")
-        n_metrics = len(multimodal_global_metrics[method].keys())
-        count = 1
-        for metric in multimodal_global_metrics[method].keys():
-            print(f"{metric}:{100 * np.around(multimodal_global_metrics[method][metric], 3) : .1f} %", end="")
-            if count != n_metrics:
-                print(", ", end="")
-            count += 1
-        print("}")
-    
+
     print("\n\n")
 
