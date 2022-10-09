@@ -168,7 +168,7 @@ if __name__ == "__main__":
     # add entry and write back to file:
     audio_parent_metrics[args.audio_model_version] = audio_metrics
     with open(audio_parent_metrics_file, "w") as json_file:
-        json.dump(audio_parent_metrics, json_file)
+        json.dump(audio_parent_metrics, json_file, indent=3)
     
     # update multimodal model's parent dictionary (contains metrics for single model, single modality, all model versions):
     multimodal_parent_metrics_file = os.path.join(main_results_dir, "multimodal", "global_metrics.json")
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     # add entry and write back to file:
     multimodal_parent_metrics[args.multimodal_model_version] = multimodal_metrics
     with open(multimodal_parent_metrics_file, "w") as json_file:
-        json.dump(multimodal_parent_metrics, json_file)
+        json.dump(multimodal_parent_metrics, json_file, indent=3)
     
     # update grandparent dictionary (contains metrics for single model, all modalities, all model versions):
     grandparent_metrics_file = os.path.join(main_results_dir, "global_metrics.json")
@@ -197,7 +197,7 @@ if __name__ == "__main__":
     grandparent_metrics["audio"] = audio_parent_metrics
     grandparent_metrics["multimodal"] = multimodal_parent_metrics
     with open(grandparent_metrics_file, "w") as json_file:
-        json.dump(grandparent_metrics, json_file)
+        json.dump(grandparent_metrics, json_file, indent=3)
     
     # update great-grandparent dictionary (contains metrics for all models, all modalities, all model versions):
     great_grandparent_metrics_file = os.path.join(args.results_dir, args.dataset, "global_metrics.json")
@@ -211,7 +211,7 @@ if __name__ == "__main__":
     # add entry and write back to file:
     great_grandparent_metrics[args.model_name] = grandparent_metrics
     with open(great_grandparent_metrics_file, "w") as json_file:
-        json.dump(great_grandparent_metrics, json_file)
+        json.dump(great_grandparent_metrics, json_file, indent=3)
     
 
     print("\n\n")

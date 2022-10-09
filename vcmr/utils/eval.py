@@ -168,16 +168,16 @@ def evaluate(model: Any, dataset: Any, dataset_name: str, audio_length: int, ove
                 # compute global metrics (average across all tags):
                 global_roc = metrics.roc_auc_score(y_true, y_pred[overlap][method], average="macro")
                 global_precision = metrics.average_precision_score(y_true, y_pred[overlap][method], average="macro")
-                # save to json file:
+                # save to json file (rounded to 4 decimal places):
                 global_metrics_dict = {
-                    "ROC-AUC": global_roc,
-                    "PR-AUC": global_precision
+                    "ROC-AUC": np.around(global_roc, decimals=4),
+                    "PR-AUC": np.around(global_precision, decimals=4)
                 }
                 with open(os.path.join(output_dir, f"overlap={overlap}", method, "global_metrics.json"), "w") as json_file:
-                    json.dump(global_metrics_dict, json_file)
+                    json.dump(global_metrics_dict, json_file, indent=3)
                 # save to grandparent dictionary:
                 global_metrics[overlap][method] = global_metrics_dict
-                
+
                 # compute tag-wise metrics:
                 tag_roc = metrics.roc_auc_score(y_true, y_pred[overlap][method], average=None)
                 tag_precision = metrics.average_precision_score(y_true, y_pred[overlap][method], average=None)
@@ -187,11 +187,11 @@ def evaluate(model: Any, dataset: Any, dataset_name: str, audio_length: int, ove
                 tag_metrics_df.to_csv(os.path.join(output_dir, f"overlap={overlap}", method, "tag_metrics.csv"), index_label="tag")
             # save dictionary containing metrics for single overlap ratio value and all methods to json file:
             with open(os.path.join(output_dir, f"overlap={overlap}", "global_metrics.json"), "w") as json_file:
-                json.dump(global_metrics[overlap], json_file)
+                json.dump(global_metrics[overlap], json_file, indent=3)
         
         # save dictionary containing metrics for all overlap ratio values and all methods to json file:
         with open(os.path.join(output_dir, "global_metrics.json"), "w") as json_file:
-            json.dump(global_metrics, json_file)
+            json.dump(global_metrics, json_file, indent=3)
     else:
         raise ValueError("Invalid dataset name.")
     
