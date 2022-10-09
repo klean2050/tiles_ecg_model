@@ -1,5 +1,6 @@
 import os
 from .contrastive import Contrastive, MultiContrastive
+from .song_splitter import SongSplitter
 from .audio import AUDIO
 from .audio_visual import AUDIOVISUAL
 from .mtat import MAGNATAGATUNE
