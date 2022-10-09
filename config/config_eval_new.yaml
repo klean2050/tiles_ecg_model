@@ -43,6 +43,6 @@ seed: 42
 results_dir: "results"
 model_name: "model_1"
 audio_model_version:  "version_0"
-multimodaL_model_version: "version_0"
+multimodal_model_version: "version_0"
 ...
 

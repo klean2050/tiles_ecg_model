@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 import json
 from tqdm import tqdm
-from typing import Union, Any, List
+from typing import Union, Any, List, Dict
+
 from vcmr.loaders import SongSplitter
 
 
@@ -18,7 +19,7 @@ ALL_DATASET_NAMES = ["magnatagatune", "mtg-jamendo-dataset"]
 ALL_AGGREGATION_METHODS = ["average", "max", "majority_vote"]
 
 
-def evaluate(model: Any, dataset: Any, dataset_name: str, audio_length: int, overlap_ratios: List, output_dir: str, agg_methods: Union[List, str] = "all", device: torch.device = None, verbose: bool = False) -> None:
+def evaluate(model: Any, dataset: Any, dataset_name: str, audio_length: int, overlap_ratios: List, output_dir: str, agg_methods: Union[List, str] = "all", device: torch.device = None, verbose: bool = False) -> Dict:
     """Performs evaluation of supervised models on music tagging.
 
     Args:
@@ -32,7 +33,8 @@ def evaluate(model: Any, dataset: Any, dataset_name: str, audio_length: int, ove
         device (torch.device): PyTorch device.
         verbose (str): Verbosity.
     
-    Returns: None
+    Returns:
+        global_metrics (dict): Dictionary containing performance metrics for all overlap ratio values and all methods.
     """
 
     # validate and set parameters:
@@ -173,7 +175,7 @@ def evaluate(model: Any, dataset: Any, dataset_name: str, audio_length: int, ove
                 }
                 with open(os.path.join(output_dir, f"overlap={overlap}", method, "global_metrics.json"), "w") as json_file:
                     json.dump(global_metrics_dict, json_file)
-                # save to parent dictionary:
+                # save to grandparent dictionary:
                 global_metrics[overlap][method] = global_metrics_dict
                 
                 # compute tag-wise metrics:
@@ -183,6 +185,9 @@ def evaluate(model: Any, dataset: Any, dataset_name: str, audio_length: int, ove
                 tag_metrics_dict = {name: {"ROC-AUC": roc, "PR-AUC": precision} for name, roc, precision in zip(label_names, tag_roc, tag_precision)}
                 tag_metrics_df = pd.DataFrame.from_dict(tag_metrics_dict, orient="index")
                 tag_metrics_df.to_csv(os.path.join(output_dir, f"overlap={overlap}", method, "tag_metrics.csv"), index_label="tag")
+            # save dictionary containing metrics for single overlap ratio value and all methods to json file:
+            with open(os.path.join(output_dir, f"overlap={overlap}", "global_metrics.json"), "w") as json_file:
+                json.dump(global_metrics[overlap], json_file)
         
         # save dictionary containing metrics for all overlap ratio values and all methods to json file:
         with open(os.path.join(output_dir, "global_metrics.json"), "w") as json_file:
@@ -190,6 +195,8 @@ def evaluate(model: Any, dataset: Any, dataset_name: str, audio_length: int, ove
     else:
         raise ValueError("Invalid dataset name.")
     
+    return global_metrics
+
     # OLD CODE:
     """
     else:
