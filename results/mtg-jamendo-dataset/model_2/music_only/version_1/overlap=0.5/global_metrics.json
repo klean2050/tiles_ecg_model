@@ -1,0 +1,14 @@
+{
+   "average": {
+      "ROC-AUC": 0.5969,
+      "PR-AUC": 0.0502
+   },
+   "max": {
+      "ROC-AUC": 0.5903,
+      "PR-AUC": 0.0474
+   },
+   "majority_vote": {
+      "ROC-AUC": 0.5002,
+      "PR-AUC": 0.0298
+   }
+}

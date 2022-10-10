@@ -1,0 +1,72 @@
+{
+   "0": {
+      "average": {
+         "ROC-AUC": 0.597,
+         "PR-AUC": 0.0499
+      },
+      "max": {
+         "ROC-AUC": 0.5911,
+         "PR-AUC": 0.0477
+      },
+      "majority_vote": {
+         "ROC-AUC": 0.5002,
+         "PR-AUC": 0.0298
+      }
+   },
+   "0.25": {
+      "average": {
+         "ROC-AUC": 0.598,
+         "PR-AUC": 0.0504
+      },
+      "max": {
+         "ROC-AUC": 0.5925,
+         "PR-AUC": 0.0482
+      },
+      "majority_vote": {
+         "ROC-AUC": 0.5001,
+         "PR-AUC": 0.0297
+      }
+   },
+   "0.5": {
+      "average": {
+         "ROC-AUC": 0.5969,
+         "PR-AUC": 0.0502
+      },
+      "max": {
+         "ROC-AUC": 0.5903,
+         "PR-AUC": 0.0474
+      },
+      "majority_vote": {
+         "ROC-AUC": 0.5002,
+         "PR-AUC": 0.0298
+      }
+   },
+   "0.75": {
+      "average": {
+         "ROC-AUC": 0.597,
+         "PR-AUC": 0.0504
+      },
+      "max": {
+         "ROC-AUC": 0.5908,
+         "PR-AUC": 0.0479
+      },
+      "majority_vote": {
+         "ROC-AUC": 0.5004,
+         "PR-AUC": 0.0299
+      }
+   },
+   "0.9": {
+      "average": {
+         "ROC-AUC": 0.5969,
+         "PR-AUC": 0.0499
+      },
+      "max": {
+         "ROC-AUC": 0.5887,
+         "PR-AUC": 0.0469
+      },
+      "majority_vote": {
+         "ROC-AUC": 0.5006,
+         "PR-AUC": 0.0299
+      }
+   }
+}
