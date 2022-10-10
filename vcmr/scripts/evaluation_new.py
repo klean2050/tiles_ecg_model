@@ -17,7 +17,6 @@ from vcmr.utils import yaml_config_hook, evaluate
 
 # script options:
 config_file = "config/config_eval_new.yaml"
-model_selection = False
 verbose = 1
 
 
@@ -154,66 +153,65 @@ if __name__ == "__main__":
     # METRIC FILE UPDATES
     # -------------------
 
-    if model_selection and args.dataset_subset == "valid":
-        if verbose:
-            print("\n\nUpdating metric files...")
-        
-        # update audio model's parent dictionary (contains metrics for single model, single modality, all model versions):
-        audio_parent_metrics_file = os.path.join(main_results_dir, "music_only", "global_metrics.json")
-        # load dictionary if it already exists:
-        if os.path.isfile(audio_parent_metrics_file):
-            with open(audio_parent_metrics_file, "r") as json_file:
-                audio_parent_metrics = json.load(json_file)
-        # else create new dictionary:
-        else:
-            audio_parent_metrics = {}
-        # add entry and write back to file:
-        audio_parent_metrics[args.audio_model_version] = audio_metrics
-        with open(audio_parent_metrics_file, "w") as json_file:
-            json.dump(audio_parent_metrics, json_file, indent=3)
-        
-        # update multimodal model's parent dictionary (contains metrics for single model, single modality, all model versions):
-        multimodal_parent_metrics_file = os.path.join(main_results_dir, "multimodal", "global_metrics.json")
-        # load dictionary if it already exists:
-        if os.path.isfile(multimodal_parent_metrics_file):
-            with open(multimodal_parent_metrics_file, "r") as json_file:
-                multimodal_parent_metrics = json.load(json_file)
-        # else create new dictionary:
-        else:
-            multimodal_parent_metrics = {}
-        # add entry and write back to file:
-        multimodal_parent_metrics[args.multimodal_model_version] = multimodal_metrics
-        with open(multimodal_parent_metrics_file, "w") as json_file:
-            json.dump(multimodal_parent_metrics, json_file, indent=3)
-        
-        # update grandparent dictionary (contains metrics for single model, all modalities, all model versions):
-        grandparent_metrics_file = os.path.join(main_results_dir, "global_metrics.json")
-        # load dictionary if it already exists:
-        if os.path.isfile(grandparent_metrics_file):
-            with open(grandparent_metrics_file, "r") as json_file:
-                grandparent_metrics = json.load(json_file)
-        # else create new dictionary:
-        else:
-            grandparent_metrics = {}
-        # add entries and write back to file:
-        grandparent_metrics["audio"] = audio_parent_metrics
-        grandparent_metrics["multimodal"] = multimodal_parent_metrics
-        with open(grandparent_metrics_file, "w") as json_file:
-            json.dump(grandparent_metrics, json_file, indent=3)
-        
-        # update great-grandparent dictionary (contains metrics for all models, all modalities, all model versions):
-        great_grandparent_metrics_file = os.path.join(args.results_dir, args.dataset, "global_metrics.json")
-        # load dictionary if it already exists:
-        if os.path.isfile(great_grandparent_metrics_file):
-            with open(great_grandparent_metrics_file, "r") as json_file:
-                great_grandparent_metrics = json.load(json_file)
-        # else create new dictionary:
-        else:
-            great_grandparent_metrics = {}
-        # add entry and write back to file:
-        great_grandparent_metrics[args.model_name] = grandparent_metrics
-        with open(great_grandparent_metrics_file, "w") as json_file:
-            json.dump(great_grandparent_metrics, json_file, indent=3)
+    if verbose:
+        print("\n\nUpdating metric files...")
+    
+    # update audio model's parent dictionary (contains metrics for single model, single modality, all model versions):
+    audio_parent_metrics_file = os.path.join(main_results_dir, "music_only", "global_metrics.json")
+    # load dictionary if it already exists:
+    if os.path.isfile(audio_parent_metrics_file):
+        with open(audio_parent_metrics_file, "r") as json_file:
+            audio_parent_metrics = json.load(json_file)
+    # else create new dictionary:
+    else:
+        audio_parent_metrics = {}
+    # add entry and write back to file:
+    audio_parent_metrics[args.audio_model_version] = audio_metrics
+    with open(audio_parent_metrics_file, "w") as json_file:
+        json.dump(audio_parent_metrics, json_file, indent=3)
+    
+    # update multimodal model's parent dictionary (contains metrics for single model, single modality, all model versions):
+    multimodal_parent_metrics_file = os.path.join(main_results_dir, "multimodal", "global_metrics.json")
+    # load dictionary if it already exists:
+    if os.path.isfile(multimodal_parent_metrics_file):
+        with open(multimodal_parent_metrics_file, "r") as json_file:
+            multimodal_parent_metrics = json.load(json_file)
+    # else create new dictionary:
+    else:
+        multimodal_parent_metrics = {}
+    # add entry and write back to file:
+    multimodal_parent_metrics[args.multimodal_model_version] = multimodal_metrics
+    with open(multimodal_parent_metrics_file, "w") as json_file:
+        json.dump(multimodal_parent_metrics, json_file, indent=3)
+    
+    # update grandparent dictionary (contains metrics for single model, all modalities, all model versions):
+    grandparent_metrics_file = os.path.join(main_results_dir, "global_metrics.json")
+    # load dictionary if it already exists:
+    if os.path.isfile(grandparent_metrics_file):
+        with open(grandparent_metrics_file, "r") as json_file:
+            grandparent_metrics = json.load(json_file)
+    # else create new dictionary:
+    else:
+        grandparent_metrics = {}
+    # add entries and write back to file:
+    grandparent_metrics["audio"] = audio_parent_metrics
+    grandparent_metrics["multimodal"] = multimodal_parent_metrics
+    with open(grandparent_metrics_file, "w") as json_file:
+        json.dump(grandparent_metrics, json_file, indent=3)
+    
+    # update great-grandparent dictionary (contains metrics for all models, all modalities, all model versions):
+    great_grandparent_metrics_file = os.path.join(args.results_dir, args.dataset, "global_metrics.json")
+    # load dictionary if it already exists:
+    if os.path.isfile(great_grandparent_metrics_file):
+        with open(great_grandparent_metrics_file, "r") as json_file:
+            great_grandparent_metrics = json.load(json_file)
+    # else create new dictionary:
+    else:
+        great_grandparent_metrics = {}
+    # add entry and write back to file:
+    great_grandparent_metrics[args.model_name] = grandparent_metrics
+    with open(great_grandparent_metrics_file, "w") as json_file:
+        json.dump(great_grandparent_metrics, json_file, indent=3)
     
 
     print("\n\n")
