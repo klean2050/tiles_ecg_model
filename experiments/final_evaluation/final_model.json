@@ -1,0 +1,6 @@
+{
+    "model_name": "model_1",
+    "model_version": "version_1",
+    "overlap_ratio": 0.5,
+    "agg_method": "average"
+}
