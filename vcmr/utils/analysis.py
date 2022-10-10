@@ -42,7 +42,7 @@ def find_best_model(global_metrics: Dict, model_modality: str, metric_type: str)
                 for method in global_metrics[model][model_modality][version][overlap].keys():
                     # update best model/score:
                     if global_metrics[model][model_modality][version][overlap][method][metric_type] > best_score:
-                        best_model = (model, model_modality, version, overlap, method, metric_type)
+                        best_model = (model, version, f"overlap={overlap}", method)
                         best_score = global_metrics[model][model_modality][version][overlap][method][metric_type]
     
     return best_model, best_score

@@ -1,0 +1,86 @@
+{
+   "magnatagatune": {
+      "audio": {
+         "ROC-AUC": {
+            "best_model": [
+               "model_1",
+               "version_1",
+               "overlap=0",
+               "average"
+            ],
+            "best_score": 0.831
+         },
+         "PR-AUC": {
+            "best_model": [
+               "model_1",
+               "version_0",
+               "overlap=0.75",
+               "average"
+            ],
+            "best_score": 0.2569
+         }
+      },
+      "multimodal": {
+         "ROC-AUC": {
+            "best_model": [
+               "model_1",
+               "version_1",
+               "overlap=0.25",
+               "average"
+            ],
+            "best_score": 0.8921
+         },
+         "PR-AUC": {
+            "best_model": [
+               "model_1",
+               "version_0",
+               "overlap=0.5",
+               "average"
+            ],
+            "best_score": 0.3529
+         }
+      }
+   },
+   "mtg-jamendo-dataset": {
+      "audio": {
+         "ROC-AUC": {
+            "best_model": [
+               "model_1",
+               "version_1",
+               "overlap=0",
+               "average"
+            ],
+            "best_score": 0.6205
+         },
+         "PR-AUC": {
+            "best_model": [
+               "model_1",
+               "version_1",
+               "overlap=0",
+               "average"
+            ],
+            "best_score": 0.0585
+         }
+      },
+      "multimodal": {
+         "ROC-AUC": {
+            "best_model": [
+               "model_2",
+               "version_1",
+               "overlap=0.9",
+               "average"
+            ],
+            "best_score": 0.6952
+         },
+         "PR-AUC": {
+            "best_model": [
+               "model_2",
+               "version_0",
+               "overlap=0",
+               "average"
+            ],
+            "best_score": 0.0892
+         }
+      }
+   }
+}
