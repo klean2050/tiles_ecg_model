@@ -1,0 +1,22 @@
+{
+   "audio": {
+      "version_1": {
+         "0.5": {
+            "average": {
+               "ROC-AUC": 0.6096,
+               "PR-AUC": 0.0602
+            }
+         }
+      }
+   },
+   "multimodal": {
+      "version_1": {
+         "0.5": {
+            "average": {
+               "ROC-AUC": 0.7071,
+               "PR-AUC": 0.1007
+            }
+         }
+      }
+   }
+}
