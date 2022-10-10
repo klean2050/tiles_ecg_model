@@ -40,8 +40,8 @@ seed: 42
 
 # saving results options:
 # note: results are saved to results_dir/dataset/model_name/
-results_dir: "results/final_evaluation"
-model_name: "best_model"
+results_dir: "results/final_evaluation/all_tags"
+model_name: "model_1"
 audio_model_version:  "version_1"
 multimodal_model_version: "version_1"
 ...
