@@ -5,6 +5,7 @@ runs/
 build/
 dist/
 experiments/
+results/
 *.egg-info
 
 # Compiled source #
