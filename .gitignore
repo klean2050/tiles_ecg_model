@@ -4,7 +4,7 @@ data/
 runs/
 build/
 dist/
-# config/
+experiments/
 *.egg-info
 
 # Compiled source #
