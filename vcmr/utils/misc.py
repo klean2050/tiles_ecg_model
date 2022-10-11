@@ -53,7 +53,7 @@ def make_graphs(dataset, mus, vid, name):
     return list(dct.keys())[-15:]
 
 
-def visualize(dataset, features, labels, name):
+def visualize(features, labels, name):
     tsne = TSNE(
         n_components=2, perplexity=50, learning_rate=130, metric="cosine", init="pca"
     ).fit_transform(features)

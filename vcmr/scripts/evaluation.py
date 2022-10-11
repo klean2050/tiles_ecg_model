@@ -1,31 +1,71 @@
-import argparse, pytorch_lightning as pl
-import os, pickle, warnings, numpy as np
+"""Script to perform evaluation of supervised models on music tagging."""
+
+
+import os, argparse
+import pytorch_lightning as pl
 from pytorch_lightning import Trainer
+import torch, json, warnings
 
-warnings.filterwarnings("ignore")
-
-from vcmr.loaders import get_dataset, Contrastive
-from vcmr.models import SampleCNN
+from vcmr.loaders import get_dataset
+from VCMR.vcmr.models.sample_cnn import SampleCNN
 from vcmr.trainers import SupervisedLearning
-from vcmr.utils import *
+from vcmr.utils import yaml_config_hook, evaluate
+
+
+# script options:
+verbose = 1
+config_file = "config/config_eval.yaml"
 
 
 if __name__ == "__main__":
+    print("\n\n")
+    # ignore warnings:
+    warnings.filterwarnings("ignore")
 
+    # --------------
+    # CONFIGS PARSER
+    # --------------
+
+    # create args parser and link to PyTorch Lightning trainer:
     parser = argparse.ArgumentParser(description="VCMR")
     parser = Trainer.add_argparse_args(parser)
 
-    config = yaml_config_hook("config/config_eval.yaml")
-    for k, v in config.items():
-        parser.add_argument(f"--{k}", default=v, type=type(v))
-
+    # extract args from config file and add to parser:
+    config = yaml_config_hook(config_file)
+    for key, value in config.items():
+        parser.add_argument(f"--{key}", default=value, type=type(value))
     args = parser.parse_args()
-    pl.seed_everything(args.seed)
 
+    # set random seed if selected:
+    if args.seed:
+        pl.seed_everything(args.seed, workers=True)
+
+    # -------
+    # DATASET
+    # -------
+
+    # validate dataset subset:
+    if args.dataset_subset not in ["train", "valid", "test"]:
+        raise ValueError("Invalid dataset subset.")
+    # get dataset:
     dataset = get_dataset(
-        args.dataset, args.dataset_dir, subset="test", sr=args.sample_rate
+        args.dataset, args.dataset_dir, subset=args.dataset_subset, sr=args.sample_rate
     )
-    test_dataset = Contrastive(dataset, input_shape=(1, args.audio_length))
+    if verbose:
+        print(
+            "\nUsing {} subset of {} with {} examples...".format(
+                args.dataset_subset, args.dataset, len(dataset)
+            )
+        )
+
+    # ------
+    # MODELS
+    # ------
+
+    if verbose:
+        print("\nLoading models...")
+
+    # create backbone audio encoder:
     encoder = SampleCNN(
         n_blocks=args.n_blocks,
         n_channels=args.n_channels,
@@ -37,57 +77,135 @@ if __name__ == "__main__":
         input_size=args.audio_length,
     )
 
-    mus_path = f"results/{args.dataset}/{args.checkpoint_mus}"
-    vid_path = f"results/{args.dataset}/{args.checkpoint_vid}"
-    os.makedirs(mus_path, exist_ok=True)
-    os.makedirs(vid_path, exist_ok=True)
-
-    # music model checkpoint
-    checkpoint = f"runs/VCMR-{args.dataset}/{args.checkpoint_mus}"
-    module_mus = SupervisedLearning.load_from_checkpoint(
-        checkpoint, encoder=encoder, output_dim=dataset.n_classes
+    # load supervised model pretrained on audio only from checkpoint:
+    audio_model = SupervisedLearning.load_from_checkpoint(
+        args.ckpt_path_audio, encoder=encoder, output_dim=dataset.n_classes
     )
-    evaluate(
-        module_mus,
-        test_dataset,
-        mus_path,
-        args.audio_length,
-        device=f"cuda:{args.n_cuda}",
+    # load supervised model pretrained on audio + video from checkpoint:
+    multimodal_model = SupervisedLearning.load_from_checkpoint(
+        args.ckpt_path_multimodal, encoder=encoder, output_dim=dataset.n_classes
     )
 
-    # music+video model checkpoint
-    checkpoint = f"runs/VCMR-{args.dataset}/{args.checkpoint_vid}"
-    module_vid = SupervisedLearning.load_from_checkpoint(
-        checkpoint, encoder=encoder, output_dim=dataset.n_classes
+    # ----------
+    # EVALUATION
+    # ----------
+
+    # select single GPU to use:
+    device = torch.device(f"cuda:{args.n_cuda}")
+    # os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda     # produces a CUDA error for some reason
+
+    # create directories for saving results:
+    # note: main results directory = results_dir/dataset/model_name/
+    main_results_dir = os.path.join(args.results_dir, args.dataset, args.model_name, "")
+    # note: results subdirectory of modality x = results_dir/dataset/model_name/modality_x/x_model_version/
+    audio_results_dir = os.path.join(
+        main_results_dir, "music_only", args.audio_model_version, ""
     )
-    evaluate(
-        module_vid,
-        test_dataset,
-        vid_path,
-        args.audio_length,
-        device=f"cuda:{args.n_cuda}",
+    multimodal_results_dir = os.path.join(
+        main_results_dir, "multimodal", args.multimodal_model_version, ""
+    )
+    os.makedirs(main_results_dir, exist_ok=True)
+    os.makedirs(audio_results_dir, exist_ok=True)
+    os.makedirs(multimodal_results_dir, exist_ok=True)
+
+    # evaluate supervised model pretrained on audio only:
+    if verbose:
+        print("\n\nRunning evaluation for music only model...\n")
+    audio_metrics = evaluate(
+        audio_model,
+        dataset=dataset,
+        dataset_name=args.dataset,
+        audio_length=args.audio_length,
+        overlap_ratios=args.song_split_overlap_ratios,
+        output_dir=audio_results_dir,
+        agg_methods=args.aggregation_methods,
+        device=device,
+        verbose=verbose,
     )
 
-    # bars for label-wise performance
-    with open(f"{mus_path}/classes_dict.pickle", "rb") as fp:
-        a = pickle.load(fp)
-        a0 = {k: v[0] for k, v in a.items()}
-        a1 = {k: v[1] for k, v in a.items()}
+    # evaluate supervised model pretrained on audio + video:
+    if verbose:
+        print("\n\nRunning evaluation for multimodal model...\n")
+    multimodal_metrics = evaluate(
+        multimodal_model,
+        dataset=dataset,
+        dataset_name=args.dataset,
+        audio_length=args.audio_length,
+        overlap_ratios=args.song_split_overlap_ratios,
+        output_dir=multimodal_results_dir,
+        agg_methods=args.aggregation_methods,
+        device=device,
+        verbose=verbose,
+    )
 
-    with open(f"{vid_path}/classes_dict.pickle", "rb") as fp:
-        b = pickle.load(fp)
-        b0 = {k: v[0] for k, v in b.items()}
-        b1 = {k: v[1] for k, v in b.items()}
+    # -------------------
+    # METRIC FILE UPDATES
+    # -------------------
 
-    _ = make_graphs(args.dataset, a0, b0, name="prs")
-    tops = make_graphs(args.dataset, a1, b1, name="rcs")
+    if verbose:
+        print("\n\nUpdating metric files...")
 
-    # t-SNE plots of pretrained features
-    indices = [i for i, k in enumerate(b.keys()) if k in tops]
-    lbs = np.load(f"{vid_path}/labels.npy")
-    lbs = np.stack([v[indices] for v in lbs])
+    # update audio model's parent dictionary (contains metrics for single model, single modality, all model versions):
+    audio_parent_metrics_file = os.path.join(
+        main_results_dir, "music_only", "global_metrics.json"
+    )
+    # load dictionary if it already exists:
+    if os.path.isfile(audio_parent_metrics_file):
+        with open(audio_parent_metrics_file, "r") as json_file:
+            audio_parent_metrics = json.load(json_file)
+    # else create new dictionary:
+    else:
+        audio_parent_metrics = {}
+    # add entry and write back to file:
+    audio_parent_metrics[args.audio_model_version] = audio_metrics
+    with open(audio_parent_metrics_file, "w") as json_file:
+        json.dump(audio_parent_metrics, json_file, indent=3)
 
-    fts1 = np.load(f"{mus_path}/features.npy")
-    fts2 = np.load(f"{vid_path}/features.npy")
-    visualize(args.dataset, fts1, lbs, name=f"{mus_path}/test_mus.png")
-    visualize(args.dataset, fts2, lbs, name=f"{vid_path}/test_vid.png")
+    # update multimodal model's parent dictionary (contains metrics for single model, single modality, all model versions):
+    multimodal_parent_metrics_file = os.path.join(
+        main_results_dir, "multimodal", "global_metrics.json"
+    )
+    # load dictionary if it already exists:
+    if os.path.isfile(multimodal_parent_metrics_file):
+        with open(multimodal_parent_metrics_file, "r") as json_file:
+            multimodal_parent_metrics = json.load(json_file)
+    # else create new dictionary:
+    else:
+        multimodal_parent_metrics = {}
+    # add entry and write back to file:
+    multimodal_parent_metrics[args.multimodal_model_version] = multimodal_metrics
+    with open(multimodal_parent_metrics_file, "w") as json_file:
+        json.dump(multimodal_parent_metrics, json_file, indent=3)
+
+    # update grandparent dictionary (contains metrics for single model, all modalities, all model versions):
+    grandparent_metrics_file = os.path.join(main_results_dir, "global_metrics.json")
+    # load dictionary if it already exists:
+    if os.path.isfile(grandparent_metrics_file):
+        with open(grandparent_metrics_file, "r") as json_file:
+            grandparent_metrics = json.load(json_file)
+    # else create new dictionary:
+    else:
+        grandparent_metrics = {}
+    # add entries and write back to file:
+    grandparent_metrics["audio"] = audio_parent_metrics
+    grandparent_metrics["multimodal"] = multimodal_parent_metrics
+    with open(grandparent_metrics_file, "w") as json_file:
+        json.dump(grandparent_metrics, json_file, indent=3)
+
+    # update great-grandparent dictionary (contains metrics for all models, all modalities, all model versions):
+    great_grandparent_metrics_file = os.path.join(
+        args.results_dir, args.dataset, "global_metrics.json"
+    )
+    # load dictionary if it already exists:
+    if os.path.isfile(great_grandparent_metrics_file):
+        with open(great_grandparent_metrics_file, "r") as json_file:
+            great_grandparent_metrics = json.load(json_file)
+    # else create new dictionary:
+    else:
+        great_grandparent_metrics = {}
+    # add entry and write back to file:
+    great_grandparent_metrics[args.model_name] = grandparent_metrics
+    with open(great_grandparent_metrics_file, "w") as json_file:
+        json.dump(great_grandparent_metrics, json_file, indent=3)
+
+    print("\n\n")

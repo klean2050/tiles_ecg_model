@@ -31,25 +31,17 @@ if __name__ == "__main__":
     # parse args:
     args = parser.parse_args()
 
-
     # ------------
     # DATA LOADERS
     # ------------
 
     # get training dataset:
-    train_dataset = get_dataset(
-        "audio_visual",
-        args.dataset_dir,
-        subset="train"
-    )
+    train_dataset = get_dataset("audio_visual", args.dataset_dir, subset="train")
 
     # set up contrastive learning training dataset:
     contrastive_train_dataset = MultiContrastive(
-        train_dataset,
-        n_samples=args.audio_length,
-        sr=args.sample_rate
+        train_dataset, n_samples=args.audio_length, sr=args.sample_rate
     )
-
 
     # -------
     # TESTING
@@ -59,9 +51,18 @@ if __name__ == "__main__":
     print("Testing __getitem__() method...")
     audio_crop, video_crop, _ = contrastive_train_dataset[sample_idx]
 
-    assert type(audio_crop) == Tensor and type(video_crop) == Tensor, "Error with return type(s)."
-    assert tuple(audio_crop.size()) == (1, args.audio_length), "Error with shape of sample cropped audio tensor."
-    assert tuple(video_crop.size()) == (contrastive_train_dataset.n_seconds, contrastive_train_dataset.video_n_features), "Error with shape of sample cropped video tensor."
+    assert (
+        type(audio_crop) == Tensor and type(video_crop) == Tensor
+    ), "Error with return type(s)."
+
+    assert tuple(audio_crop.size()) == (
+        1,
+        args.audio_length,
+    ), "Error with shape of sample cropped audio tensor."
+
+    assert tuple(video_crop.size()) == (
+        contrastive_train_dataset.n_seconds,
+        contrastive_train_dataset.video_n_features,
+    ), "Error with shape of sample cropped video tensor."
 
     print("\n\n")
-
