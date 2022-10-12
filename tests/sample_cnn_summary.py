@@ -2,7 +2,7 @@
 
 
 from torchinfo import summary
-from VCMR.vcmr.models.sample_cnn import SampleCNN
+from vcmr.models.sample_cnn import SampleCNN
 
 
 if __name__ == "__main__":

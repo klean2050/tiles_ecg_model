@@ -7,7 +7,7 @@ from pytorch_lightning import Trainer
 import torch, json, warnings
 
 from vcmr.loaders import get_dataset
-from VCMR.vcmr.models.sample_cnn import SampleCNN
+from vcmr.models.sample_cnn import SampleCNN
 from vcmr.trainers import SupervisedLearning
 from vcmr.utils import yaml_config_hook, evaluate
 

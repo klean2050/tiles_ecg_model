@@ -11,7 +11,7 @@ from torchaudio_augmentations import RandomResizedCrop
 
 from vcmr.utils import yaml_config_hook
 from vcmr.loaders import get_dataset, Contrastive
-from VCMR.vcmr.models.sample_cnn import SampleCNN
+from vcmr.models.sample_cnn import SampleCNN
 from vcmr.trainers import ContrastiveLearning, MultimodalLearning, SupervisedLearning
 
 

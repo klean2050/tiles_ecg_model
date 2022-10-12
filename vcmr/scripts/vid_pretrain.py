@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 
 from vcmr.utils import yaml_config_hook
 from vcmr.loaders import get_dataset, MultiContrastive
-from VCMR.vcmr.models.sample_cnn import SampleCNN
+from vcmr.models.sample_cnn import SampleCNN
 from vcmr.trainers import ContrastiveLearning, MultimodalLearning
 
 
