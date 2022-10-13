@@ -26,11 +26,11 @@ def evaluate(
     overlap_ratios: List,
     output_dir: str,
     agg_methods: Union[List, str] = "all",
+    tag_groups: Union[Dict, str] = "all",
     device: torch.device = None,
     verbose: bool = False,
 ) -> Dict:
     """Performs evaluation of supervised models on music tagging.
-
     Args:
         model (pytorch_lightning.LightningModule): Supervised model to evaluate.
         dataset (torch.utils.data.Dataset): Test dataset.
@@ -39,9 +39,10 @@ def evaluate(
         overlap_ratios (list): List of overlap ratios to try for splitting songs.
         output_dir (str): Path of directory for saving results.
         agg_methods (list | str): Method(s) to aggregate instance-level outputs of a song.
+        tag_groups (dict | str): Tag groups to evaluate.
         device (torch.device): PyTorch device.
         verbose (str): Verbosity.
-
+    
     Returns:
         global_metrics (dict): Dictionary containing performance metrics for all overlap ratio values and all methods.
     """
@@ -68,15 +69,23 @@ def evaluate(
         agg_methods = agg_methods
     else:
         raise ValueError("agg_methods is of an invalid data type.")
-
+    if type(tag_groups) == str:
+        if tag_groups == "all":
+            tag_groups = {"all_tags": list(dataset.label2idx.keys())}
+        else:
+            raise ValueError("Invalid tag_groups value.")
+    elif type(tag_groups) != dict:
+        raise ValueError("tag_groups is of an invalid data type.")
+    
     # create subdirectories for saving results:
     for overlap in overlap_ratios:
         for method in agg_methods:
-            os.makedirs(
-                os.path.join(output_dir, f"overlap={overlap}", method, ""),
-                exist_ok=True,
-            )
-
+            for category in tag_groups.keys():
+                os.makedirs(
+                    os.path.join(output_dir, f"overlap={overlap}", method, category, ""),
+                    exist_ok=True,
+                )
+    
     # true labels, features (embeddings), and predicted labels:
     y_true = []
     features = {}
@@ -183,13 +192,6 @@ def evaluate(
 
     # compute performance metrics:
     if dataset_name in ["magnatagatune", "mtg-jamendo-dataset"]:
-        # get label names:
-        label_names = list(test_dataset.dataset.label2idx.keys())
-        label_names = [
-            name.split("---")[-1] for name in label_names
-        ]  # old code, probably not necessary
-        # sanity check length:
-        assert len(label_names) == y_true.shape[-1], "Error with length of label names."
 
         global_metrics = {}
         # loop over overlap ratio values:
@@ -197,62 +199,87 @@ def evaluate(
             global_metrics[overlap] = {}
             # loop over aggregation methods:
             for method in agg_methods:
-                # compute global metrics (average across all tags):
-                global_roc = metrics.roc_auc_score(
-                    y_true, y_pred[overlap][method], average="macro"
-                )
-                global_precision = metrics.average_precision_score(
-                    y_true, y_pred[overlap][method], average="macro"
-                )
-                # save to json file (rounded to 4 decimal places):
-                global_metrics_dict = {
-                    "ROC-AUC": np.around(global_roc, decimals=4),
-                    "PR-AUC": np.around(global_precision, decimals=4),
-                }
+                global_metrics[overlap][method] = {}
+                # loop over tag groups:
+                for category, tags in tag_groups.items():
+                    # convert tag names to tag indices:
+                    tag_indices = [dataset.label2idx[tag] for tag in tags]
+
+                    # compute global metrics (average across tags in tag group):
+                    try:
+                        global_roc = metrics.roc_auc_score(
+                            y_true[:, tag_indices], y_pred[overlap][method][:, tag_indices], average="macro"
+                        )
+                        global_precision = metrics.average_precision_score(
+                            y_true[:, tag_indices], y_pred[overlap][method][:, tag_indices], average="macro"
+                        )
+                    except:
+                        if verbose:
+                            print("Warning: at least 1 global metric was not able to be computed.")
+                        global_roc = np.nan
+                        global_precision = np.nan
+                    # save to json file (rounded to 4 decimal places):
+                    global_metrics_dict = {
+                        "ROC-AUC": np.around(global_roc, decimals=4),
+                        "PR-AUC": np.around(global_precision, decimals=4),
+                    }
+                    with open(
+                        os.path.join(
+                            output_dir, f"overlap={overlap}", method, category, "global_metrics.json"
+                        ),
+                        "w",
+                    ) as json_file:
+                        json.dump(global_metrics_dict, json_file, indent=3)
+                    # save to higher-level dictionary:
+                    global_metrics[overlap][method][category] = global_metrics_dict
+
+                    # compute tag-wise metrics:
+                    try:
+                        tag_roc = metrics.roc_auc_score(
+                            y_true[:, tag_indices], y_pred[overlap][method][:, tag_indices], average=None
+                        )
+                        tag_precision = metrics.average_precision_score(
+                            y_true[:, tag_indices], y_pred[overlap][method][:, tag_indices], average=None
+                        )
+                        # save to csv file:
+                        tag_metrics_dict = {
+                            name: {"ROC-AUC": roc, "PR-AUC": precision}
+                            for name, roc, precision in zip(tags, tag_roc, tag_precision)
+                        }
+                        tag_metrics_df = pd.DataFrame.from_dict(
+                            tag_metrics_dict, orient="index"
+                        )
+                        tag_metrics_df.to_csv(
+                            os.path.join(
+                                output_dir, f"overlap={overlap}", method, category, "tag_metrics.csv"
+                            ),
+                            index_label="tag",
+                        )
+                    except:
+                        if verbose:
+                            print("Warning: at least 1 tag-wise metric was not able to be computed.")
+                        pass
+                
+                # save dictionary containing metrics for single overlap ratio, single method, all tag groups to json file:
                 with open(
-                    os.path.join(
-                        output_dir, f"overlap={overlap}", method, "global_metrics.json"
-                    ),
+                    os.path.join(output_dir, f"overlap={overlap}", method, "global_metrics.json"),
                     "w",
                 ) as json_file:
-                    json.dump(global_metrics_dict, json_file, indent=3)
-                # save to grandparent dictionary:
-                global_metrics[overlap][method] = global_metrics_dict
-
-                # compute tag-wise metrics:
-                tag_roc = metrics.roc_auc_score(
-                    y_true, y_pred[overlap][method], average=None
-                )
-                tag_precision = metrics.average_precision_score(
-                    y_true, y_pred[overlap][method], average=None
-                )
-                # save to csv file:
-                tag_metrics_dict = {
-                    name: {"ROC-AUC": roc, "PR-AUC": precision}
-                    for name, roc, precision in zip(label_names, tag_roc, tag_precision)
-                }
-                tag_metrics_df = pd.DataFrame.from_dict(
-                    tag_metrics_dict, orient="index"
-                )
-                tag_metrics_df.to_csv(
-                    os.path.join(
-                        output_dir, f"overlap={overlap}", method, "tag_metrics.csv"
-                    ),
-                    index_label="tag",
-                )
-            # save dictionary containing metrics for single overlap ratio value and all methods to json file:
+                    json.dump(global_metrics[overlap][method], json_file, indent=3)
+            
+            # save dictionary containing metrics for single overlap ratio, all methods, all tag groups to json file:
             with open(
                 os.path.join(output_dir, f"overlap={overlap}", "global_metrics.json"),
                 "w",
             ) as json_file:
                 json.dump(global_metrics[overlap], json_file, indent=3)
-
-        # save dictionary containing metrics for all overlap ratio values and all methods to json file:
+        
+        # save dictionary containing metrics for all overlap ratios, all methods, all tag groups to json file:
         with open(os.path.join(output_dir, "global_metrics.json"), "w") as json_file:
             json.dump(global_metrics, json_file, indent=3)
     else:
-        raise ValueError("Invalid dataset name.")
-
+        raise ValueError("Dataset not supported.")
+    
     return global_metrics
 
 

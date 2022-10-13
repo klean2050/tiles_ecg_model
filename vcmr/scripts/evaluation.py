@@ -13,8 +13,10 @@ from vcmr.utils import yaml_config_hook, evaluate
 
 
 # script options:
+config_file = "experiments/final_evaluation/magnatagatune/config_final_eval.yaml"
+mtag_tags_file = "config/mtat_tag_categories.yaml"
+final_eval = True
 verbose = 1
-config_file = "config/config_eval.yaml"
 
 
 if __name__ == "__main__":
@@ -89,7 +91,7 @@ if __name__ == "__main__":
     # ----------
     # EVALUATION
     # ----------
-
+    
     # select single GPU to use:
     device = torch.device(f"cuda:{args.n_cuda}")
     # os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda     # produces a CUDA error for some reason
@@ -108,6 +110,28 @@ if __name__ == "__main__":
     os.makedirs(audio_results_dir, exist_ok=True)
     os.makedirs(multimodal_results_dir, exist_ok=True)
 
+    # extract MagnaTagATune tag categories for final evaluation:
+    all_tags = list(dataset.label2idx.keys())
+    if final_eval and args.dataset == "magnatagatune":
+        mtat_tags = yaml_config_hook(mtag_tags_file)
+        # sort and validate tag categories:
+        for category, tags in mtat_tags.items():
+            mtat_tags[category] = sorted(tags)
+            if not (set(tags) <= set(all_tags)):
+                raise ValueError("One or more tags in {} category is invalid.")
+
+    # set tag groups:
+    if final_eval:
+        if args.dataset == "magnatagatune":
+            tag_groups = mtat_tags
+            tag_groups["all_tags"] = all_tags
+        else:
+            tag_groups = "all"
+            # tag_groups = {"": all_tags}
+    else:
+        tag_groups = "all"
+        # tag_groups = {"": all_tags}
+
     # evaluate supervised model pretrained on audio only:
     if verbose:
         print("\n\nRunning evaluation for music only model...\n")
@@ -119,6 +143,7 @@ if __name__ == "__main__":
         overlap_ratios=args.song_split_overlap_ratios,
         output_dir=audio_results_dir,
         agg_methods=args.aggregation_methods,
+        tag_groups=tag_groups,
         device=device,
         verbose=verbose,
     )
@@ -134,6 +159,7 @@ if __name__ == "__main__":
         overlap_ratios=args.song_split_overlap_ratios,
         output_dir=multimodal_results_dir,
         agg_methods=args.aggregation_methods,
+        tag_groups=tag_groups,
         device=device,
         verbose=verbose,
     )
@@ -209,3 +235,4 @@ if __name__ == "__main__":
         json.dump(great_grandparent_metrics, json_file, indent=3)
 
     print("\n\n")
+
