@@ -31,9 +31,10 @@ REQUIRED = [
     "torch",
     "torchaudio",
     "torchaudio_augmentations",
+    "torchinfo",
     "torchmetrics",
     "tqdm",
-    "wget"
+    "wget",
 ]
 
 EXTRAS = {}
