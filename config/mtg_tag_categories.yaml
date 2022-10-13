@@ -8,6 +8,6 @@ genre: [classical, techno, electronic, rock, indian, opera, pop, classic, new ag
 mood: [slow, fast, ambient, loud, quiet, soft, weird]
 instrument: [guitar, strings, drums, piano, violin, synth, harpsichord, flute, sitar, harp, cello]
 vocals: [vocal, female, male, singing, vocals, no vocals, no vocal, man, choir, voice, male voice, female vocal, female voice, choral]
-other: [beat, solo, beats]
+# other: [beat, solo, beats]
 ...
 
