@@ -1,23 +1,21 @@
-"""Script to run analysis of supervised models on music tagging."""
+"""Script to find best supervised models (on music tagging)."""
 
 
-import os, json
+import os
+import json
+
 from vcmr.utils import find_best_model
 
 
 # script options:
-verbose = 1
 results_dir = "results"
 datasets = ["magnatagatune", "mtg-jamendo-dataset"]
 model_modalities = ["audio", "multimodal"]
 metric_types = ["ROC-AUC", "PR-AUC"]
+verbose = 1
 
 
 if __name__ == "__main__":
-
-    # -----------
-    # BEST MODELS
-    # -----------
 
     best_models = {}
     for dataset in datasets:
@@ -56,3 +54,4 @@ if __name__ == "__main__":
         json.dump(best_models, json_file, indent=3)
 
     print("\n\n")
+
