@@ -11,14 +11,14 @@ ALL_TAG_CATEGORIES = ["all_tags", "instrument", "genre", "mood", "vocals", "othe
 ALL_METRIC_TYPES = ["ROC-AUC", "PR-AUC"]
 
 
-def plot_tag_categories(metrics_full: Dict, metric_type: str, dataset_name: str, tag_categories: Union[List, str] = "all", save_path: str = None, bar_width: int = 0.25, fig_num: int = 1) -> None:
+def plot_tag_categories(metrics_full: Dict, metric_type: str, tag_categories: Union[List, str] = "all", plot_title: str = None, save_path: str = None, bar_width: int = 0.25, fig_num: int = 1) -> None:
     """Creates bar graph of music-tagging performance on tag categories.
 
     Args:
         metrics_full (dict): Dictionary containing tag-category-wise performance metrics on a dataset.
         metric_type (str): Performance metric to plot.
-        dataset_name (str): Name of dataset (only used for plot title).
         tag_categories (list | str): Tag categories to plot.
+        plot_title (str): Title of plot.
         save_path (str): Path for saving plot.
         bar_width (int): Bar width for bar graph.
         fig_num (int): matplotlib figure number.
@@ -56,10 +56,11 @@ def plot_tag_categories(metrics_full: Dict, metric_type: str, dataset_name: str,
     # label bars (pairs) by tag category:
     plt.xticks(np.arange(n_categories) + 0.5 * len(metrics.keys()) * bar_width, category_names)
     # annotate plot:
-    plt.title("{} by Tag Category for {} Dataset".format(metric_type, dataset_name))
+    if plot_title is not None:
+        plt.title(plot_title)
     plt.ylabel(metric_type)
     plt.legend(loc="upper right")
-
+    
     # save plot:
     if save_path is not None:
         plt.savefig(save_path)
