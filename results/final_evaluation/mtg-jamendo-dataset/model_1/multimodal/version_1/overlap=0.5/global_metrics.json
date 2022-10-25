@@ -1,0 +1,8 @@
+{
+   "average": {
+      "all_tags": {
+         "ROC-AUC": 0.7071,
+         "PR-AUC": 0.1007
+      }
+   }
+}

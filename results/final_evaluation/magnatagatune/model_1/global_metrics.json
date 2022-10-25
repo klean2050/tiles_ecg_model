@@ -1,0 +1,66 @@
+{
+   "audio": {
+      "version_1": {
+         "0.5": {
+            "average": {
+               "genre": {
+                  "ROC-AUC": 0.8512,
+                  "PR-AUC": 0.3122
+               },
+               "mood": {
+                  "ROC-AUC": 0.8071,
+                  "PR-AUC": 0.2601
+               },
+               "instrument": {
+                  "ROC-AUC": 0.8257,
+                  "PR-AUC": 0.2731
+               },
+               "vocals": {
+                  "ROC-AUC": 0.7375,
+                  "PR-AUC": 0.1251
+               },
+               "other": {
+                  "ROC-AUC": 0.8855,
+                  "PR-AUC": 0.2814
+               },
+               "all_tags": {
+                  "ROC-AUC": 0.8092,
+                  "PR-AUC": 0.2364
+               }
+            }
+         }
+      }
+   },
+   "multimodal": {
+      "version_1": {
+         "0.5": {
+            "average": {
+               "genre": {
+                  "ROC-AUC": 0.9232,
+                  "PR-AUC": 0.4297
+               },
+               "mood": {
+                  "ROC-AUC": 0.871,
+                  "PR-AUC": 0.3406
+               },
+               "instrument": {
+                  "ROC-AUC": 0.9104,
+                  "PR-AUC": 0.4429
+               },
+               "vocals": {
+                  "ROC-AUC": 0.8477,
+                  "PR-AUC": 0.216
+               },
+               "other": {
+                  "ROC-AUC": 0.9402,
+                  "PR-AUC": 0.4001
+               },
+               "all_tags": {
+                  "ROC-AUC": 0.8908,
+                  "PR-AUC": 0.3527
+               }
+            }
+         }
+      }
+   }
+}

@@ -1,0 +1,48 @@
+
+
+# Config file for evaluation of supervised models on music tagging.
+
+
+---
+# dataset options:
+# for MagnaTagATune dataset:
+dataset: "magnatagatune"
+dataset_dir: "/data/avramidi/VCMR/data/magnatagatune"
+dataset_subset: "test"
+# for MTG-Jamendo dataset:
+# dataset: "mtg-jamendo-dataset"
+# dataset_dir: "/data/avramidi/mtg-jamendo-dataset"
+sample_rate: 16000
+audio_length: 98415     # must be an int
+
+# model options:
+# model checkpoint paths (music only and multimodal):
+ckpt_path_audio: "runs/supervised_learning/magnatagatune/music_only/model_1/version_0/checkpoints/epoch=36-step=2701.ckpt"
+ckpt_path_multimodal: "runs/supervised_learning/magnatagatune/multimodal/model_1/version_0/checkpoints/epoch=37-step=2774.ckpt"
+# audio encoder architecture:
+n_blocks: 9
+n_channels: [128, 128, 256, 256, 256, 256, 256, 512, 512]
+output_size: 512
+conv_kernel_size: 3
+pool_size: 3
+activation: "relu"
+first_block_params:
+  out_channels: 128
+  conv_size: 5
+# dimensionality of projection:
+projection_dim: 128
+
+# evaluation options:
+song_split_overlap_ratios: [0.5]
+aggregation_methods: ["average"]
+n_cuda: "1"     # must be only a single GPU index
+seed: 42
+
+# saving results options:
+# note: results are saved to results_dir/dataset/model_name/
+results_dir: "results/final_evaluation"
+model_name: "model_1"
+audio_model_version:  "version_1"
+multimodal_model_version: "version_1"
+...
+

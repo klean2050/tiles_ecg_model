@@ -1,0 +1,28 @@
+{
+   "average": {
+      "genre": {
+         "ROC-AUC": 0.9232,
+         "PR-AUC": 0.4297
+      },
+      "mood": {
+         "ROC-AUC": 0.871,
+         "PR-AUC": 0.3406
+      },
+      "instrument": {
+         "ROC-AUC": 0.9104,
+         "PR-AUC": 0.4429
+      },
+      "vocals": {
+         "ROC-AUC": 0.8477,
+         "PR-AUC": 0.216
+      },
+      "other": {
+         "ROC-AUC": 0.9402,
+         "PR-AUC": 0.4001
+      },
+      "all_tags": {
+         "ROC-AUC": 0.8908,
+         "PR-AUC": 0.3527
+      }
+   }
+}

@@ -1,0 +1,12 @@
+,pool_size,n_blocks,first_conv_size,input_size,input_size_sec
+config_1,2,15,2,65536,4.1
+config_2,2,14,3,49152,3.07
+config_3,2,15,3,98304,6.14
+config_4,2,14,4,65536,4.1
+config_5,2,14,5,81920,5.12
+config_6,3,9,3,59049,3.69
+config_7,3,9,4,78732,4.92
+config_8,3,9,5,98415,6.15
+config_9,4,7,3,49152,3.07
+config_10,4,7,4,65536,4.1
+config_11,4,7,5,81920,5.12
