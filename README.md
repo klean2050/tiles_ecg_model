@@ -1,3 +1,5 @@
+
+
 <div align="center">
 
 # VCMR: Video-Conditioned Music Representations
@@ -87,3 +89,9 @@ In this study we made use of the following repositories:
 * [CLMR](https://github.com/Spijkervet/CLMR)
 * [MoviePy](https://github.com/Zulko/moviepy)
 * [PySceneDetect](https://github.com/Breakthrough/PySceneDetect)
+
+
+## Authors:
+* [Kleanthis Avramidis](https://klean2050.github.io): PhD Student in Computer Science at USC
+* [Shanti Stewart](https://www.linkedin.com/in/shanti-stewart/): MS Student in Machine Learning & Data Science at USC
+
