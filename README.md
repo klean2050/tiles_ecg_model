@@ -91,7 +91,17 @@ In this study we made use of the following repositories:
 * [PySceneDetect](https://github.com/Breakthrough/PySceneDetect)
 
 
-## Authors:
+## Authors
 * [Kleanthis Avramidis](https://klean2050.github.io): PhD Student in Computer Science at USC
 * [Shanti Stewart](https://www.linkedin.com/in/shanti-stewart/): MS Student in Machine Learning & Data Science at USC
 
+## Citation
+
+```
+@article{avramidis2022role,
+  title={On the Role of Visual Context in Enriching Music Representations},
+  author={Avramidis, Kleanthis and Stewart, Shanti and Narayanan, Shrikanth},
+  journal={arXiv preprint arXiv:2210.15828},
+  year={2022}
+}
+```
