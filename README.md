@@ -38,14 +38,15 @@ VCMR/
 │   ├── trainers/            # lightning classes for each train session
 │   └── utils/               # miscellaneous scripts and methods
 ├── .gitignore           # ignore data/ and runs/ folders
-└── setup.py             # package installation script
+├── setup.py             # package installation script
+└── video_list.txt       # list of curated YouTube videos (ID)
 ```
 
 ## Getting the Data
 
 VCMR is trained on a large-scale dataset of 20150 music video clips, downloaded from YouTube in MPEG-4 high-resolution format. The unique codes of the utilized videos can be found at ``video_list.txt``. To reproduce the dataset, run ``preprocess_data.py``.
 
-For each video we isolate the middle 2 minutes of its content. To avoid non-official clips (e.g., amateur covers, lyric videos) we keep track of the scenes and discard those clips that include a scene of more than 30 seconds. For the music encoder we extract the audio component in WAV mono format at 22050 Hz and split it at 8 segments of 15 seconds. For the visual encoder we extract CLIP embeddings from frames at 5 fps and average the resulting 512-D feature vectors per second.
+For each video we isolate the middle 2 minutes of its content. To avoid non-official clips (e.g., amateur covers, lyric videos) we keep track of the scenes and discard those clips that include a scene of more than 30 seconds. For the music encoder we extract the audio component in WAV mono format at 16 kHz and split it at 8 segments of 15 seconds. For the visual encoder we extract CLIP embeddings from frames at 5 fps and average the resulting 512-D feature vectors per second.
 
 ## The VCMR Framework
 
@@ -92,8 +93,8 @@ In this study we made use of the following repositories:
 
 
 ## Authors
-* [Kleanthis Avramidis](https://klean2050.github.io): PhD Student in Computer Science at USC
-* [Shanti Stewart](https://www.linkedin.com/in/shanti-stewart/): MS Student in Machine Learning & Data Science at USC
+* [Kleanthis Avramidis](https://klean2050.github.io): PhD Student in Computer Science, USC
+* [Shanti Stewart](https://www.linkedin.com/in/shanti-stewart/): MS Student in Machine Learning & Data Science, USC
 
 ## Citation
 
