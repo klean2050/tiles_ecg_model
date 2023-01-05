@@ -2,8 +2,8 @@
 
 <div align="center">
 
-# TILES ECG \[model\]: In-the-Wild ECG Pre-Training
-This repository is code implementation as well as trained models for ECG data analysis.
+# TILES ECG: In-the-Wild ECG Pre-Training
+This repo contains code implementation as well as trained models for ECG data analysis.
   
 </div>
 
