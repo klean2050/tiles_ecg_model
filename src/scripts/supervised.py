@@ -9,10 +9,10 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
 from torchaudio_augmentations import RandomResizedCrop
 
-from vcmr.utils import yaml_config_hook
-from vcmr.loaders import get_dataset, Contrastive
-from vcmr.models.sample_cnn import SampleCNN
-from vcmr.trainers import ContrastiveLearning, MultimodalLearning, SupervisedLearning
+from src.utils import yaml_config_hook
+from src.loaders import get_dataset, Contrastive
+from src.models.sample_cnn import SampleCNN
+from src.trainers import ContrastiveLearning, MultimodalLearning, SupervisedLearning
 
 
 # script options:

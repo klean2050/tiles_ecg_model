@@ -8,9 +8,6 @@ from tqdm import tqdm
 from sklearn import metrics
 from typing import Union, Any, List, Dict, Tuple
 
-from vcmr.loaders import SongSplitter
-
-
 # supported values of certain parameters:
 ALL_DATASET_NAMES = ["magnatagatune", "mtg-jamendo-dataset"]
 ALL_AGGREGATION_METHODS = ["average", "max", "majority_vote"]
@@ -107,9 +104,7 @@ def evaluate(
                 print("Running inference for overlap_ratio = {}...".format(overlap))
 
             # create wrapper dataset for splitting songs:
-            test_dataset = SongSplitter(
-                dataset, audio_length=audio_length, overlap_ratio=overlap
-            )
+            test_dataset = ...
             # clear true labels (only last overlap iteration is kept):
             y_true = []
 

@@ -1,23 +1,4 @@
-"""Contains miscellaneous utility functions."""
-
-
-import os
-import torch.nn as nn
-import random
-import yaml
-
-
-class RandomResizedCrop(nn.Module):
-    def __init__(self, n_samples):
-        super().__init__()
-        self.n_samples = n_samples
-
-    def forward(self, audio):
-        max_samples = audio.shape[-1]
-        start_idx = random.randint(0, max_samples - self.n_samples)
-        audio = audio[..., start_idx : start_idx + self.n_samples]
-        return audio, start_idx
-
+import os, yaml
 
 def yaml_config_hook(config_file):
     """
@@ -34,6 +15,5 @@ def yaml_config_hook(config_file):
 
     if "defaults" in cfg.keys():
         del cfg["defaults"]
-
     return cfg
 

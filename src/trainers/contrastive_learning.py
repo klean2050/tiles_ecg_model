@@ -1,6 +1,3 @@
-"""Contains PyTorch Lightning LightningModule class for contrastive learning (SimCLR model)."""
-
-
 import torch, torch.nn as nn
 from torch import Tensor
 
@@ -13,11 +10,11 @@ class ContrastiveLearning(LightningModule):
         super().__init__()
         self.save_hyperparameters(args)
 
-        # backbone encoder:
+        # backbone encoder
         self.encoder = encoder
-        # dimensionality of representation:
+        # dimensionality of representation
         self.n_features = self.encoder.output_size
-        # projection head:
+        # projection head
         self.projector = nn.Sequential(
             nn.Linear(self.n_features, self.n_features, bias=False),
             nn.ReLU(),
@@ -25,7 +22,7 @@ class ContrastiveLearning(LightningModule):
         )
         self.model = nn.Sequential(self.encoder, self.projector)
 
-        # criterion function:
+        # criterion function
         self.criterion = self.configure_criterion()
 
     def forward(self, x_i: Tensor, x_j: Tensor) -> Tensor:
@@ -34,13 +31,13 @@ class ContrastiveLearning(LightningModule):
         return self.criterion(z_i, z_j)
 
     def training_step(self, batch, _) -> Tensor:
-        x, _ = batch
+        x = batch
         loss = self.forward(x[:, 0, :], x[:, 1, :])
         self.log("Train/loss", loss)
         return loss
 
     def validation_step(self, batch, _) -> Tensor:
-        x, _ = batch
+        x = batch
         loss = self.forward(x[:, 0, :], x[:, 1, :])
         self.log("Valid/loss", loss)
         return loss
@@ -57,10 +54,9 @@ class ContrastiveLearning(LightningModule):
     def configure_optimizers(self) -> dict:
         scheduler = None
         if self.hparams.optimizer == "Adam":
-            optimizer = torch.optim.AdamW(self.model.parameters(), lr=3e-4)
+            optimizer = torch.optim.AdamW(self.model.parameters(), lr=5e-4)
         elif self.hparams.optimizer == "LARS":
             # optimized using LARS with linear learning rate scaling
-            # (i.e. LearningRate = 0.3 × BatchSize/256) and weight decay of 10−6.
             learning_rate = 0.3 * self.hparams.batch_size / 256
             optimizer = LARS(
                 self.model.parameters(),
@@ -68,7 +64,7 @@ class ContrastiveLearning(LightningModule):
                 weight_decay=self.hparams.weight_decay,
                 exclude_from_weight_decay=["batch_normalization", "bias"],
             )
-            # "decay the learning rate with the cosine decay schedule without restarts"
+            # decay learning rate with cosine decay schedule w/o restarts
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
                 optimizer, self.hparams.max_epochs, eta_min=0, last_epoch=-1
             )

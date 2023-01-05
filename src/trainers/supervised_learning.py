@@ -42,11 +42,7 @@ class SupervisedLearning(LightningModule):
         return loss
 
     def configure_criterion(self):
-        return (
-            nn.BCEWithLogitsLoss()
-            if self.hparams.dataset in ["magnatagatune", "mtg-jamendo-dataset"]
-            else nn.CrossEntropyLoss()
-        )
+        return nn.CrossEntropyLoss()
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(

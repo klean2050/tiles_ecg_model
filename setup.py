@@ -6,9 +6,9 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package metadata
-NAME = "vcmr"
-DESCRIPTION = "Video-Conditioned Music Representations"
-URL = "https://github.com/klean2050/VCMR"
+NAME = "tiles_ecg"
+DESCRIPTION = "In-the-Wild ECG Pre-Training using TILES"
+URL = "https://github.com/klean2050/tiles_ecg_model"
 EMAIL = "k.avramidist@windowslive.com"
 AUTHOR = "Kleanthis Avramidis"
 REQUIRES_PYTHON = ">=3.9.0"
@@ -27,7 +27,6 @@ REQUIRED = [
     "scikit_learn",
     "setuptools",
     "simclr",
-    "SoundFile==0.10.3.post1",
     "torch",
     "torchaudio",
     "torchaudio_augmentations",
