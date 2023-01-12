@@ -26,20 +26,20 @@ class ContrastiveLearning(LightningModule):
         self.criterion = self.configure_criterion()
 
     def forward(self, x_i: Tensor, x_j: Tensor) -> Tensor:
-        z_i = self.model(x_i)
-        z_j = self.model(x_j)
+        z_i = self.model(x_i.unsqueeze(1))
+        z_j = self.model(x_j.unsqueeze(1))
         return self.criterion(z_i, z_j)
 
     def training_step(self, batch, _) -> Tensor:
         x = batch
         loss = self.forward(x[:, 0, :], x[:, 1, :])
-        self.log("Train/loss", loss)
+        self.log("Train/loss", loss, sync_dist=True)
         return loss
 
     def validation_step(self, batch, _) -> Tensor:
         x = batch
         loss = self.forward(x[:, 0, :], x[:, 1, :])
-        self.log("Valid/loss", loss)
+        self.log("Valid/loss", loss, sync_dist=True)
         return loss
 
     def configure_criterion(self) -> nn.Module:
@@ -54,7 +54,8 @@ class ContrastiveLearning(LightningModule):
     def configure_optimizers(self) -> dict:
         scheduler = None
         if self.hparams.optimizer == "Adam":
-            optimizer = torch.optim.AdamW(self.model.parameters(), lr=5e-4)
+            optimizer = torch.optim.AdamW(
+                self.model.parameters(), lr=self.hparams.learning_rate)
         elif self.hparams.optimizer == "LARS":
             # optimized using LARS with linear learning rate scaling
             learning_rate = 0.3 * self.hparams.batch_size / 256
