@@ -8,6 +8,8 @@ from src.loaders import TILES_ECG
 from src.models.resnet1d import ResNet1D
 from src.trainers.contrastive_learning import ContrastiveLearning
 
+from ecg_augmentations import *
+
 
 if __name__ == "__main__":
 
@@ -36,7 +38,17 @@ if __name__ == "__main__":
 
     NUM_AUG_SAMPLES = 2
     # create transform for ECG augmentation
-    train_transform = [...]
+    transforms = [
+        RandomCrop(n_samples=1000),
+        RandomApply([PRMask()], p=0.4),
+        RandomApply([QRSMask()], p=0.4),
+        RandomApply([Scale()], p=0.4),
+        RandomApply([Permute()], p=0.6),
+        RandomApply([GaussianNoise()], p=0.6),
+        RandomApply([Invert()], p=0.2),
+        RandomApply([Reverse()], p=0.2),
+    ]
+    transforms = ComposeMany(transforms, NUM_AUG_SAMPLES)
 
     # ------------
     # DATA LOADERS
@@ -44,13 +56,11 @@ if __name__ == "__main__":
 
     # define training splits
     valid_sp = os.listdir(args.dataset_dir)[::10]
-    train_sp = [
-        p for p in os.listdir(args.dataset_dir) if p not in valid_sp
-    ]
+    train_sp = [p for p in os.listdir(args.dataset_dir) if p not in valid_sp]
 
     # get training and validation datasets
-    train_dataset = TILES_ECG(args.dataset_dir, split=train_sp, transform=None)
-    valid_dataset = TILES_ECG(args.dataset_dir, split=valid_sp, transform=None)
+    train_dataset = TILES_ECG(args.dataset_dir, split=train_sp, transform=transforms)
+    valid_dataset = TILES_ECG(args.dataset_dir, split=valid_sp, transform=transforms)
 
     # create the dataloaders
     train_loader = DataLoader(
@@ -83,7 +93,7 @@ if __name__ == "__main__":
         n_classes=args.n_classes,
     )
     # create full LightningModule
-    model = ContrastiveLearning(args, encoder)
+    model = ContrastiveLearning(args, encoder.float())
 
     # logger that saves to /save_dir/name/version/
     logger = TensorBoardLogger(
@@ -97,7 +107,7 @@ if __name__ == "__main__":
     # --------
 
     # GPUs to use
-    #os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
+    # os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
 
     # create PyTorch Lightning trainer
     trainer = Trainer.from_argparse_args(
@@ -106,11 +116,11 @@ if __name__ == "__main__":
         max_epochs=args.m_epochs,
         check_val_every_n_epoch=args.val_freq,
         log_every_n_steps=args.log_freq,
-        #sync_batchnorm=True,
-        strategy="ddp_find_unused_parameters_false",
+        # sync_batchnorm=True,
+        strategy="ddp",
         accelerator="cpu",
         devices="auto",
-        precision=args.bit_precision,
+        # precision=args.bit_precision,
     )
 
     # train and save model
