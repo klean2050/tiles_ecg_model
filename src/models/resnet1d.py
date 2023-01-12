@@ -195,7 +195,7 @@ class ResNet1D(nn.Module):
         n_block,
         n_classes,
         downsample_gap=2,
-        increasefilter_gap=4,
+        increasefilter_gap=2,
         use_bn=True,
         use_do=True,
         verbose=False,
@@ -273,7 +273,7 @@ class ResNet1D(nn.Module):
         # self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
-        out = x
+        out = x.float()
 
         # first conv
         out = self.first_block_conv(out)

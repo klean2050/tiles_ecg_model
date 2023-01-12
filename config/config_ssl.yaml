@@ -5,16 +5,16 @@ dataset_dir: "data/inp/"
 in_channels: 1
 base_filters: 16
 kernel_size: 3
-stride: 1
+stride: 2
 groups: 1
-n_block: 4
+n_block: 8
 n_classes: 256
 projection_dim: 128
 
 # training options:
 batch_size: 128
 m_epochs: 50
-optimizer: "LARS"
+optimizer: "Adam"
 learning_rate: 0.001
 weight_decay: 1e-6
 temperature: 0.1
