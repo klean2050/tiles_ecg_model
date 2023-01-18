@@ -5,8 +5,8 @@ from torch.utils.data import DataLoader
 
 from src.utils import yaml_config_hook
 from src.loaders import TILES_ECG
-from src.models.resnet1d import ResNet1D
-from src.trainers.contrastive_learning import ContrastiveLearning
+from src.models import ResNet1D
+from src.trainers import ContrastiveLearning
 
 from ecg_augmentations import *
 
