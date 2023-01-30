@@ -1,5 +1,5 @@
 # dataset options
-dataset_dir: "data/inp/"
+dataset_dir: "data/tiles/"
 
 # model options
 in_channels: 1
