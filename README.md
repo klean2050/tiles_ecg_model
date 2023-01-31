@@ -40,6 +40,20 @@ Tracking Individual Performance with Sensors (TILES) is a project holding multim
 
 ## Pre-Training Framework (TBD)
 
+#### Input ECG data
+
+Each TILES participant has their ECG recorded for 15 seconds every 5 minutes during their work hours, for a total of 10 weeks. In this experiment we consider a subset of 69 subjects, and for each of them we extract all available 15-sec ECG segments. We normalize the data per subject before feeding them to the model.
+
+#### Augmentation Strategy
+
+We pre-train the model in a self-supervised manner, through contrastive learning. In specific, we consider 2 augmented views of an input ECG signal and we train the network to identify these pairings among all possible pairs in a training batch. To augment the ECG samples we use the [PyTorch ECG Augmentations](https://github.com/klean2050/ecg-augmentations) package. First, the input ECG is randomly cropped to 10 seconds and a series of masks and signal transformations are randomly applied based on a set probability. This is applied online, twice during training, to produce the 2 augmented views.
+
+#### SSL Objective
+
+...
+
+#### Model Backbone
+
 ...
 
 ## Fine-Tuning Framework (TBD)
