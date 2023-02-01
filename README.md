@@ -50,7 +50,7 @@ We pre-train the model in a self-supervised manner, through contrastive learning
 
 ### Backbone \& Objective
 
-A lightweight ResNet encoder is used to extract latent representations from the augmented data inputs. We use a light architecture of 8 blocks and 16 filters at the first block, in order to abide by the domain literature and make the model applicable to real-time settings. The 256D output embeddings of a pair of augmented samples are projected to a 128D latent space, where all samples within a batch are contrasted using the NT-Xent loss, adapted from the SimCLR study. With this loss, the model is forced to identify the underlying association between augmented versions of the same sample. The network is trained for about 60K steps using an AdamW optimizer (learning rate 0.001 on batches of 128 samples).
+A lightweight ResNet encoder is used to extract latent representations from the augmented data inputs. We use a light architecture of 8 blocks and 16 filters at the first block, in order to abide by the domain literature and make the model applicable to real-time settings. The 256D output embeddings of a pair of augmented samples are projected to a 128D latent space, where all samples within a batch are contrasted using the NT-Xent loss, adapted from the SimCLR study. With this loss, the model is forced to identify the underlying association between augmented versions of the same sample. The network is trained for about 60K steps using an AdamW optimizer.
 
 ## Fine-Tuning Framework (TBD)
 
