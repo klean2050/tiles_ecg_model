@@ -1,6 +1,7 @@
 # dataset options
 dataset_dir: "/home/kavra/Datasets/physionet.org/files/drivedb/1.0.0/"
-streams: "HR"
+sample_rate: 0.5
+streams: ["HR"]
 
 # model options
 in_channels: 1
@@ -25,7 +26,8 @@ workers: 4
 n_cuda: "2, 3"
 bit_precision: 16
 seed: 42
-ckpt_path: "runs/version_6/checkpoiints/epoch=49-step=57850.ckpt"     # not used if set to null
+ckpt_path: null     # not used if set to null
+ssl_ckpt_path: "runs/ssl_trial/version_6/checkpoints/epoch=49-step=57850.ckpt"
 
 # logging options:
 log_dir: "runs"

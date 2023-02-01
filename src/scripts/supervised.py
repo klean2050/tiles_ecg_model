@@ -1,24 +1,16 @@
-import os, argparse, torchinfo
-import pytorch_lightning as pl
+import os, argparse, random, pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
-from torchaudio_augmentations import RandomResizedCrop
 
 from src.utils import yaml_config_hook
-from src.loaders import DriveDB, Contrastive
-from src.models import SampleCNN, ResNet1D
-from src.trainers import ContrastiveLearning, MultimodalLearning, SupervisedLearning
-
-
-# script options:
-verbose = 1
-model_summary_info = ["input_size", "output_size", "num_params"]
+from src.loaders import DriveDB
+from src.models import ResNet1D
+from src.trainers import ContrastiveLearning, SupervisedLearning
 
 
 if __name__ == "__main__":
-    print("\n\n")
 
     # --------------
     # CONFIGS PARSER
@@ -29,7 +21,7 @@ if __name__ == "__main__":
     parser = Trainer.add_argparse_args(parser)
 
     # extract args from config file and add to parser:
-    config_file = "config/config_ssl.yaml"
+    config_file = "config/config_sup.yaml"
     config = yaml_config_hook(config_file)
     for key, value in config.items():
         parser.add_argument(f"--{key}", default=value, type=type(value))
@@ -44,8 +36,10 @@ if __name__ == "__main__":
     # ------------
 
     # define training splits
-    valid_sp = os.listdir(args.dataset_dir)[::10]
-    train_sp = [p for p in os.listdir(args.dataset_dir) if p not in valid_sp]
+    subjects = [i.split(".")[0] for i in os.listdir(args.dataset_dir)]
+    subjects = list(set([i for i in subjects if "drive" in i]))
+    valid_sp = random.sample(subjects, int(0.2 * len(subjects)))
+    train_sp = [p for p in subjects if p not in valid_sp]
 
     # get training/validation datasets:
     train_dataset = DriveDB(
@@ -60,6 +54,7 @@ if __name__ == "__main__":
         sr=args.sample_rate,
         streams=args.streams,
     )
+    mods = train_dataset.get_modalities()
 
     # create the dataloaders
     train_loader = DataLoader(
@@ -91,16 +86,18 @@ if __name__ == "__main__":
         n_block=args.n_block,
         n_classes=args.n_classes,
     )
-    # create full LightningModule
-    model = ContrastiveLearning(args, encoder.float())
 
     # load pretrained ECG model from checkpoint
     pretrained_model = ContrastiveLearning.load_from_checkpoint(
-        args.pretrained_ckpt_path, encoder=encoder
+        args.ssl_ckpt_path, encoder=encoder
     )
     # create supervised learning model
     model = SupervisedLearning(
-        args, pretrained_model.encoder, output_dim=train_dataset.n_classes
+        args,
+        mods,
+        pretrained_model.encoder,
+        output_dim=1,
+        gtruth="EDA",
     )
 
     # logger that saves to /save_dir/name/version/
@@ -115,11 +112,11 @@ if __name__ == "__main__":
     # --------
 
     # GPUs to use
-    #os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
+    # os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
 
     # create PyTorch Lightning trainer
     model_ckpt_callback = ModelCheckpoint(
-        monitor="Valid/pr_auc", mode="max", save_top_k=1
+        monitor="Valid/loss", mode="min", save_top_k=1
     )
     early_stop_callback = EarlyStopping(monitor="Valid/loss", mode="min", patience=10)
 

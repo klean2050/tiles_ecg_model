@@ -2,19 +2,22 @@ import os, wfdb, pandas as pd
 import numpy as np, neurokit2 as nk
 from tqdm import tqdm
 from torch.utils.data import Dataset
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, resample
 
 
 class DriveDB(Dataset):
-    def __init__(self, root, sr, streams):
+    def __init__(self, root, split, sr, streams):
         super().__init__()
         self.root, self.sr = root, sr
         self.streams = streams + ["EDA"]
         self.data = {s: [] for s in self.streams + ["ECG"]}
         self.names = []
 
+        save_ecg = []
         for file in tqdm(os.listdir(self.root)):
             if not file.endswith(".dat"):
+                continue
+            if file.split(".")[0] not in split:
                 continue
 
             ### data loading
@@ -23,13 +26,15 @@ class DriveDB(Dataset):
             not_there = [i for i in streams if i not in fields["sig_name"]]
             if not_there != []:
                 continue
-            
-            ### ECG processing
+
+            ### ECG processing: interpolate, partition and clean
             signal = this_df["ECG"].to_numpy()
-            # interpolate to 100 Hz
-            # preprocess like TILES
-            # segment into 5-min (20x15secx100Hz)
-            self.data["ECG"]
+            signal = resample(signal, int(100 * len(signal) / 15.5))
+            cutoff = len(signal) % (300 * 100)
+            signal = signal[: len(signal) - cutoff].reshape(-1, 300 * 100)
+            for i in range(len(signal)):
+                signal[i] = nk.ecg_clean(signal[i], sampling_rate=100)
+            save_ecg.append(signal)
 
             ### respiration processing
             if "RESP_rate" in self.streams:
@@ -39,7 +44,7 @@ class DriveDB(Dataset):
                 except:
                     continue
                 out, _ = nk.rsp_process(signal, sampling_rate=fields["fs"])
-                #this_df["RESP_amp"] = out[["RSP_Amplitude"]]
+                # this_df["RESP_amp"] = out[["RSP_Amplitude"]]
                 this_df["RESP_rate"] = out[["RSP_Rate"]]
 
             ### lowpass filter (0.05Hz) + downsample
@@ -61,28 +66,41 @@ class DriveDB(Dataset):
                 s = s[self.streams].to_dict(orient="list")
                 for stream in s.keys():
                     self.data[stream].append(s[stream])
-            
+
             self.names.append(file.split(".")[0])
             for stream in self.data.keys():
                 self.data[stream] = self.data[stream][:-1]
 
         ### stack input time-series
+        self.data["ECG"] = save_ecg
         for stream in self.data.keys():
             self.data[stream] = np.vstack(self.data[stream])
 
     def __len__(self):
-        return len(self.data[self.streams[0]])
+        return len(self.data["ECG"])
 
-    def __getitem__(self, stream, i):
-        data = self.data[stream]
-        return data[i], self.names[i]
-    
+    def __getitem__(self, i):
+        out = {}
+        for stream in self.data:
+            out[stream] = self.data[stream][i]
+
+        out["ECG"] = out["ECG"].reshape(-1, 1000)
+        return out, []  # self.names[i]
+
+    def get_modalities(self):
+        mods = list(self.data.keys())
+        mods.remove("EDA")
+        return mods
+
     def LP_filter(self, ts=None, freq=15.5, cut=0.05):
         b, a = butter(3, cut, fs=freq, btype="low")
         return filtfilt(b, a, ts)
-    
+
 
 if __name__ == "__main__":
     root = "/home/kavra/Datasets/physionet.org/files/drivedb/1.0.0/"
     dataset = DriveDB(root=root, sr=0.5, streams=["HR"])
     print("Success! Dataset loaded with length:", len(dataset))
+
+    data, name = dataset[10]
+    print(name, data.keys(), data["ECG"].shape, data["EDA"].shape)
