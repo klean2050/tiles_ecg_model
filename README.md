@@ -48,13 +48,9 @@ Each TILES participant has their ECG recorded for 15 seconds every 5 minutes dur
 
 We pre-train the model in a self-supervised manner, through contrastive learning. In specific, we consider 2 augmented views of an input ECG signal and we train the network to identify these pairings among all possible pairs in a training batch. To augment the ECG samples we use the [PyTorch ECG Augmentations](https://github.com/klean2050/ecg-augmentations) package. First, the input ECG is randomly cropped to 10 seconds and a series of masks and signal transformations are randomly applied based on a set probability. This is applied online, twice during training, to produce the 2 augmented views.
 
-#### SSL Objective
+#### Backbone \& Objective
 
-...
-
-#### Model Backbone
-
-...
+A lightweight ResNet encoder is used to extract latent representation vectors from the augmented data inputs. These are extracted from the output of the last residual layer. We use a light architecture of 8 blocks and 16 filters at the first block, in order to abide by the domain literature and make the model applicable to real-time settings. The 256D output embeddings of a pair of augmented samples are projected to a 128D latent space, where all samples within a batch are contrasted using the NT-Xent contrastive loss, adapted from the SimCLR study. With this loss, the model is forced to learn the underlying association between augmented versions of the same sample and at the same time recognize augmentations of different samples. The network is trained for about 60K steps using an AdamW optimizer (learning rate 0.001 on batches of 128 samples).
 
 ## Fine-Tuning Framework (TBD)
 
