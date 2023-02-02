@@ -54,11 +54,11 @@ A lightweight ResNet encoder is used to extract latent representations from the 
 
 ## Fine-Tuning Framework
 
-We transfer the trained ECG encoder to the downstream tasks in a teacher-student setting, where additional sensor streams are trained from scratch for an estimation task, along with aligning their latent representations to those produced by the (frozen) ECG model. Hence each task incorporates a separate network and a double objective for each modality, the estimation target and the contrastive loss to ECG. The final state estimation is done using late fusion of the different modalities (i.e., either by prediction fusion or majority voting -- TBD).
+We transfer the trained ECG encoder to the downstream tasks in a teacher-student setting, where additional sensor streams are trained from scratch for an estimation task, along with aligning their latent representations to those produced by the (frozen) ECG model. Hence each modality incorporates a separate network and a double objective to train upon. The final state estimation is done using late fusion of the different modalities (i.e., either by prediction fusion or majority voting - TBD).
 
 ### Case: DriveDB
 
-The specific dataset contains raw sensor measurements like ECG, EDA, HR and respiration information. Since no annotations or behavioral or environmental variables are given, we model the arousal state of each driver by predicting 5-min averaged EDA from ECG and HR streams. The framework we described is successfully trained to estimate the average EDA value per 5-minute intervals in a subject-independent setting.
+The specific dataset contains raw sensor measurements like ECG, EDA, HR and respiration information. Since no annotations or behavioral or environmental variables are given, we model the state of each driver by predicting 5-min averaged EDA from ECG and HR streams. The framework we described is successfully trained to estimate the average EDA value per 5-minute intervals in a subject-independent setting.
 
 ## Results & Checkpoints
 
