@@ -8,9 +8,16 @@ class SupervisedLearning(LightningModule):
     def __init__(self, args, modalities, encoder, output_dim, gtruth):
         super().__init__()
         self.save_hyperparameters(args)
-        self.configure_criterion()
         self.modalities = modalities
         self.ground_truth = gtruth
+
+        # configure criterion
+        self.cls_loss = (
+            nn.MSELoss() if "drivedb" in args.dataset_dir else nn.CrossEntropyLoss()
+        )
+        self.ssl_loss = NT_Xent(
+            self.hparams.batch_size, self.hparams.temperature, world_size=1
+        )
 
         # freezing trained ECG encoder
         self.encoder = encoder
@@ -74,25 +81,25 @@ class SupervisedLearning(LightningModule):
             reprs[m] = self.models[m]["project_ssl"](vectors[m])
 
         # compute the cls objective
-        y = torch.mean(y, dim=1)  # .unaqueeze(1)
+        y = torch.mean(y, dim=1).unsqueeze(1).float()
         # ERROR HERE: find good objective for DriveDB
         cls_loss = [self.cls_loss(preds[m], y) for m in x.keys()]
-        cls_loss = torch.mean(cls_loss)
+        cls_loss = sum(cls_loss).float() / len(cls_loss)
 
         # compute the ssl objective
         ssl_keys = [m for m in x.keys() if x != "ECG"]
         ssl_loss = [self.ssl_loss(reprs[m], reprs["ECG"]) for m in ssl_keys]
-        cls_loss = torch.mean(cls_loss)
+        ssl_loss = sum(ssl_loss).float() / len(ssl_loss)
 
         # compute the multi-objective
-        return 0.9 * cls_loss + 0.1 * ssl_loss
+        return cls_loss + 0.01 * ssl_loss
 
     def training_step(self, batch, _):
         data, _ = batch
         x = {key: data[key] for key in self.modalities}
         y = data[self.ground_truth]
         loss = self.forward(x, y)
-        self.log("Train/loss", loss)
+        self.log("Train/loss", loss, sync_dist=True)
         return loss
 
     def validation_step(self, batch, _):
@@ -100,14 +107,8 @@ class SupervisedLearning(LightningModule):
         x = {key: data[key] for key in self.modalities}
         y = data[self.ground_truth]
         loss = self.forward(x, y)
-        self.log("Valid/loss", loss)
+        self.log("Valid/loss", loss, sync_dist=True)
         return loss
-
-    def configure_criterion(self):
-        self.cls_loss = nn.CrossEntropyLoss()
-        self.ssl_loss = NT_Xent(
-            self.hparams.batch_size, self.hparams.temperature, world_size=1
-        )
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(

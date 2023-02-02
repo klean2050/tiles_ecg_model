@@ -14,10 +14,10 @@ n_classes: 256
 projection_dim: 128
 
 # training options:
-batch_size: 32
+batch_size: 16
 m_epochs: 50
 optimizer: "Adam"
-learning_rate: 0.001
+learning_rate: 0.005
 weight_decay: 1e-6
 temperature: 0.1
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
