@@ -3,6 +3,7 @@ import numpy as np, neurokit2 as nk
 from tqdm import tqdm
 from torch.utils.data import Dataset
 from scipy.signal import butter, filtfilt, resample
+from sklearn.preprocessing import normalize
 
 
 class DriveDB(Dataset):
@@ -62,12 +63,13 @@ class DriveDB(Dataset):
             this_df["EDA"] = self.LP_filter(gt_signal, freq=sr, cut=0.01)
 
             ### divide 5-minute segments
-            for _, s in this_df.groupby(pd.Grouper(freq="5T")):
+            grouper = this_df.groupby(pd.Grouper(freq="5T"))
+            for _, s in grouper:
                 s = s[self.streams].to_dict(orient="list")
                 for stream in s.keys():
                     self.data[stream].append(s[stream])
 
-            self.names.append(file.split(".")[0])
+            self.names.extend([file.split(".")[0]] * (len(grouper) - 1))
             for stream in self.data.keys():
                 self.data[stream] = self.data[stream][:-1]
 
@@ -75,6 +77,23 @@ class DriveDB(Dataset):
         self.data["ECG"] = save_ecg
         for stream in self.data.keys():
             self.data[stream] = np.vstack(self.data[stream])
+
+        ### normalize data subject-wise
+        for stream in self.data.keys():
+            self.data[stream] = np.vstack(self.data[stream])
+
+            this_name = self.names[0]
+            temp, final = [], []
+            for i in range(len(self.data["ECG"])):
+                if self.names[i] == this_name:
+                    temp.append(self.data[stream][i])
+                else:
+                    this_name = self.names[i]
+                    final.append(normalize(np.vstack(temp)))
+                    temp = [self.data[stream][i]]
+
+            final.append(normalize(np.vstack(temp)))
+            self.data[stream] = np.vstack(final)
 
     def __len__(self):
         return len(self.data["ECG"])
@@ -85,7 +104,7 @@ class DriveDB(Dataset):
             out[stream] = self.data[stream][i]
 
         out["ECG"] = out["ECG"].reshape(-1, 1000)
-        return out, []  # self.names[i]
+        return out, self.names[i]
 
     def get_modalities(self):
         mods = list(self.data.keys())
@@ -99,7 +118,9 @@ class DriveDB(Dataset):
 
 if __name__ == "__main__":
     root = "/home/kavra/Datasets/physionet.org/files/drivedb/1.0.0/"
-    dataset = DriveDB(root=root, sr=0.5, streams=["HR"])
+    subjects = [i.split(".")[0] for i in os.listdir(root)]
+    subjects = list(set([i for i in subjects if "drive" in i]))
+    dataset = DriveDB(root=root, sr=0.5, streams=["HR"], split=subjects)
     print("Success! Dataset loaded with length:", len(dataset))
 
     data, name = dataset[10]
