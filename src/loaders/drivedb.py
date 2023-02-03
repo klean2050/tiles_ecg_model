@@ -81,19 +81,19 @@ class DriveDB(Dataset):
         ### normalize data subject-wise
         for stream in self.data.keys():
             self.data[stream] = np.vstack(self.data[stream])
+            if stream != "EDA":
+                this_name = self.names[0]
+                temp, final = [], []
+                for i in range(len(self.data["ECG"])):
+                    if self.names[i] == this_name:
+                        temp.append(self.data[stream][i])
+                    else:
+                        this_name = self.names[i]
+                        final.append(normalize(np.vstack(temp)))
+                        temp = [self.data[stream][i]]
 
-            this_name = self.names[0]
-            temp, final = [], []
-            for i in range(len(self.data["ECG"])):
-                if self.names[i] == this_name:
-                    temp.append(self.data[stream][i])
-                else:
-                    this_name = self.names[i]
-                    final.append(normalize(np.vstack(temp)))
-                    temp = [self.data[stream][i]]
-
-            final.append(normalize(np.vstack(temp)))
-            self.data[stream] = np.vstack(final)
+                final.append(normalize(np.vstack(temp)))
+                self.data[stream] = np.vstack(final)
 
     def __len__(self):
         return len(self.data["ECG"])

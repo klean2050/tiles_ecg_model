@@ -21,7 +21,7 @@ learning_rate: 0.005
 weight_decay: 1e-6
 temperature: 0.1
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
-log_freq: 5     # how often to log (logs every log_freq steps)
+log_freq: 2     # how often to log (logs every log_freq steps)
 workers: 4
 n_cuda: "2, 3"
 bit_precision: 16
