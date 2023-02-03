@@ -5,30 +5,19 @@ from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
 
-def sort_tiles_ecg(path, overwrite):
-
-    os.makedirs("data", exist_ok=True)
-    for prcp in tqdm(os.listdir(path)):
-        if prcp in os.listdir("data") and not overwrite:
-            continue
-
-        # load - sort - save ECG of participant
-        df = pd.read_csv(os.path.join(path, prcp))
-        try:
-            df["Timestamp"] = pd.to_datetime(df["Timestamp"])
-        except:
-            df["Timestamp"] = pd.to_datetime(df["timestamp"])
-            df = df.drop(columns=["timestamp", "record_id"])
-
-        df.set_index("Timestamp").sort_index().to_csv("data/" + prcp)
-
-
 def process_prcp(prcp):
 
-    # load ECG data of participant
-    df = pd.read_csv(f"data/{prcp}")
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], utc=True)
-    df = df.set_index("Timestamp")["raw_ecg"]
+    # load ECG of participant
+    df = pd.read_csv(os.path.join(path, prcp))
+    # make datetime timestamp
+    try:
+        df["Timestamp"] = pd.to_datetime(df["Timestamp"])
+    except:
+        df["Timestamp"] = pd.to_datetime(df["timestamp"])
+        df = df.drop(columns=["timestamp", "record_id"])
+
+    # sort based on timestamp and get ECG
+    df = df.set_index("Timestamp").sort_index()["raw_ecg"]
 
     final_samples = []
     prcp_samples = [
@@ -49,14 +38,12 @@ def process_prcp(prcp):
 
 if __name__ == "__main__":
     path = "/home/kavra/Datasets/tiles-phase1-opendataset/omsignal/ecg/"
-    # sort_tiles_ecg(path, overwrite=False)
+    out_path = "data/"
 
-    os.makedirs("data/inp", exist_ok=True)
-    for prcp in tqdm(os.listdir("data")):
-        if not prcp.endswith("gz"):
-            continue
-        elif f"{prcp.split('.')[0]}.npy" in os.listdir("data/inp"):
+    os.makedirs(out_path, exist_ok=True)
+    for prcp in tqdm(os.listdir(path)):
+        if f"{prcp.split('.')[0]}.npy" in os.listdir(out_path):
             continue
         samples = process_prcp(prcp)
         samples = StandardScaler().fit_transform(samples)
-        np.save(f"data/inp/{prcp.split('.')[0]}", samples)
+        np.save(out_path + prcp.split('.')[0], samples)
