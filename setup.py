@@ -15,7 +15,6 @@ REQUIRES_PYTHON = ">=3.9.0"
 VERSION = "0.1.0"
 
 REQUIRED = [
-    "essentia==2.1b6.dev778",
     "fire",
     "gdown",
     "matplotlib",
@@ -29,7 +28,7 @@ REQUIRED = [
     "simclr",
     "torch",
     "torchaudio",
-    "torchaudio_augmentations",
+    "neurokit2",
     "torchinfo",
     "torchmetrics",
     "tqdm",
