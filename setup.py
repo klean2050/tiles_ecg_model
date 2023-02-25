@@ -33,6 +33,7 @@ REQUIRED = [
     "torchmetrics",
     "tqdm",
     "wget",
+    "opt_einsum",
 ]
 
 EXTRAS = {}
