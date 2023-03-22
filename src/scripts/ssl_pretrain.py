@@ -40,8 +40,8 @@ if __name__ == "__main__":
     # create transform for ECG augmentation
     transforms = [
         RandomCrop(n_samples=1000),
-        RandomApply([PRMask()], p=0.4),
-        RandomApply([QRSMask()], p=0.4),
+        RandomApply([PRMask(sr=100)], p=0.4),
+        RandomApply([QRSMask(sr=100)], p=0.4),
         RandomApply([Scale()], p=0.4),
         RandomApply([Permute()], p=0.6),
         RandomApply([GaussianNoise()], p=0.6),
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # ------------
 
     # define training splits
-    valid_sp = os.listdir(args.dataset_dir)[::10]
+    valid_sp = os.listdir(args.dataset_dir)[::12]
     train_sp = [p for p in os.listdir(args.dataset_dir) if p not in valid_sp]
 
     # get training and validation datasets

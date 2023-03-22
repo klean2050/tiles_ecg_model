@@ -12,7 +12,7 @@ n_classes: 256
 projection_dim: 128
 
 # training options:
-batch_size: 128
+batch_size: 256
 m_epochs: 50
 optimizer: "Adam"
 learning_rate: 0.001

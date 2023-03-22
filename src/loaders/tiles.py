@@ -30,8 +30,8 @@ class TILES_ECG(data.Dataset):
         return len(self.samples)
 
     def __getitem__(self, index):
-        ecg = self.samples[index]
-        return self.transform(ecg)
+        ecg = self.samples[index].unsqueeze(0)
+        return self.transform(ecg)[:, 0]
 
 
 if __name__ == "__main__":
