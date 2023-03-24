@@ -5,10 +5,10 @@ from src.models import ResNet1D
 
 
 class SupervisedLearning(LightningModule):
-    def __init__(self, args, modalities, encoder, output_dim, gtruth):
+    def __init__(self, args, encoder, output_dim, gtruth=0):
         super().__init__()
         self.save_hyperparameters(args)
-        self.modalities = modalities
+        self.modalities = args.streams
         self.ground_truth = gtruth
 
         # configure criterion
