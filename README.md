@@ -17,8 +17,12 @@ conda activate tiles_ecg
 Clone the repository and install the dependencies:
 ```
 git clone https://github.com/klean2050/tiles_ecg_model
-cd tiles_ecg_model && pip install -e .
+pip install -e tiles_ecg_model
 ```
+You will also need the ``ecg-augmentations`` library:
+```
+git clone https://github.com/klean2050/ecg-augmentations
+pip install -e ecg-augmentations
 
 ## Project Structure
 

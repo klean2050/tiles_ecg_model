@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # ------------
 
     # define training splits
-    valid_sp = os.listdir(args.dataset_dir)[::12]
+    valid_sp = os.listdir(args.dataset_dir)[::10]
     train_sp = [p for p in os.listdir(args.dataset_dir) if p not in valid_sp]
 
     # get training and validation datasets
@@ -116,11 +116,11 @@ if __name__ == "__main__":
         max_epochs=args.m_epochs,
         check_val_every_n_epoch=args.val_freq,
         log_every_n_steps=args.log_freq,
-        # sync_batchnorm=True,
+        sync_batchnorm=True,
         strategy="ddp",
-        accelerator="cpu",
-        devices="auto",
-        # precision=args.bit_precision,
+        accelerator="gpu",
+        devices=args.n_cuda,
+        precision=args.bit_precision,
     )
 
     # train and save model
