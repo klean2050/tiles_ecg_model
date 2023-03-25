@@ -21,7 +21,8 @@ REQUIRED = [
     "numpy",
     "pandas",
     "pytest",
-    "pytorch_lightning",
+    "opencv-contrib-python",
+    "pytorch_lightning==1.9",
     "PyYAML",
     "scikit_learn",
     "setuptools",
@@ -32,6 +33,7 @@ REQUIRED = [
     "torchinfo",
     "torchmetrics",
     "tqdm",
+    "wfdb",
     "wget",
     "opt_einsum",
 ]
