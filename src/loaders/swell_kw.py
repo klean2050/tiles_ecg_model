@@ -99,8 +99,7 @@ class SWELL_KW(data.Dataset):
 
     def make_windows(self, ecg_array):
         ecg_array = [
-            ecg_array[i : i + self.window_size]
-            for i in range(0, len(ecg_array), self.window_size)
+            ecg_array[i : i + self.window_size] for i in range(0, len(ecg_array), self.window_size)
         ]
         # discard first and last window (distorted)
         return np.stack(ecg_array[1:-1])

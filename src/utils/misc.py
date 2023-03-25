@@ -1,5 +1,6 @@
 import os, yaml
 
+
 def yaml_config_hook(config_file):
     """
     Custom YAML config loader, which can include other yaml files
@@ -16,4 +17,3 @@ def yaml_config_hook(config_file):
     if "defaults" in cfg.keys():
         del cfg["defaults"]
     return cfg
-
