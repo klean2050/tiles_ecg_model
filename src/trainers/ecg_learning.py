@@ -9,6 +9,7 @@ class ECGLearning(LightningModule):
         self.save_hyperparameters(args)
         self.ground_truth = args.gtruth
         self.accuracy = accuracy_score
+        self.bs = args.batch_size
 
         # configure criterion
         self.loss = nn.MSELoss() if "drivedb" in args.dataset_dir else nn.CrossEntropyLoss()
@@ -21,7 +22,7 @@ class ECGLearning(LightningModule):
 
         # create cls projector
         self.project_cls = nn.Sequential(
-            nn.Dropout(0.2),
+            nn.Dropout(0.4),
             nn.Linear(128, self.hparams.projection_dim),
             nn.ReLU(),
             nn.Linear(self.hparams.projection_dim, output_dim),
@@ -40,8 +41,8 @@ class ECGLearning(LightningModule):
         y = labels[:, self.ground_truth] > 4
         loss, preds = self.forward(data, y)
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
-        self.log("Train/loss", loss, sync_dist=True)
-        self.log("Train/acc", acc, sync_dist=True)
+        self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
+        self.log("Train/acc", acc, sync_dist=True, batch_size=self.bs)
         return loss
 
     def validation_step(self, batch, _):
@@ -49,8 +50,8 @@ class ECGLearning(LightningModule):
         y = labels[:, self.ground_truth] > 4
         loss, preds = self.forward(data, y)
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
-        self.log("Valid/loss", loss, sync_dist=True)
-        self.log("Valid/acc", acc, sync_dist=True)
+        self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
+        self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
         return loss
 
     def configure_optimizers(self):

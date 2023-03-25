@@ -61,7 +61,7 @@ if __name__ == "__main__":
         valid_loader = DataLoader(
             valid_dataset,
             batch_size=args.batch_size,
-            shuffle=True,
+            shuffle=False,
             num_workers=args.workers,
             drop_last=True,
         )
@@ -117,7 +117,7 @@ if __name__ == "__main__":
             check_val_every_n_epoch=args.val_freq,
             log_every_n_steps=args.log_freq,
             sync_batchnorm=True,
-            strategy="ddp",
+            strategy="ddp_find_unused_parameters_false",
             accelerator="gpu",
             devices="auto",
             precision=args.bit_precision,

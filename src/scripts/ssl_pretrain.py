@@ -107,7 +107,7 @@ if __name__ == "__main__":
     # --------
 
     # GPUs to use
-    # os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
 
     # create PyTorch Lightning trainer
     trainer = Trainer.from_argparse_args(
