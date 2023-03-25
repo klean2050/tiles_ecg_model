@@ -37,12 +37,10 @@ if __name__ == "__main__":
     # ------------
 
     # get full fine-tuning dataset
-    full_dataset = get_dataset(
-        dataset=args.dataset, dataset_dir=args.dataset_dir, sr=100
-    )
+    full_dataset = get_dataset(dataset=args.dataset, dataset_dir=args.dataset_dir, sr=100)
 
     # setup cross-validation
-    gcv = GroupKFold(n_splits=10)
+    gcv = GroupKFold(n_splits=5)
     splits = [s for s in gcv.split(full_dataset, groups=full_dataset.names)]
 
     # iterate over cross-validation splits
@@ -63,7 +61,7 @@ if __name__ == "__main__":
         valid_loader = DataLoader(
             valid_dataset,
             batch_size=args.batch_size,
-            shuffle=False,
+            shuffle=True,
             num_workers=args.workers,
             drop_last=True,
         )
@@ -106,15 +104,11 @@ if __name__ == "__main__":
         # --------
 
         # GPUs to use
-        # os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
 
         # create PyTorch Lightning trainer
-        model_ckpt_callback = ModelCheckpoint(
-            monitor="Valid/loss", mode="min", save_top_k=1
-        )
-        early_stop_callback = EarlyStopping(
-            monitor="Valid/loss", mode="min", patience=10
-        )
+        model_ckpt_callback = ModelCheckpoint(monitor="Valid/acc", mode="max", save_top_k=1)
+        early_stop_callback = EarlyStopping(monitor="Valid/loss", mode="min", patience=15)
 
         trainer = Trainer.from_argparse_args(
             args,
@@ -122,11 +116,12 @@ if __name__ == "__main__":
             max_epochs=args.m_epochs,
             check_val_every_n_epoch=args.val_freq,
             log_every_n_steps=args.log_freq,
-            # sync_batchnorm=True,
+            sync_batchnorm=True,
             strategy="ddp",
-            accelerator="cpu",
+            accelerator="gpu",
             devices="auto",
             precision=args.bit_precision,
+            callbacks=[model_ckpt_callback, early_stop_callback],
         )
 
         # train and save model
