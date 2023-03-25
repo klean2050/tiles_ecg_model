@@ -1,6 +1,6 @@
 # dataset options
-dataset: "SWELL_KW"
-dataset_dir: "/home/kavra/Datasets/physio/SWELL_KW/"
+dataset: "WESAD"
+dataset_dir: "/home/kavra/Datasets/physio/WESAD/"
 streams: ["ECG"]
 gtruth: 3
 
@@ -13,7 +13,7 @@ groups: 1
 n_block: 8
 n_classes: 256
 projection_dim: 128
-output_dim: 2
+output_dim: 4
 
 # training options:
 batch_size: 32
@@ -33,5 +33,5 @@ ssl_ckpt_path: "ckpt/upd_epoch=99-step=93500.ckpt"
 
 # logging options:
 log_dir: "runs"
-experiment_name: "cls_swell"
+experiment_name: "cls_wesad"
 experiment_version: null

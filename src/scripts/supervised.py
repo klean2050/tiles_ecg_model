@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser = Trainer.add_argparse_args(parser)
 
     # extract args from config file and add to parser:
-    config_file = "config/config_swell.yaml"
+    config_file = "config/config_wesad.yaml"
     config = yaml_config_hook(config_file)
     for key, value in config.items():
         parser.add_argument(f"--{key}", default=value, type=type(value))
@@ -37,7 +37,9 @@ if __name__ == "__main__":
     # ------------
 
     # get full fine-tuning dataset
-    full_dataset = get_dataset(dataset=args.dataset, dataset_dir=args.dataset_dir, sr=100)
+    full_dataset = get_dataset(
+        dataset=args.dataset, dataset_dir=args.dataset_dir, sr=100
+    )
 
     # setup cross-validation
     gcv = GroupKFold(n_splits=5)
@@ -107,8 +109,12 @@ if __name__ == "__main__":
         os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
 
         # create PyTorch Lightning trainer
-        model_ckpt_callback = ModelCheckpoint(monitor="Valid/acc", mode="max", save_top_k=1)
-        early_stop_callback = EarlyStopping(monitor="Valid/loss", mode="min", patience=15)
+        model_ckpt_callback = ModelCheckpoint(
+            monitor="Valid/acc", mode="max", save_top_k=1
+        )
+        early_stop_callback = EarlyStopping(
+            monitor="Valid/loss", mode="min", patience=20
+        )
 
         trainer = Trainer.from_argparse_args(
             args,

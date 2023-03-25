@@ -12,7 +12,9 @@ class ECGLearning(LightningModule):
         self.bs = args.batch_size
 
         # configure criterion
-        self.loss = nn.MSELoss() if "drivedb" in args.dataset_dir else nn.CrossEntropyLoss()
+        self.loss = (
+            nn.MSELoss() if "drivedb" in args.dataset_dir else nn.CrossEntropyLoss()
+        )
 
         # freezing trained ECG encoder
         self.encoder = encoder
@@ -38,7 +40,7 @@ class ECGLearning(LightningModule):
 
     def training_step(self, batch, _):
         data, labels, _ = batch
-        y = labels[:, self.ground_truth]
+        y = labels - 1  # [:, self.ground_truth]
         loss, preds = self.forward(data, y)
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
         self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
@@ -47,7 +49,7 @@ class ECGLearning(LightningModule):
 
     def validation_step(self, batch, _):
         data, labels, _ = batch
-        y = labels[:, self.ground_truth]
+        y = labels - 1  # [:, self.ground_truth]
         loss, preds = self.forward(data, y)
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
         self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
@@ -60,23 +62,4 @@ class ECGLearning(LightningModule):
             lr=self.hparams.learning_rate,
             weight_decay=float(self.hparams.weight_decay),
         )
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer,
-            mode="min",
-            factor=0.1,
-            patience=5,
-            threshold=0.0001,
-            threshold_mode="rel",
-            cooldown=0,
-            min_lr=0,
-            eps=1e-08,
-            verbose=False,
-        )
-        if scheduler:
-            return {
-                "optimizer": optimizer,
-                "lr_scheduler": scheduler,
-                "monitor": "Valid/loss",
-            }
-        else:
-            return {"optimizer": optimizer}
+        return {"optimizer": optimizer}
