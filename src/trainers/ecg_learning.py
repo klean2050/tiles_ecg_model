@@ -22,7 +22,7 @@ class ECGLearning(LightningModule):
 
         # create cls projector
         self.project_cls = nn.Sequential(
-            nn.Dropout(0.4),
+            nn.Dropout(0.5),
             nn.Linear(128, self.hparams.projection_dim),
             nn.ReLU(),
             nn.Linear(self.hparams.projection_dim, output_dim),
@@ -38,7 +38,7 @@ class ECGLearning(LightningModule):
 
     def training_step(self, batch, _):
         data, labels, _ = batch
-        y = labels[:, self.ground_truth] > 4
+        y = labels[:, self.ground_truth]
         loss, preds = self.forward(data, y)
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
         self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
@@ -47,7 +47,7 @@ class ECGLearning(LightningModule):
 
     def validation_step(self, batch, _):
         data, labels, _ = batch
-        y = labels[:, self.ground_truth] > 4
+        y = labels[:, self.ground_truth]
         loss, preds = self.forward(data, y)
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
         self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
