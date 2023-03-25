@@ -23,6 +23,7 @@ You will also need the ``ecg-augmentations`` library:
 ```
 git clone https://github.com/klean2050/ecg-augmentations
 pip install -e ecg-augmentations
+```
 
 ## Project Structure
 
