@@ -4,16 +4,14 @@ from sklearn.metrics import accuracy_score, f1_score
 
 
 class ECGLearning(LightningModule):
-    def __init__(self, args, encoder, output_dim, gtruth=0):
+    def __init__(self, args, encoder, output_dim):
         super().__init__()
         self.save_hyperparameters(args)
-        self.ground_truth = gtruth
+        self.ground_truth = args.gtruth
         self.accuracy = accuracy_score
 
         # configure criterion
-        self.loss = (
-            nn.MSELoss() if "drivedb" in args.dataset_dir else nn.CrossEntropyLoss()
-        )
+        self.loss = nn.MSELoss() if "drivedb" in args.dataset_dir else nn.CrossEntropyLoss()
 
         # freezing trained ECG encoder
         self.encoder = encoder
@@ -39,7 +37,7 @@ class ECGLearning(LightningModule):
 
     def training_step(self, batch, _):
         data, labels, _ = batch
-        y = labels[:, self.ground_truth]
+        y = labels[:, self.ground_truth] > 4
         loss, preds = self.forward(data, y)
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
         self.log("Train/loss", loss, sync_dist=True)
@@ -48,7 +46,7 @@ class ECGLearning(LightningModule):
 
     def validation_step(self, batch, _):
         data, labels, _ = batch
-        y = labels[:, self.ground_truth]
+        y = labels[:, self.ground_truth] > 4
         loss, preds = self.forward(data, y)
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
         self.log("Valid/loss", loss, sync_dist=True)
