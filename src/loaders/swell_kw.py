@@ -21,7 +21,7 @@ class SWELL_KW(data.Dataset):
             self.labels = np.load(self.cache_path + "labels.npy")
             self.names = np.load(self.cache_path + "names.npy")
         else:
-            os.makedirs(self.cache_path)
+            os.makedirs(self.cache_path, exist_ok=True)
 
             print("Loading label data ...")
             label = pd.ExcelFile(self.label_path, engine="openpyxl")
@@ -59,16 +59,22 @@ class SWELL_KW(data.Dataset):
                     label_set = swell_labels[
                         (swell_labels["PP"] == pp) & (swell_labels["Blok"] == i + 1)
                     ]
-                    label_set = label_set[
-                        [
-                            "Valence_rc",
-                            "Arousal_rc",
-                            "Dominance",
-                            "Stress",
-                            "Frustration",
+                    label_set = np.asarray(
+                        label_set[
+                            [
+                                "Valence_rc",
+                                "Arousal_rc",
+                                "Dominance",
+                                "Stress",
+                                "Frustration",
+                            ]
                         ]
-                    ]
-                    these_wlabels = [np.asarray(label_set)] * len(these_windows)
+                    )
+
+                    if not len(label_set):
+                        these_wlabels = [self.labels[-1]] * len(these_windows)
+                    else:
+                        these_wlabels = [label_set[0]] * len(these_windows)
                     self.labels += these_wlabels
 
             self.samples = np.vstack(self.samples)
@@ -79,7 +85,7 @@ class SWELL_KW(data.Dataset):
             np.save(self.cache_path + "labels.npy", self.labels)
             np.save(self.cache_path + "names.npy", self.names)
 
-        print(f"Loaded {len(self.samples)} ECG samples in total.")
+        print(f"Loaded {len(self.labels)} ECG samples in total.")
 
     def iterate_subjects(self):
         files = glob.glob(self.signal_path + "*.csv")

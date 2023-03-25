@@ -1,8 +1,8 @@
 # dataset options
 dataset: "SWELL_KW"
 dataset_dir: "/home/kavra/Datasets/physio/SWELL_KW/"
-sample_rate: 0.5
 streams: ["ECG"]
+gtruth: 1
 
 # model options
 in_channels: 1
@@ -19,7 +19,7 @@ output_dim: 10
 batch_size: 64
 m_epochs: 100
 optimizer: "Adam"
-learning_rate: 0.005
+learning_rate: 0.001
 weight_decay: 1e-6
 temperature: 0.1
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
