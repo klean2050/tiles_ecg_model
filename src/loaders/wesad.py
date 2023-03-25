@@ -2,6 +2,7 @@ import os, pickle
 import numpy as np
 import neurokit2 as nk
 from scipy.signal import resample_poly
+from sklearn.preprocessing import StandardScaler
 from torch.utils import data
 from tqdm import tqdm
 
@@ -22,11 +23,10 @@ class WESAD(data.Dataset):
         ecg_all, lab_all, names = [], [], []
         print("Loading participant data...")
         for p in tqdm(self.pps):
-            if not p.startswith("S"):
-                continue
 
             if os.path.exists(f"data/wesad/{p}_ecg.npy"):
                 ecg = np.load(f"data/wesad/{p}_ecg.npy")
+                ecg = StandardScaler().fit_transform(ecg)
                 lab = np.load(f"data/wesad/{p}_lab.npy")
             else:
                 with open(f"{self.root}/{p}/{p}.pkl", "rb") as f:
