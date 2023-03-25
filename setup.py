@@ -25,6 +25,7 @@ REQUIRED = [
     "pytorch_lightning==1.9",
     "PyYAML",
     "scikit_learn",
+    "scipy==1.10",
     "setuptools",
     "simclr",
     "torch",
