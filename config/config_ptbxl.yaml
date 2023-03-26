@@ -1,0 +1,37 @@
+# dataset options
+dataset: "PTB_XL"
+dataset_dir: "/media/data/public-data/Health/ptb-xl"
+streams: ["ECG"]
+gtruth: 3
+
+# model options
+in_channels: 1
+base_filters: 16
+kernel_size: 3
+stride: 2
+groups: 1
+n_block: 8
+n_classes: 256
+projection_dim: 128
+output_dim: 5
+
+# training options:
+batch_size: 32
+m_epochs: 50
+optimizer: "Adam"
+learning_rate: 0.0005
+weight_decay: 1e-6
+temperature: 0.1
+val_freq: 1     # how often to validate (runs validation every val_freq epochs)
+log_freq: 2     # how often to log (logs every log_freq steps)
+workers: 4
+n_cuda: "0"
+bit_precision: 16
+seed: 42
+ckpt_path: null     # not used if set to null
+ssl_ckpt_path: "ckpt/upd_epoch=99-step=93500.ckpt"
+
+# logging options:
+log_dir: "runs"
+experiment_name: "pred_ptb_xl"
+experiment_version: null
