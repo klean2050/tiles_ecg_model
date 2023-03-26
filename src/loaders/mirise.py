@@ -48,9 +48,10 @@ class MIRISE(data.Dataset):
                 with open(f"data/mirise/{p}_lab.pkl", "wb") as f:
                     pickle.dump(lab, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-            ecg_all.extend([v for _, v in ecg.items()])
+            unraveled = [v for _, v in ecg.items()]
+            ecg_all.extend(unraveled)
             lab_all.extend([v for _, v in lab.items()])
-            names += [p] * len([v for _, v in ecg.items()])
+            names += [p] * len(np.vstack(unraveled))
 
         self.samples = np.vstack(ecg_all)
         self.labels = np.concatenate(lab_all)

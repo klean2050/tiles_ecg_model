@@ -40,7 +40,7 @@ class ECGLearning(LightningModule):
 
     def training_step(self, batch, _):
         data, labels, _ = batch
-        y = labels - 1  # [:, self.ground_truth]
+        y = labels  # [:, self.ground_truth]
         loss, preds = self.forward(data, y)
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
         self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
@@ -49,7 +49,7 @@ class ECGLearning(LightningModule):
 
     def validation_step(self, batch, _):
         data, labels, _ = batch
-        y = labels - 1  # [:, self.ground_truth]
+        y = labels  # [:, self.ground_truth]
         loss, preds = self.forward(data, y)
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
         self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
