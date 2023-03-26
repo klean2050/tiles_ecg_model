@@ -30,10 +30,9 @@ class PTB_XL(data.Dataset):
         
         print("Loading ECG data...")
         
-        
         if os.path.exists(f"data/ptb_xl/{split}_ecg.npy"):
-            ecg = np.load(f"data/ptb_xl/{split}_ecg.npy")
-            lab = np.load(f"data/ptb_xl/{split}_lab.npy")
+            ecg_data = np.load(f"data/ptb_xl/{split}_ecg.npy")
+            ecg_labels = np.load(f"data/ptb_xl/{split}_lab.npy")
         else:
             # Data root folder
             data_path = Path(self.root).joinpath(
@@ -86,9 +85,10 @@ class PTB_XL(data.Dataset):
                 for raw_label in raw_labels: label[label_dict[raw_label]] = 1
                 
                 data = wfdb.rdsamp(str(data_path.joinpath(file_name)))[0][:, 0]
+                data = nk.ecg_clean(data, sampling_rate=self.sr)
+                
                 mean, std = np.mean(data, axis=0), np.std(data, axis=0)
                 ecg = (data - mean) / (std + 1e-5)
-                ecg = nk.ecg_clean(ecg, sampling_rate=self.sr)
                 
                 ecg_data.append(ecg)
                 ecg_labels.append(label)
@@ -111,7 +111,7 @@ class PTB_XL(data.Dataset):
         ecg = self.samples[idx]
         lab = self.labels[idx]
         
-        return ecg, lab, None
+        return ecg, lab, 0
 
 
 if __name__ == "__main__":
