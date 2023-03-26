@@ -1,3 +1,4 @@
+import pdb
 import torch, torch.nn as nn
 from pytorch_lightning import LightningModule
 from sklearn.metrics import accuracy_score, f1_score
@@ -7,15 +8,19 @@ class ECGLearning(LightningModule):
     def __init__(self, args, encoder, output_dim):
         super().__init__()
         self.save_hyperparameters(args)
-        self.ground_truth = args.gtruth
-        self.accuracy = accuracy_score
-        self.bs = args.batch_size
+        self.ground_truth   = args.gtruth
+        self.accuracy       = accuracy_score
+        self.bs             = args.batch_size
+        self.args           = args
 
         # configure criterion
-        self.loss = (
-            nn.MSELoss() if "drivedb" in args.dataset_dir else nn.CrossEntropyLoss()
-        )
-
+        if "drivedb" in args.dataset_dir:
+            self.loss = nn.MSELoss()
+        elif "ptb" in args.dataset_dir:
+            self.loss = nn.BCEWithLogitsLoss()
+        else:
+            self.loss = nn.CrossEntropyLoss()
+        
         # freezing trained ECG encoder
         self.encoder = encoder
         self.encoder.eval()
@@ -35,25 +40,40 @@ class ECGLearning(LightningModule):
     def forward(self, x, y):
         x = x.unsqueeze(1)
         preds = self.model(x).squeeze()
-        loss = self.loss(preds, y.long())
+        if "ptb" in self.args.dataset_dir:
+            loss = self.loss(preds, y.float())
+        else:
+            loss = self.loss(preds, y.long())
         return loss, preds
 
     def training_step(self, batch, _):
         data, labels, _ = batch
         y = labels  # [:, self.ground_truth]
         loss, preds = self.forward(data, y)
-        acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
-        self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
-        self.log("Train/acc", acc, sync_dist=True, batch_size=self.bs)
+        if "ptb" in self.args.dataset_dir:
+            preds = torch.tensor(nn.Softmax(dim=1)(preds).detach().cpu().numpy() > 0.5, dtype=int)
+            macro_f1 = f1_score(y.cpu(), preds, average='macro', zero_division=0)
+            self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
+            self.log("Train/macro-f1", macro_f1, sync_dist=True, batch_size=self.bs)
+        else:
+            acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
+            self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
+            self.log("Train/acc", acc, sync_dist=True, batch_size=self.bs)
         return loss
 
     def validation_step(self, batch, _):
         data, labels, _ = batch
         y = labels  # [:, self.ground_truth]
         loss, preds = self.forward(data, y)
-        acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
-        self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
-        self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
+        if "ptb" in self.args.dataset_dir:
+            preds = torch.tensor(nn.Softmax(dim=1)(preds).detach().cpu().numpy() > 0.5, dtype=int)
+            macro_f1 = f1_score(y.cpu(), preds, average='macro', zero_division=0)
+            self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
+            self.log("Valid/macro-f1", macro_f1, sync_dist=True, batch_size=self.bs)
+        else:
+            acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
+            self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
+            self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
         return loss
 
     def configure_optimizers(self):
