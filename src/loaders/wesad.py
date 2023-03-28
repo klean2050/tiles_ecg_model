@@ -62,7 +62,7 @@ class WESAD(data.Dataset):
             names += [p] * len(ecg)
 
         self.samples = np.vstack(ecg_all)
-        self.labels = np.concatenate(lab_all)
+        self.labels = np.concatenate(lab_all) - 1
         self.names = names
 
         print(f"Loaded {len(self.labels)} ECG samples in total.")

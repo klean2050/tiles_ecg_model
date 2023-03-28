@@ -6,9 +6,10 @@ import numpy as np, pandas as pd
 
 
 class SWELL_KW(data.Dataset):
-    def __init__(self, root, sr):
+    def __init__(self, root, sr, gtruth=3):
         super().__init__()
         self.root = root
+        self.gtruth = gtruth
         self.physio_path = self.root + "0 - Raw data/D - Physiology - raw data/"
         self.signal_path = self.physio_path + "csv_extracted_signals/"
         self.label_path = self.root + "Behavioral-features - per minute.xlsx"
@@ -110,6 +111,7 @@ class SWELL_KW(data.Dataset):
     def __getitem__(self, index):
         ecg = self.samples[index]
         label = self.labels[index]
+        label = label[:, self.gtruth] > 4.5
         name = self.names[index]
         return ecg, label, name
 
