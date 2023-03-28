@@ -1,4 +1,3 @@
-import pdb
 import torch, torch.nn as nn
 from pytorch_lightning import LightningModule
 from sklearn.metrics import accuracy_score, f1_score
@@ -8,10 +7,10 @@ class ECGLearning(LightningModule):
     def __init__(self, args, encoder, output_dim):
         super().__init__()
         self.save_hyperparameters(args)
-        self.ground_truth   = args.gtruth
-        self.accuracy       = accuracy_score
-        self.bs             = args.batch_size
-        self.args           = args
+        self.ground_truth = args.gtruth
+        self.accuracy = accuracy_score
+        self.bs = args.batch_size
+        self.args = args
 
         # configure criterion
         if "drivedb" in args.dataset_dir:
@@ -20,7 +19,7 @@ class ECGLearning(LightningModule):
             self.loss = nn.BCEWithLogitsLoss()
         else:
             self.loss = nn.CrossEntropyLoss()
-        
+
         # freezing trained ECG encoder
         self.encoder = encoder
         self.encoder.eval()
@@ -28,23 +27,21 @@ class ECGLearning(LightningModule):
             param.requires_grad = False
 
         # create cls projector
+        self.n_features = self.encoder.output_size
         self.project_cls = nn.Sequential(
-            nn.Dropout(0.5),
-            nn.Linear(128, self.hparams.projection_dim),
+            nn.Linear(self.n_features, self.hparams.projection_dim),
             nn.ReLU(),
+            nn.Dropout(0.5),
             nn.Linear(self.hparams.projection_dim, output_dim),
         )
         # putting it all together
         self.model = nn.Sequential(self.encoder, self.project_cls)
 
     def forward(self, x, y):
-        x = x.unsqueeze(1)
-        preds = self.model(x).squeeze()
-        if "ptb" in self.args.dataset_dir:
-            loss = self.loss(preds, y.float())
-        else:
-            loss = self.loss(preds, y.long())
-        return loss, preds
+        preds = self.model(x.unsqueeze(1))
+        preds = preds.squeeze() if preds.shape[0] != 1 else preds
+        y = y.float() if "ptb" in self.args.dataset_dir else y.long()
+        return self.loss(preds, y), preds
 
     def training_step(self, batch, _):
         data, y, _ = batch
@@ -58,7 +55,7 @@ class ECGLearning(LightningModule):
 
         acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
         preds = preds.argmax(dim=1).detach().cpu().numpy()
-        f1 = f1_score(y.cpu(), preds, average='macro', zero_division=0)
+        f1 = f1_score(y.cpu(), preds, average="macro", zero_division=0)
 
         self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
         self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)

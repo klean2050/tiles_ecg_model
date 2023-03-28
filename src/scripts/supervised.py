@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser = Trainer.add_argparse_args(parser)
 
     # extract args from config file and add to parser:
-    config_file = "config/config_mirise.yaml"
+    config_file = "config/config_wesad.yaml"
     config = yaml_config_hook(config_file)
     for key, value in config.items():
         parser.add_argument(f"--{key}", default=value, type=type(value))
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     )
 
     # setup cross-validation
-    #num_splits = len(set(full_dataset.names))
+    # num_splits = len(set(full_dataset.names))
     gcv = GroupKFold(n_splits=5)
     splits = [s for s in gcv.split(full_dataset, groups=full_dataset.names)]
 
@@ -125,7 +125,7 @@ if __name__ == "__main__":
             check_val_every_n_epoch=args.val_freq,
             log_every_n_steps=args.log_freq,
             sync_batchnorm=True,
-            strategy="ddp_find_unused_parameters_false",
+            strategy="ddp",
             accelerator="gpu",
             devices="auto",
             precision=args.bit_precision,
@@ -143,13 +143,10 @@ if __name__ == "__main__":
         # ----------
         # EVALUATION
         # ----------
-
+        out = f"results/{args.dataset}_split_{i}.txt"
         metrics = evaluate(
             model,
             dataset=valid_dataset,
             dataset_name=args.dataset,
-            output_dir=None,
-            aggregate="mean",
-            device="cuda:2",
-            verbose=True,
+            output=out,
         )

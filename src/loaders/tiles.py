@@ -5,12 +5,11 @@ from tqdm import tqdm
 
 
 class TILES_ECG(data.Dataset):
-    def __init__(self, root, split, transform=None, contrastive=True):
+    def __init__(self, root, split, transform=None):
         super().__init__()
         self.root = root
         self.participants = split
         self.transform = transform
-        self.contrastive = contrastive
         self.samples = []
 
         print("\nLoading participant data ...")
@@ -62,7 +61,7 @@ class TILES_ECG(data.Dataset):
         return len(self.samples)
 
     def __getitem__(self, index):
-        if self.contrastive:
+        if self.transform.num_augmented_samples == 2:
             ecg = self.samples[index].unsqueeze(0)
             return self.transform(ecg)[:, 0]
         else:

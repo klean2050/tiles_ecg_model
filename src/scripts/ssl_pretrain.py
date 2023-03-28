@@ -9,7 +9,7 @@ from src.models import ResNet1D
 from src.trainers import ContrastiveLearning, TransformLearning
 
 from ecg_augmentations import *
-
+from torchsummary import summary
 
 if __name__ == "__main__":
 
@@ -37,17 +37,24 @@ if __name__ == "__main__":
     # -------------
 
     # create transform for ECG augmentation
-    transforms = [
-        RandomCrop(n_samples=1000),
-        #RandomApply([PRMask(sr=100)], p=0.3),
-        #RandomApply([QRSMask(sr=100)], p=0.3),
-        #RandomApply([Scale()], p=0.3),
-        #RandomApply([Permute()], p=0.5),
-        RandomApply([GaussianNoise()], p=0.5),
-        #RandomApply([Invert()], p=0.1),
-        #RandomApply([Reverse()], p=0.1),
-    ]
-    transforms = ComposeMany(transforms, 1)
+    if args.contrastive:
+        transforms = [
+            RandomCrop(n_samples=1000),
+            RandomApply([PRMask(sr=100)], p=0.3),
+            RandomApply([QRSMask(sr=100)], p=0.3),
+            RandomApply([Scale()], p=0.3),
+            RandomApply([Permute()], p=0.5),
+            RandomApply([GaussianNoise()], p=0.5),
+            RandomApply([Invert()], p=0.1),
+            RandomApply([Reverse()], p=0.1),
+        ]
+        transforms = ComposeMany(transforms, 2)
+    else:
+        transforms = [
+            RandomCrop(n_samples=1000),
+            RandomApply([GaussianNoise()], p=0.5),
+        ]
+        transforms = ComposeMany(transforms, 1)
 
     # ------------
     # DATA LOADERS
@@ -58,12 +65,8 @@ if __name__ == "__main__":
     train_sp = [p for p in os.listdir(args.dataset_dir) if p not in valid_sp]
 
     # get training and validation datasets
-    train_dataset = TILES_ECG(
-        args.dataset_dir, split=train_sp, transform=transforms, contrastive=False
-    )
-    valid_dataset = TILES_ECG(
-        args.dataset_dir, split=valid_sp, transform=transforms, contrastive=False
-    )
+    train_dataset = TILES_ECG(args.dataset_dir, train_sp, transform=transforms)
+    valid_dataset = TILES_ECG(args.dataset_dir, valid_sp, transform=transforms)
 
     # create the dataloaders
     train_loader = DataLoader(
@@ -95,9 +98,13 @@ if __name__ == "__main__":
         n_block=args.n_block,
         n_classes=args.n_classes,
     )
+    #print(summary(encoder.cuda(), (1, 1000)))
+
     # create full LightningModule
-    #model = ContrastiveLearning(args, encoder.float())
-    model = TransformLearning(args, encoder.float())
+    if args.contrastive:
+        model = ContrastiveLearning(args, encoder.float())
+    else:
+        model = TransformLearning(args, encoder.float())
 
     # logger that saves to /save_dir/name/version/
     logger = TensorBoardLogger(
