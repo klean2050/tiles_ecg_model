@@ -1,15 +1,16 @@
 # dataset options
 dataset_dir: "/data/avramidi/tiles_ecg/"
+contrastive: 0
 
 # model options
 in_channels: 1
-base_filters: 16
+base_filters: 64
 kernel_size: 3
 stride: 2
 groups: 1
-n_block: 8
+n_block: 10
 n_classes: 256
-projection_dim: 8   # this changes depending on SSL task
+projection_dim: 8   # this changes depending on SSL task [128, 8]
 
 # training options:
 batch_size: 256
@@ -21,7 +22,7 @@ temperature: 0.1
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
 log_freq: 10    # how often to log (logs every log_freq steps)
 workers: 4
-n_cuda: "0"
+n_cuda: "1"
 bit_precision: 16
 seed: 42
 ckpt_path: null     # not used if set to null

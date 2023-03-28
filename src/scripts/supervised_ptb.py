@@ -2,8 +2,7 @@ import os, argparse, pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
-from torch.utils.data import Subset, DataLoader
-from sklearn.model_selection import GroupKFold
+from torch.utils.data import DataLoader
 
 from src.utils import yaml_config_hook
 from src.loaders import get_dataset
@@ -40,7 +39,7 @@ if __name__ == "__main__":
     train_dataset = get_dataset(
         dataset=args.dataset, dataset_dir=args.dataset_dir, sr=100, split="train"
     )
-    
+
     valid_dataset = get_dataset(
         dataset=args.dataset, dataset_dir=args.dataset_dir, sr=100, split="dev"
     )
@@ -102,12 +101,8 @@ if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
 
     # create PyTorch Lightning trainer
-    model_ckpt_callback = ModelCheckpoint(
-        monitor="Valid/f1", mode="max", save_top_k=1
-    )
-    early_stop_callback = EarlyStopping(
-        monitor="Valid/loss", mode="min", patience=10
-    )
+    model_ckpt_callback = ModelCheckpoint(monitor="Valid/f1", mode="max", save_top_k=1)
+    early_stop_callback = EarlyStopping(monitor="Valid/loss", mode="min", patience=10)
 
     trainer = Trainer.from_argparse_args(
         args,

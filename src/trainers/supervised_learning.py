@@ -42,9 +42,9 @@ class SupervisedLearning(LightningModule):
             nn.Linear(128, self.hparams.projection_dim),
         )
         self.project_cls = nn.Sequential(
-            nn.Dropout(0.2),
             nn.Linear(128, self.hparams.projection_dim),
             nn.ReLU(),
+            nn.Dropout(0.5),
             nn.Linear(self.hparams.projection_dim, output_dim),
         )
 

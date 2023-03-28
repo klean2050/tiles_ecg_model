@@ -4,6 +4,7 @@ data/
 runs/
 build/
 dist/
+results/
 # experiments/
 # results/
 *.egg-info

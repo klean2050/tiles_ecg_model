@@ -268,9 +268,6 @@ class ResNet1D(nn.Module):
         self.final_bn = nn.BatchNorm1d(out_channels)
         self.final_relu = nn.ReLU(inplace=True)
         self.output_size = out_channels
-        # self.do = nn.Dropout(p=0.5)
-        # self.dense = nn.Linear(out_channels, n_classes)
-        # self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
         out = x.float()
