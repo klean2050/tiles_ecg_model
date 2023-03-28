@@ -20,15 +20,15 @@ def evaluate(model, dataset, dataset_name, output_dir, aggregate, device):
     model = model.to(device)
     model.eval()
     with torch.no_grad():
-        
+
         y_true, y_pred = [], []
-        for idx in tqdm(range(len(test_dataset))):
-            ecg, label, name = test_dataset[idx]
+        for idx in tqdm(range(len(dataset))):
+            ecg, label, name = dataset[idx]
             ecg = ecg.to(device)
 
             # pass sample through model
             ecg = ecg.unsqueeze(1)
-            preds = self.model(ecg).squeeze()
+            preds = model(ecg).squeeze()
 
             # transform logits to predictions
             preds = preds.argmax(dim=1).detach()
@@ -47,6 +47,5 @@ def evaluate(model, dataset, dataset_name, output_dir, aggregate, device):
 
     # evaluate metrics in dict
     acc = accuracy_score(y_true, y_pred)
-    f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
+    f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
     print({"Accuracy": acc, "F1-macro": f1})
-
