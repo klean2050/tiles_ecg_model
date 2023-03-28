@@ -1,5 +1,9 @@
 # How to use pre-trained models
 
+### Attention
+
+Please access the latest model checkpoints [here](https://drive.google.com/drive/folders/1L7T-fsCHiyh5XWaA7VyLHxyl_pcEK-Ar?usp=sharing) and copy to `ckpt` folder.
+
 One can load a pre-trained model for fine-tuning or testing as follows:
 
 ```python

@@ -7,7 +7,6 @@ dist/
 results/
 ckpt/BIG*
 # experiments/
-# results/
 *.egg-info
 
 # Compiled source #
