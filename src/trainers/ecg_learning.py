@@ -47,33 +47,23 @@ class ECGLearning(LightningModule):
         return loss, preds
 
     def training_step(self, batch, _):
-        data, labels, _ = batch
-        y = labels  # [:, self.ground_truth]
-        loss, preds = self.forward(data, y)
-        if "ptb" in self.args.dataset_dir:
-            preds = torch.tensor(nn.Softmax(dim=1)(preds).detach().cpu().numpy() > 0.5, dtype=int)
-            macro_f1 = f1_score(y.cpu(), preds, average='macro', zero_division=0)
-            self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
-            self.log("Train/macro-f1", macro_f1, sync_dist=True, batch_size=self.bs)
-        else:
-            acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
-            self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
-            self.log("Train/acc", acc, sync_dist=True, batch_size=self.bs)
+        data, y, _ = batch
+        loss, _ = self.forward(data, y)
+        self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
         return loss
 
     def validation_step(self, batch, _):
-        data, labels, _ = batch
-        y = labels  # [:, self.ground_truth]
+        data, y, _ = batch
         loss, preds = self.forward(data, y)
-        if "ptb" in self.args.dataset_dir:
-            preds = torch.tensor(nn.Softmax(dim=1)(preds).detach().cpu().numpy() > 0.5, dtype=int)
-            macro_f1 = f1_score(y.cpu(), preds, average='macro', zero_division=0)
-            self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
-            self.log("Valid/macro-f1", macro_f1, sync_dist=True, batch_size=self.bs)
-        else:
-            acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
-            self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
-            self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
+
+        acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
+        preds = preds.argmax(dim=1).detach().cpu().numpy()
+        f1 = f1_score(y.cpu(), preds, average='macro', zero_division=0)
+
+        self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
+        self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
+        self.log("Valid/f1", f1, sync_dist=True, batch_size=self.bs)
+
         return loss
 
     def configure_optimizers(self):

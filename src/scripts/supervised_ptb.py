@@ -44,10 +44,6 @@ if __name__ == "__main__":
     valid_dataset = get_dataset(
         dataset=args.dataset, dataset_dir=args.dataset_dir, sr=100, split="dev"
     )
-    
-    test_dataset = get_dataset(
-        dataset=args.dataset, dataset_dir=args.dataset_dir, sr=100, split="test"
-    )
 
     # create the dataloaders
     train_loader = DataLoader(
@@ -107,10 +103,10 @@ if __name__ == "__main__":
 
     # create PyTorch Lightning trainer
     model_ckpt_callback = ModelCheckpoint(
-        monitor="Valid/macro-f1", mode="max", save_top_k=1
+        monitor="Valid/f1", mode="max", save_top_k=1
     )
     early_stop_callback = EarlyStopping(
-        monitor="Valid/loss", mode="min", patience=20
+        monitor="Valid/loss", mode="min", patience=10
     )
 
     trainer = Trainer.from_argparse_args(
@@ -121,7 +117,6 @@ if __name__ == "__main__":
         log_every_n_steps=args.log_freq,
         sync_batchnorm=True,
         strategy="ddp_find_unused_parameters_false",
-        # strategy="ddp",
         accelerator="gpu",
         devices="auto",
         precision=args.bit_precision,

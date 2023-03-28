@@ -4,8 +4,9 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import Subset, DataLoader
 from sklearn.model_selection import GroupKFold
+from random import shuffle
 
-from src.utils import yaml_config_hook
+from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
 from src.models import ResNet1D
 from src.trainers import ContrastiveLearning, SupervisedLearning, ECGLearning
@@ -42,6 +43,7 @@ if __name__ == "__main__":
     )
 
     # setup cross-validation
+    #num_splits = len(set(full_dataset.names))
     gcv = GroupKFold(n_splits=5)
     splits = [s for s in gcv.split(full_dataset, groups=full_dataset.names)]
 
@@ -110,10 +112,10 @@ if __name__ == "__main__":
 
         # create PyTorch Lightning trainer
         model_ckpt_callback = ModelCheckpoint(
-            monitor="Valid/acc", mode="max", save_top_k=1
+            monitor="Valid/f1", mode="max", save_top_k=1
         )
         early_stop_callback = EarlyStopping(
-            monitor="Valid/loss", mode="min", patience=20
+            monitor="Valid/loss", mode="min", patience=10
         )
 
         trainer = Trainer.from_argparse_args(
@@ -136,4 +138,18 @@ if __name__ == "__main__":
             train_dataloaders=train_loader,
             val_dataloaders=valid_loader,
             ckpt_path=args.ckpt_path,
+        )
+
+        # ----------
+        # EVALUATION
+        # ----------
+
+        metrics = evaluate(
+            model,
+            dataset=valid_dataset,
+            dataset_name=args.dataset,
+            output_dir=None,
+            aggregate="mean",
+            device="cuda:2",
+            verbose=True,
         )
