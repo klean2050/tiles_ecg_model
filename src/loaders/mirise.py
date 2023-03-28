@@ -1,6 +1,7 @@
 import os, pickle, neurokit2 as nk
 import numpy as np, pandas as pd
 from scipy.signal import resample_poly
+from sklearn.preprocessing import StandardScaler
 from torch.utils import data
 from tqdm import tqdm
 
@@ -54,6 +55,7 @@ class MIRISE(data.Dataset):
             names += [p] * len(np.vstack(unraveled))
 
         self.samples = np.vstack(ecg_all)
+        self.samples = StandardScaler().fit_transform(self.samples)
         self.labels = np.concatenate(lab_all)
         self.names = names
 
