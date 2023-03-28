@@ -70,6 +70,16 @@ We transfer the trained ECG encoder to the downstream tasks in a teacher-student
 
 The specific dataset contains raw sensor measurements like ECG, EDA, HR and respiration information. Since no annotations or behavioral or environmental variables are given, we model the state of each driver by predicting 5-min averaged EDA from ECG and HR streams. The framework we described is successfully trained to estimate the average EDA value per 5-minute intervals in a subject-independent setting.
 
+### Case: SWELL-KW
+
+### Case: WESAD
+
+The dataset for WEarable Stress and Affect Detection (WESAD) contains ECG data from 15 participants. RespiBAN Professional sensors were used to collect ECG at a sampling rate of 700 Hz. The goal was to study 4 different affective states (neutral, stressed, amused, and meditated). To perform this study, 4 different test scenarios were created. First, 20 minutes of neutral data were collected, during which participants were asked to do normal activities. During the amusement scenario, participants watched 11 funny video clips for a total of 392 seconds. Next, participants went through public speaking and arithmetic tasks for a total of 10 minutes as part of the stress scenario. Finally, participants went through a guided meditation session of 7 minutes in duration. Upon completion of each trial, the ground truth labels for the affect states were collected using PANAS.
+
+### Case: Toyota - MIRISE Dataset
+
+Initial experiment: differentiate between *sunny* and *rainy* conditions.
+
 ## Results & Checkpoints
 
 To view results in TensorBoard run:
