@@ -5,11 +5,12 @@ from tqdm import tqdm
 
 
 class TILES_ECG(data.Dataset):
-    def __init__(self, root, split, transform=None):
+    def __init__(self, root, split, transform=None, contrastive=True):
         super().__init__()
         self.root = root
         self.participants = split
         self.transform = transform
+        self.contrastive = contrastive
         self.samples = []
 
         print("\nLoading participant data ...")
@@ -26,12 +27,50 @@ class TILES_ECG(data.Dataset):
 
         print(f"Loaded {len(self.samples)} ECG samples in total.")
 
+    def generate_label(self, x):
+        # signal transforms
+        transforms = {
+            "0": Pass(),
+            "1": PRMask(sr=100),
+            "2": QRSMask(sr=100),
+            "3": Permute(),
+            "4": Scale(),
+            "5": TimeWarp(sr=100),
+            "6": Invert(),
+            "7": Reverse(),
+        }
+        choice = np.random.choice(
+            np.arange(8),
+            size=4,
+            p=[0.05, 0.2, 0.2, 0.2, 0.15, 0.1, 0.05, 0.05]
+        )
+        y = np.zeros(8)
+
+        if 0 in choice:
+            y[0] = 1
+            return x.unsqueeze(0), y
+        else:
+            y[choice] = 1
+            this_transform = [
+                tr for k, tr in transforms.items() if int(k) in choice
+            ]
+            this_transform = ComposeMany(this_transform, 1)
+            augmented_x = this_transform(x.unsqueeze(0))
+            return augmented_x[0], y
+
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, index):
-        ecg = self.samples[index].unsqueeze(0)
-        return self.transform(ecg)[:, 0]
+        if self.contrastive:
+            ecg = self.samples[index].unsqueeze(0)
+            return self.transform(ecg)[:, 0]
+        else:
+            ecg = self.samples[index]
+            ecg, y = self.generate_label(ecg)
+            # apply standard transforms now
+            return self.transform(ecg)[0], y
+
 
 
 if __name__ == "__main__":
