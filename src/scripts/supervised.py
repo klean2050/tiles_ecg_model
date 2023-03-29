@@ -8,8 +8,8 @@ from random import shuffle
 
 from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
-from src.models import ResNet1D
-from src.trainers import ContrastiveLearning, SupervisedLearning, ECGLearning
+from src.models import ResNet1D, S4Model
+from src.trainers import ContrastiveLearning, ECGLearning
 
 
 if __name__ == "__main__":
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser = Trainer.add_argparse_args(parser)
 
     # extract args from config file and add to parser:
-    config_file = "config/config_wesad.yaml"
+    config_file = "config/config_swell.yaml"
     config = yaml_config_hook(config_file)
     for key, value in config.items():
         parser.add_argument(f"--{key}", default=value, type=type(value))
@@ -39,13 +39,15 @@ if __name__ == "__main__":
 
     # get full fine-tuning dataset
     full_dataset = get_dataset(
-        dataset=args.dataset, dataset_dir=args.dataset_dir, sr=100
+        dataset=args.dataset, dataset_dir=args.dataset_dir, sr=args.sr
     )
 
     # setup cross-validation
-    # num_splits = len(set(full_dataset.names))
-    gcv = GroupKFold(n_splits=5)
-    splits = [s for s in gcv.split(full_dataset, groups=full_dataset.names)]
+    gcv = GroupKFold(n_splits=args.splits)
+    a = full_dataset.names.copy()
+    if not args.subject_agnostic:
+        shuffle(a)
+    splits = [s for s in gcv.split(full_dataset, groups=a)]
 
     # iterate over cross-validation splits
     for i, (train_idx, valid_idx) in enumerate(splits):
@@ -75,26 +77,45 @@ if __name__ == "__main__":
         # --------------
 
         # create backbone ECG encoder
-        encoder = ResNet1D(
-            in_channels=args.in_channels,
-            base_filters=args.base_filters,
-            kernel_size=args.kernel_size,
-            stride=args.stride,
-            groups=args.groups,
-            n_block=args.n_block,
-            n_classes=args.n_classes,
-        )
+        if args.model_type == "resnet":
+            encoder = ResNet1D(
+                in_channels=args.in_channels,
+                base_filters=args.base_filters,
+                kernel_size=args.kernel_size,
+                stride=args.stride,
+                groups=args.groups,
+                n_block=args.n_block,
+                n_classes=args.n_classes,
+            )
+        elif args.model_type == "s4":
+            encoder = S4Model(
+                d_input=args.d_input,
+                d_output=args.d_output,
+                d_model=args.d_model,
+                n_layers=args.n_layers,
+                dropout=args.dropout,
+                prenorm=True,
+            )
+        else:
+            raise ValueError("Model type not supported.")
 
-        # load pretrained ECG model from checkpoint
-        pretrained_model = ContrastiveLearning.load_from_checkpoint(
-            args.ssl_ckpt_path, encoder=encoder
-        )
-        # create supervised learning model
-        model = ECGLearning(
-            args,
-            pretrained_model.encoder,
-            output_dim=args.output_dim,
-        )
+        # create supervised model
+        if args.use_pretrained:
+            # load pretrained ECG model from checkpoint
+            pretrained_model = ContrastiveLearning.load_from_checkpoint(
+                args.ssl_ckpt_path, encoder=encoder
+            )
+            model = ECGLearning(
+                args,
+                pretrained_model.encoder,
+                output_dim=args.output_dim,
+            )
+        else:
+            model = ECGLearning(
+                args,
+                encoder,
+                output_dim=args.output_dim,
+            )
 
         # logger that saves to /save_dir/name/version/
         logger = TensorBoardLogger(
@@ -115,7 +136,7 @@ if __name__ == "__main__":
             monitor="Valid/f1", mode="max", save_top_k=1
         )
         early_stop_callback = EarlyStopping(
-            monitor="Valid/loss", mode="min", patience=10
+            monitor="Valid/loss", mode="min", patience=15
         )
 
         trainer = Trainer.from_argparse_args(
@@ -143,6 +164,7 @@ if __name__ == "__main__":
         # ----------
         # EVALUATION
         # ----------
+
         out = f"results/{args.dataset}_split_{i}.txt"
         metrics = evaluate(
             model,

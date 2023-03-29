@@ -5,11 +5,11 @@ from torch.utils.data import DataLoader
 
 from src.utils import yaml_config_hook
 from src.loaders import TILES_ECG
-from src.models import ResNet1D
+from src.models import ResNet1D, S4Model
 from src.trainers import ContrastiveLearning, TransformLearning
 
 from ecg_augmentations import *
-from torchsummary import summary
+
 
 if __name__ == "__main__":
 
@@ -89,16 +89,27 @@ if __name__ == "__main__":
     # --------------
 
     # create backbone ECG encoder
-    encoder = ResNet1D(
-        in_channels=args.in_channels,
-        base_filters=args.base_filters,
-        kernel_size=args.kernel_size,
-        stride=args.stride,
-        groups=args.groups,
-        n_block=args.n_block,
-        n_classes=args.n_classes,
-    )
-    #print(summary(encoder.cuda(), (1, 1000)))
+    if args.model_type == "resnet":
+        encoder = ResNet1D(
+            in_channels=args.in_channels,
+            base_filters=args.base_filters,
+            kernel_size=args.kernel_size,
+            stride=args.stride,
+            groups=args.groups,
+            n_block=args.n_block,
+            n_classes=args.n_classes,
+        )
+    elif args.model_type == "s4":
+        encoder = S4Model(
+            d_input=args.d_input,
+            d_output=args.d_output,
+            d_model=args.d_model,
+            n_layers=args.n_layers,
+            dropout=args.dropout,
+            prenorm=True,
+        )
+    else:
+        raise ValueError("Model type not supported.")
 
     # create full LightningModule
     if args.contrastive:
