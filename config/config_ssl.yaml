@@ -1,8 +1,14 @@
 # dataset options
+dataset: "TILES"
 dataset_dir: "/data/avramidi/tiles_ecg/"
 contrastive: 0
+sr: 100
+seed: 42
 
-# model options
+### model options
+model_type: "s4"    # [resnet, s4]
+
+# ResNet
 in_channels: 1
 base_filters: 64
 kernel_size: 3
@@ -12,19 +18,26 @@ n_block: 10
 n_classes: 256
 projection_dim: 8   # this changes depending on SSL task [128, 8]
 
-# training options:
+# S4
+d_input: 1
+d_output: 128
+d_model: 128
+n_layers: 6
+dropout: 0.2
+
+# training options
 batch_size: 256
-m_epochs: 100
+m_epochs: 80
 optimizer: "Adam"
 learning_rate: 0.001
 weight_decay: 1e-6
 temperature: 0.1
+
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
 log_freq: 10    # how often to log (logs every log_freq steps)
 workers: 4
-n_cuda: "1"
+n_cuda: "3"
 bit_precision: 16
-seed: 42
 ckpt_path: null     # not used if set to null
 
 # logging options:

@@ -43,8 +43,8 @@ def evaluate(model, dataset, dataset_name, output=None, aggregate="majority"):
     for name in np.unique(y_name):
         idx = np.where(y_name == name)[0]
         for label in np.unique(y_true[idx]):
-            fidx = np.where(y_true[idx] == label)[0]
             y_true_agg.append(label)
+            fidx = np.where(y_true[idx] == label)[0]
             if aggregate == "majority":
                 y_pred_agg.append(np.bincount(y_pred[fidx]).argmax())
             else:
