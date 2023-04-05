@@ -1,6 +1,6 @@
 import torch, torch.nn as nn
 from pytorch_lightning import LightningModule
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 
 class ECGLearning(LightningModule):
@@ -53,14 +53,19 @@ class ECGLearning(LightningModule):
         data, y, _ = batch
         loss, preds = self.forward(data, y)
 
-        acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
+        if "ptb" in self.args.dataset_dir:
+            auroc = roc_auc_score(y.cpu(), preds.cpu())
+            self.log("Valid/auroc", auroc, sync_dist=True, batch_size=self.bs)
+        else:
+            acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
+            self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
+
         preds = preds.argmax(dim=1).detach().cpu().numpy()
+        y = y.argmax(dim=1) if "ptb" in self.args.dataset_dir else y
+
         f1 = f1_score(y.cpu(), preds, average="macro", zero_division=0)
-
-        self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
-        self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
         self.log("Valid/f1", f1, sync_dist=True, batch_size=self.bs)
-
+        self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
         return loss
 
     def configure_optimizers(self):

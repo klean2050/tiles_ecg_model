@@ -161,7 +161,7 @@ class S4Model(nn.Module):
         d_model=256,
         n_layers=4,
         dropout=0.2,
-        prenorm=False,
+        prenorm=True,
     ):
         super().__init__()
         self.output_size = d_output

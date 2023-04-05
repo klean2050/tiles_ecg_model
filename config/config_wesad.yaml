@@ -3,6 +3,7 @@ dataset: "WESAD"
 dataset_dir: "/home/kavra/Datasets/physio/WESAD/"
 subject_agnostic: False
 streams: ["ECG"]
+gtruth: "None"
 splits: 5
 sr: 100
 seed: 42
@@ -42,7 +43,7 @@ workers: 4
 n_cuda: "2"
 bit_precision: 16
 ckpt_path: null     # not used if set to null
-ssl_ckpt_path: "ckpt/epoch=32-step=32109.ckpt"
+ssl_ckpt_path: "ckpt/epoch=51-step=50596.ckpt"
 
 # logging options:
 log_dir: "runs"

@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser = Trainer.add_argparse_args(parser)
 
     # extract args from config file and add to parser:
-    config_file = "config/config_swell.yaml"
+    config_file = "config/config_wesad.yaml"
     config = yaml_config_hook(config_file)
     for key, value in config.items():
         parser.add_argument(f"--{key}", default=value, type=type(value))
