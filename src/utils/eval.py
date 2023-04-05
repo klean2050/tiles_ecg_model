@@ -1,6 +1,6 @@
 import os, torch, numpy as np
 from tqdm import tqdm
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 
 def evaluate(model, dataset, dataset_name, output=None, aggregate="majority"):
@@ -18,47 +18,62 @@ def evaluate(model, dataset, dataset_name, output=None, aggregate="majority"):
     model.eval()
     with torch.no_grad():
         print("Evaluating model...")
-        y_true, y_pred, y_name = [], [], []
+        y_true, y_pred, y_name, y_log = [], [], [], []
         for idx in tqdm(range(len(dataset))):
             ecg, label, name = dataset[idx]
             ecg = torch.Tensor(ecg).to(model.device)
-            label = torch.Tensor([label]).to(model.device)
+            label = torch.Tensor(np.array([label])).to(model.device)
 
             # pass sample through model
             _, preds = model(ecg.unsqueeze(0), label)
+            logits = preds.clone()
             preds = preds.argmax(dim=1).detach()
 
             # save labels and predictions
             y_true.append(label)
             y_pred.append(preds)
             y_name.append(name)
+            y_log.append(logits)
 
     # stack arrays for evaluation
     y_true = torch.stack(y_true, dim=0).squeeze().cpu().numpy()
     y_pred = torch.stack(y_pred, dim=0).squeeze().cpu().numpy()
+    y_log = torch.stack(y_log, dim=0).squeeze().cpu().numpy()
     y_name = np.array(y_name)
 
     # aggregate predictions
     y_true_agg, y_pred_agg = [], []
-    for name in np.unique(y_name):
-        idx = np.where(y_name == name)[0]
-        for label in np.unique(y_true[idx]):
-            y_true_agg.append(label)
-            fidx = np.where(y_true[idx] == label)[0]
-            if aggregate == "majority":
-                y_pred_agg.append(np.bincount(y_pred[fidx]).argmax())
-            else:
-                raise NotImplementedError
+    if "ptb" in dataset_name:
+        y_true_agg = y_true
+        y_pred_agg = y_pred
 
-    # evaluate metrics in dict
-    acc = accuracy_score(y_true_agg, y_pred_agg)
-    f1 = f1_score(y_true_agg, y_pred_agg, average="macro", zero_division=0)
-    print(f"k-fold results for {dataset_name}:")
-    print({"Accuracy": acc, "F1-macro": f1})
+        auc = roc_auc_score(y_true_agg, y_log)
+        y_true_agg = y_true_agg.argmax(axis=1)
+        f1 = f1_score(y_true_agg, y_pred_agg, average="macro", zero_division=0)
+        print(f"k-fold results for {dataset_name}:")
+        print({"AUROC": auc, "F1-macro": f1})
+    else:
+        for name in np.unique(y_name):
+            idx = np.where(y_name == name)[0]
+            for label in np.unique(y_true[idx]):
+                y_true_agg.append(label)
+                fidx = np.where(y_true[idx] == label)[0]
+                if aggregate == "majority":
+                    y_pred_agg.append(np.bincount(y_pred[fidx]).argmax())
+                else:
+                    raise NotImplementedError
+
+        acc = accuracy_score(y_true_agg, y_pred_agg)
+        f1 = f1_score(y_true_agg, y_pred_agg, average="macro", zero_division=0)
+        print(f"k-fold results for {dataset_name}:")
+        print({"Accuracy": acc, "F1-macro": f1})
 
     # save predictions
     if output is not None:
         os.makedirs(output.split("/")[0], exist_ok=True)
         with open(output, "w") as f:
-            string = f"Accuracy: {acc:.4f}\nF1-macro: {f1:.4f}"
+            if "ptb" in dataset_name:
+                string = f"AUROC: {auc:.4f}\nF1-macro: {f1:.4f}"
+            else:
+                string = f"Accuracy: {acc:.4f}\nF1-macro: {f1:.4f}"
             f.write(string)

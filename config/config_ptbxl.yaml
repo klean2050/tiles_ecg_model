@@ -1,5 +1,5 @@
 # dataset options
-dataset: "PTB_XL"
+dataset: "ptb_xl"
 dataset_dir: "/data/avramidi/ptb-xl"
 streams: ["ECG"]
 gtruth: None

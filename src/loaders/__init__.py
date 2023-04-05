@@ -16,7 +16,7 @@ def get_dataset(dataset, dataset_dir, sr=100, split="train"):
         return WESAD(root=dataset_dir, sr=sr)
     elif dataset == "MIRISE":
         return MIRISE(root=dataset_dir, sr=sr)
-    elif dataset == "PTB_XL":
+    elif dataset == "ptb_xl":
         return PTB_XL(root=dataset_dir, sr=sr, split=split)
     else:
         raise NotImplementedError("Dataset not implemented")

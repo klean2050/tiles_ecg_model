@@ -55,15 +55,13 @@ class ECGLearning(LightningModule):
 
         if "ptb" in self.args.dataset_dir:
             auroc = roc_auc_score(y.cpu(), preds.cpu())
+            preds = torch.tensor(nn.Sigmoid()(preds).cpu() > 0.5, dtype=int)
             self.log("Valid/auroc", auroc, sync_dist=True, batch_size=self.bs)
         else:
             acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
             self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
 
-        preds = preds.argmax(dim=1).detach().cpu().numpy()
-        y = y.argmax(dim=1) if "ptb" in self.args.dataset_dir else y
-
-        f1 = f1_score(y.cpu(), preds, average="macro", zero_division=0)
+        f1 = f1_score(y.cpu(), preds.cpu(), average="macro", zero_division=0)
         self.log("Valid/f1", f1, sync_dist=True, batch_size=self.bs)
         self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
         return loss

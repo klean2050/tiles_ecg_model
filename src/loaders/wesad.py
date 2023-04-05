@@ -24,7 +24,7 @@ class WESAD(data.Dataset):
         print("Loading participant data...")
         for p in tqdm(self.pps):
 
-            if os.path.exists(f"data/wesad/{p}_ecg.npy"):
+            if os.path.exists(f"data/wesad/{p}_ecg_3.npy"):
                 ecg = np.load(f"data/wesad/{p}_ecg.npy")
                 ecg = StandardScaler().fit_transform(ecg)
                 lab = np.load(f"data/wesad/{p}_lab.npy")
@@ -51,11 +51,11 @@ class WESAD(data.Dataset):
                 meditation = self.preprocess(meditation)
                 lab4 = np.ones(len(meditation)) * 4
 
-                ecg = np.concatenate([baseline, stress, amusement, meditation])
-                lab = np.concatenate([lab1, lab2, lab3, lab4])
+                ecg = np.concatenate([baseline, stress, amusement])  # , meditation])
+                lab = np.concatenate([lab1, lab2, lab3])  # , lab4])
 
-                np.save(f"data/wesad/{p}_ecg.npy", ecg)
-                np.save(f"data/wesad/{p}_lab.npy", lab)
+                np.save(f"data/wesad/{p}_ecg_3.npy", ecg)
+                np.save(f"data/wesad/{p}_lab_3.npy", lab)
 
             ecg_all.append(ecg)
             lab_all.append(lab)

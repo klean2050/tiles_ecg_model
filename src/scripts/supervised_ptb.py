@@ -4,7 +4,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
 
-from src.utils import yaml_config_hook
+from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
 from src.models import ResNet1D, S4Model
 from src.trainers import ContrastiveLearning, ECGLearning
@@ -42,6 +42,10 @@ if __name__ == "__main__":
 
     valid_dataset = get_dataset(
         dataset=args.dataset, dataset_dir=args.dataset_dir, sr=args.sr, split="dev"
+    )
+
+    test_dataset = get_dataset(
+        dataset=args.dataset, dataset_dir=args.dataset_dir, sr=args.sr, split="test"
     )
 
     # create the dataloaders
@@ -120,8 +124,10 @@ if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
 
     # create PyTorch Lightning trainer
-    model_ckpt_callback = ModelCheckpoint(monitor="Valid/f1", mode="max", save_top_k=1)
-    early_stop_callback = EarlyStopping(monitor="Valid/loss", mode="min", patience=15)
+    model_ckpt_callback = ModelCheckpoint(
+        monitor="Valid/auroc", mode="max", save_top_k=1
+    )
+    early_stop_callback = EarlyStopping(monitor="Valid/loss", mode="min", patience=20)
 
     trainer = Trainer.from_argparse_args(
         args,
@@ -143,4 +149,16 @@ if __name__ == "__main__":
         train_dataloaders=train_loader,
         val_dataloaders=valid_loader,
         ckpt_path=args.ckpt_path,
+    )
+
+    # ----------
+    # EVALUATION
+    # ----------
+
+    out = f"results/{args.dataset}_test.txt"
+    metrics = evaluate(
+        model,
+        dataset=test_dataset,
+        dataset_name=args.dataset,
+        output=out,
     )
