@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
 from src.models import ResNet1D, S4Model
-from src.trainers import ContrastiveLearning, ECGLearning
+from src.trainers import ContrastiveLearning, TransformLearning, ECGLearning
 
 
 if __name__ == "__main__":
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     # create supervised model
     if args.use_pretrained:
         # load pretrained ECG model from checkpoint
-        pretrained_model = ContrastiveLearning.load_from_checkpoint(
+        pretrained_model = TransformLearning.load_from_checkpoint(
             args.ssl_ckpt_path, encoder=encoder
         )
         model = ECGLearning(
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     # create PyTorch Lightning trainer
     model_ckpt_callback = ModelCheckpoint(
-        monitor="Valid/auroc", mode="max", save_top_k=1
+        monitor="Valid/loss", mode="min", save_top_k=1
     )
     early_stop_callback = EarlyStopping(monitor="Valid/loss", mode="min", patience=20)
 
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     # EVALUATION
     # ----------
 
-    out = f"results/{args.dataset}_test.txt"
+    out = f"results/{args.dataset}_resnet_endtoend.txt"
     metrics = evaluate(
         model,
         dataset=test_dataset,

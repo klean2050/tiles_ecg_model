@@ -1,4 +1,5 @@
-import os, argparse, pytorch_lightning as pl
+import os, argparse, numpy as np
+import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -23,7 +24,7 @@ if __name__ == "__main__":
     parser = Trainer.add_argparse_args(parser)
 
     # extract args from config file and add to parser:
-    config_file = "config/config_wesad.yaml"
+    config_file = "config/config_swell.yaml"
     config = yaml_config_hook(config_file)
     for key, value in config.items():
         parser.add_argument(f"--{key}", default=value, type=type(value))
@@ -50,9 +51,11 @@ if __name__ == "__main__":
     splits = [s for s in gcv.split(full_dataset, groups=a)]
 
     # iterate over cross-validation splits
+    all_metrics = {}
     for i, (train_idx, valid_idx) in enumerate(splits):
 
         # create train and validation datasets
+        shuffle(train_idx)
         train_dataset = Subset(full_dataset, train_idx)
         valid_dataset = Subset(full_dataset, valid_idx)
 
@@ -133,10 +136,10 @@ if __name__ == "__main__":
 
         # create PyTorch Lightning trainer
         model_ckpt_callback = ModelCheckpoint(
-            monitor="Valid/f1", mode="max", save_top_k=1
+            monitor="Valid/loss", mode="min", save_top_k=1
         )
         early_stop_callback = EarlyStopping(
-            monitor="Valid/loss", mode="min", patience=15
+            monitor="Valid/loss", mode="min", patience=25
         )
 
         trainer = Trainer.from_argparse_args(
@@ -165,10 +168,19 @@ if __name__ == "__main__":
         # EVALUATION
         # ----------
 
-        out = f"results/{args.dataset}_split_{i}.txt"
         metrics = evaluate(
-            model,
-            dataset=valid_dataset,
-            dataset_name=args.dataset,
-            output=out,
+            model, dataset=valid_loader, dataset_name=args.dataset,
         )
+        # aggregate metrics
+        for m in metrics:
+            if m not in all_metrics:
+                all_metrics[m] = []
+            all_metrics[m].append(metrics[m])
+
+    # save aggregated metrics
+    output = f"results/{args.dataset}_upd.txt"
+    with open(output, "w") as f:
+        for m, v in all_metrics.items():
+            f.write(
+                "{}: {:.3f} ({:.3f})".format(m, np.mean(v), np.std(v))
+            )
