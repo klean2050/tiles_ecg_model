@@ -12,19 +12,11 @@ class ECGLearning(LightningModule):
         self.bs = args.batch_size
         self.args = args
 
-        # configure criterion
-        if "drivedb" in args.dataset_dir:
-            self.loss = nn.MSELoss()
-        elif "ptb" in args.dataset_dir:
-            self.loss = nn.BCEWithLogitsLoss()
-        else:
-            self.loss = nn.CrossEntropyLoss()
-
         # freezing trained ECG encoder
         self.encoder = encoder
         self.encoder.eval()
         for param in self.encoder.parameters():
-            param.requires_grad = False
+            param.requires_grad = True
 
         # create cls projector
         self.n_features = self.encoder.output_size
@@ -41,24 +33,27 @@ class ECGLearning(LightningModule):
         preds = self.model(x.unsqueeze(1))
         preds = preds.squeeze() if preds.shape[0] != 1 else preds
         y = y.float() if "ptb" in self.args.dataset_dir else y.long()
-        return self.loss(preds, y), preds
+        return preds, y
 
     def training_step(self, batch, _):
         data, y, _ = batch
-        loss, _ = self.forward(data, y)
+        preds, y = self.forward(data, y)
+        loss = self.compute_loss(preds, y)
         self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
         return loss
 
     def validation_step(self, batch, _):
         data, y, _ = batch
-        loss, preds = self.forward(data, y)
+        preds, y = self.forward(data, y)
+        loss = self.compute_loss(preds, y, val=True)
 
         if "ptb" in self.args.dataset_dir:
             auroc = roc_auc_score(y.cpu(), preds.cpu())
-            preds = torch.tensor(nn.Sigmoid()(preds).cpu() > 0.5, dtype=int)
+            preds = (torch.sigmoid(preds).detach() > 0.5) * 1
             self.log("Valid/auroc", auroc, sync_dist=True, batch_size=self.bs)
         else:
-            acc = accuracy_score(y.cpu(), preds.cpu().argmax(dim=1))
+            y, preds = y.long(), preds.argmax(dim=1)
+            acc = accuracy_score(y.cpu(), preds.cpu())
             self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
 
         f1 = f1_score(y.cpu(), preds.cpu(), average="macro", zero_division=0)
@@ -73,3 +68,11 @@ class ECGLearning(LightningModule):
             weight_decay=float(self.hparams.weight_decay),
         )
         return {"optimizer": optimizer}
+
+    def compute_loss(self, preds, y, val=False):
+        if "ptb" in self.args.dataset_dir:
+            loss = nn.BCEWithLogitsLoss()
+        else:
+            weight = None if val else len(y) / torch.bincount(y)
+            loss = nn.CrossEntropyLoss(weight=weight)
+        return loss(preds, y)
