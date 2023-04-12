@@ -1,4 +1,4 @@
-import os, argparse, pytorch_lightning as pl
+import os, argparse, pytorch_lightning as pl, numpy as np
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -58,6 +58,14 @@ if __name__ == "__main__":
     )
     valid_loader = DataLoader(
         valid_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.workers,
+        drop_last=True,
+    )
+
+    test_loader = DataLoader(
+        test_dataset,
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=args.workers,
@@ -155,10 +163,13 @@ if __name__ == "__main__":
     # EVALUATION
     # ----------
 
-    out = f"results/{args.dataset}_resnet_endtoend.txt"
-    metrics = evaluate(
-        model,
-        dataset=test_dataset,
-        dataset_name=args.dataset,
-        output=out,
+    metrics, _ = evaluate(
+        model, dataset=test_loader, dataset_name=args.dataset,
     )
+
+    output = f"results/{args.dataset}_init_050.txt"
+    with open(output, "w") as f:
+        for m, v in metrics.items():
+            f.write(
+                "{}: {:.3f}\n".format(m, np.mean(v), np.std(v))
+            )

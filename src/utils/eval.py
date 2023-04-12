@@ -42,26 +42,18 @@ def evaluate(model, dataset, dataset_name, aggregate="majority"):
         auc = roc_auc_score(y_true, y_pred)
         y_pred = 1 / (1 + np.exp(-y_pred)) > 0.5
         f1 = f1_score(y_true, y_pred * 1, average="macro", zero_division=0)
-        print(f"Chunk-wise results for {dataset_name}:")
-        print({"AUROC": auc, "F1-macro": f1})
+        metrics = {"AUROC": auc, "F1-macro": f1}
     else:
         acc = accuracy_score(y_true, y_pred)
         f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
-        print(f"Chunk-wise results for {dataset_name}:")
-        print({"Accuracy": acc, "F1-macro": f1})
+        metrics = {"Accuracy": acc, "F1-macro": f1}
+
+    print(f"Chunk-wise results for {dataset_name}:\n{metrics}")
 
     # aggregate predictions
     y_true_agg, y_pred_agg = [], []
     if "ptb" in dataset_name:
-        y_true_agg = y_true
-        y_pred_agg = y_pred
-
-        auc = roc_auc_score(y_true_agg, y_pred_agg)
-        y_pred_agg = 1 / (1 + np.exp(-y_pred_agg)) > 0.5
-        f1 = f1_score(y_true_agg, y_pred_agg * 1, average="macro", zero_division=0)
-        print(f"Aggregate results for {dataset_name}:")
-        print({"AUROC": auc, "F1-macro": f1})
-        return {"AUROC": auc, "F1-macro": f1}
+        metrics_agg = None
     else:
         for name in np.unique(y_name):
             idx = np.where(y_name == name)[0]
@@ -77,6 +69,7 @@ def evaluate(model, dataset, dataset_name, aggregate="majority"):
 
         acc = accuracy_score(y_true_agg, y_pred_agg)
         f1 = f1_score(y_true_agg, y_pred_agg, average="macro", zero_division=0)
-        print(f"Aggregate results for {dataset_name}:")
-        print({"Accuracy": acc, "F1-macro": f1})
-        return {"Accuracy": acc, "F1-macro": f1}
+        metrics_agg = {"Accuracy": acc, "F1-macro": f1}
+        print(f"Aggregated results for {dataset_name}:\n{metrics_agg}")
+
+    return metrics, metrics_agg

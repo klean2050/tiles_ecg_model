@@ -16,7 +16,7 @@ class ECGLearning(LightningModule):
         self.encoder = encoder
         self.encoder.eval()
         for param in self.encoder.parameters():
-            param.requires_grad = True
+            param.requires_grad = self.args.unfreeze
 
         # create cls projector
         self.n_features = self.encoder.output_size

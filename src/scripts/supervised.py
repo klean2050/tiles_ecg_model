@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser = Trainer.add_argparse_args(parser)
 
     # extract args from config file and add to parser:
-    config_file = "config/config_swell.yaml"
+    config_file = "config/config_wesad.yaml"
     config = yaml_config_hook(config_file)
     for key, value in config.items():
         parser.add_argument(f"--{key}", default=value, type=type(value))
@@ -51,12 +51,12 @@ if __name__ == "__main__":
     splits = [s for s in gcv.split(full_dataset, groups=a)]
 
     # iterate over cross-validation splits
-    all_metrics = {}
+    all_metrics, all_metrics_agg = {}, {}
     for i, (train_idx, valid_idx) in enumerate(splits):
 
         # create train and validation datasets
         shuffle(train_idx)
-        train_dataset = Subset(full_dataset, train_idx)
+        train_dataset = Subset(full_dataset, train_idx[::2])
         valid_dataset = Subset(full_dataset, valid_idx)
 
         # create the dataloaders
@@ -168,19 +168,27 @@ if __name__ == "__main__":
         # EVALUATION
         # ----------
 
-        metrics = evaluate(
-            model, dataset=valid_loader, dataset_name=args.dataset,
+        metrics, metrics_agg = evaluate(
+            model,
+            dataset=valid_loader,
+            dataset_name=args.dataset,
         )
-        # aggregate metrics
         for m in metrics:
             if m not in all_metrics:
                 all_metrics[m] = []
             all_metrics[m].append(metrics[m])
+        for m in metrics_agg:
+            if m not in all_metrics_agg:
+                all_metrics_agg[m] = []
+            all_metrics_agg[m].append(metrics_agg[m])
 
-    # save aggregated metrics
-    output = f"results/{args.dataset}_upd.txt"
+    # -----------
+    # LOG RESULTS
+    # -----------
+
+    output = f"results/{args.dataset}_scratch_050.txt"
     with open(output, "w") as f:
         for m, v in all_metrics.items():
-            f.write(
-                "{}: {:.3f} ({:.3f})".format(m, np.mean(v), np.std(v))
-            )
+            f.write("Chunk-wise {}: {:.3f} ({:.3f})\n".format(m, np.mean(v), np.std(v)))
+        for m, v in all_metrics_agg.items():
+            f.write("Aggregated {}: {:.3f} ({:.3f})\n".format(m, np.mean(v), np.std(v)))
