@@ -31,16 +31,17 @@ dropout: 0.2
 
 # training options
 use_pretrained: 0
+unfreeze: True
 batch_size: 128
 m_epochs: 200
 optimizer: "Adam"
-learning_rate: 0.001
+learning_rate: 0.0001
 weight_decay: 1e-6
 
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
 log_freq: 2     # how often to log (logs every log_freq steps)
 workers: 4
-n_cuda: "0"
+n_cuda: "1"
 bit_precision: 16
 ckpt_path: null     # not used if set to null
 ssl_ckpt_path: "ckpt/s4_trans.ckpt" #"ckpt/BIG_epoch=99-step=97300.ckpt"

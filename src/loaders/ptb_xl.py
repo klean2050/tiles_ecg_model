@@ -86,8 +86,8 @@ class PTB_XL(data.Dataset):
             np.save(f"data/ptb_xl/{split}_ecg.npy", ecg_data)
             np.save(f"data/ptb_xl/{split}_lab.npy", ecg_labels)
 
-        self.samples = ecg_data[::2] if split == "train" else ecg_data
-        self.labels = ecg_labels[::2] if split == "train" else ecg_labels
+        self.samples = ecg_data[::1] if split == "train" else ecg_data
+        self.labels = ecg_labels[::1] if split == "train" else ecg_labels
         print(f"Loaded {len(self.labels)} ECG samples in total.")
 
     def __len__(self):
