@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parser = Trainer.add_argparse_args(parser)
 
     # extract args from config file and add to parser:
-    config_file = "config/config_ptbxl.yaml"
+    config_file = "config/config_avec16.yaml"
     config = yaml_config_hook(config_file)
     for key, value in config.items():
         parser.add_argument(f"--{key}", default=value, type=type(value))
@@ -37,15 +37,27 @@ if __name__ == "__main__":
 
     # get full fine-tuning dataset
     train_dataset = get_dataset(
-        dataset=args.dataset, dataset_dir=args.dataset_dir, sr=args.sr, split="train"
+        dataset=args.dataset,
+        dataset_dir=args.dataset_dir,
+        sr=args.sr,
+        split="train",
+        gtruth=args.gtruth,
     )
 
     valid_dataset = get_dataset(
-        dataset=args.dataset, dataset_dir=args.dataset_dir, sr=args.sr, split="dev"
+        dataset=args.dataset,
+        dataset_dir=args.dataset_dir,
+        sr=args.sr,
+        split="dev",
+        gtruth=args.gtruth,
     )
 
     test_dataset = get_dataset(
-        dataset=args.dataset, dataset_dir=args.dataset_dir, sr=args.sr, split="test"
+        dataset=args.dataset,
+        dataset_dir=args.dataset_dir,
+        sr=args.sr,
+        split="test",
+        gtruth=args.gtruth,
     )
 
     # create the dataloaders
@@ -164,12 +176,12 @@ if __name__ == "__main__":
     # ----------
 
     metrics, _ = evaluate(
-        model, dataset=test_loader, dataset_name=args.dataset,
+        model,
+        dataset=test_loader,
+        dataset_name=args.dataset,
     )
 
     output = f"results/{args.dataset}_init_050.txt"
     with open(output, "w") as f:
         for m, v in metrics.items():
-            f.write(
-                "{}: {:.3f}\n".format(m, np.mean(v), np.std(v))
-            )
+            f.write("{}: {:.3f}\n".format(m, np.mean(v), np.std(v)))

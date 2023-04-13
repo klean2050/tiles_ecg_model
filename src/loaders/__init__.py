@@ -8,7 +8,7 @@ from .ludb import LUDB
 from .avec16 import AVEC16
 
 
-def get_dataset(dataset, dataset_dir, sr=100, split="train"):
+def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train"):
 
     if dataset == "DriveDB":
         return DriveDB(root=dataset_dir, sr=sr, streams="ECG")
@@ -23,6 +23,6 @@ def get_dataset(dataset, dataset_dir, sr=100, split="train"):
     elif dataset == "LUDB":
         return LUDB(root=dataset_dir)
     elif dataset == "AVEC16":
-        return AVEC16(root=dataset_dir, sr=sr, split=split)
+        return AVEC16(root=dataset_dir, sr=sr, split=split, category=gtruth)
     else:
         raise NotImplementedError("Dataset not implemented")

@@ -7,47 +7,52 @@ from scipy.signal import resample_poly
 
 
 class AVEC16(data.Dataset):
-    def __init__(self, root, sr, split="train"):
+    def __init__(self, root, sr, split="train", category="arousal"):
         super().__init__()
         self.root = root
         self.sr = sr
         self.win = sr * 10
+        split = "dev" if split == "test" else split
 
         if os.path.exists(f"data/avec16/{split}_ecg.npy"):
             print("Loading from cache...")
             ecg_data = np.load(f"data/avec16/{split}_ecg.npy")
-            ecg_labels = np.load(f"data/avec16/{split}_lab.npy")
+            ecg_labels = np.load(f"data/avec16/{split}_lab_{category}.npy")
         else:
             print("Loading ECG data...")
             data_path = Path(self.root)
-            
+
             ecg_data, ecg_labels = list(), list()
             for participant_id in tqdm(range(1, 10)):
-                arousal_file_path = data_path.joinpath('ratings_gold_standard', 'arousal', f'{split}_{participant_id}.arff')
-                valence_file_path = data_path.joinpath('ratings_gold_standard', 'valence', f'{split}_{participant_id}.arff')
-                ecg_data_path = data_path.joinpath('recordings_physio', 'filtered', f'{split}_{participant_id}.csv')
-                # Read ecg data
-                ecg = pd.read_csv(ecg_data_path, delimiter=';')["ECG"].values
-                arousal_list, valence_list = list(), list()
-
+                annotation_path = data_path.joinpath(
+                    "ratings_gold_standard", category, f"{split}_{participant_id}.arff"
+                )
+                ecg_data_path = data_path.joinpath(
+                    "recordings_physio", "filtered", f"{split}_{participant_id}.csv"
+                )
+                # Read ECG data
+                ecg = pd.read_csv(ecg_data_path, delimiter=";")["ECG"].values
                 new_len = int((len(ecg) / 250) * self.sr)
                 ecg = resample_poly(ecg, self.sr, 250)[:new_len]
 
-                with open(arousal_file_path) as f:
+                with open(annotation_path) as f:
                     lines = f.readlines()
                     for line in lines:
-                        if f'{split}_{participant_id}' not in line: continue
-                        time    = float(line.split(',')[-2].split('\n')[0])
+                        if f"{split}_{participant_id}" not in line:
+                            continue
+                        time = float(line.split(",")[-2].split("\n")[0])
                         # We skip the first 10s of ECG data, and we select data frames every 20ms
-                        if time <= 10: continue
-                        if (time*100) % 20: continue
+                        if time <= 10:
+                            continue
+                        if (time * 100) % 20:
+                            continue
 
                         # Read data and labels
-                        label   = float(line.split(',')[-1].split('\n')[0])
-                        start_idx   = int(time * 100 - self.win)
-                        end_idx     = int(time * 100)
+                        label = float(line.split(",")[-1].split("\n")[0])
+                        start_idx = int(time * 100 - self.win)
+                        end_idx = int(time * 100)
                         data = ecg[start_idx:end_idx]
-                        
+
                         # ECG Data cleaning
                         data = nk.ecg_clean(data, sampling_rate=self.sr)
                         mean, std = np.mean(data, axis=0), np.std(data, axis=0)
@@ -55,13 +60,13 @@ class AVEC16(data.Dataset):
 
                         ecg_data.append(data)
                         ecg_labels.append(label)
-            
+
             ecg_data = np.array(ecg_data)
             ecg_labels = np.array(ecg_labels)
 
             os.makedirs("data/avec16", exist_ok=True)
             np.save(f"data/avec16/{split}_ecg.npy", ecg_data)
-            np.save(f"data/avec16/{split}_lab.npy", ecg_labels)
+            np.save(f"data/avec16/{split}_lab_{category}.npy", ecg_labels)
 
         self.samples = ecg_data
         self.labels = ecg_labels
@@ -78,6 +83,6 @@ class AVEC16(data.Dataset):
 
 if __name__ == "__main__":
     root = "/media/data/sail-data/Recola/AVEC16"
-    train_dataset = AVEC16(root, sr=100, split="train")
-    dev_dataset = AVEC16(root, sr=100, split="dev")
+    train_dataset = AVEC16(root, sr=100, split="train", category="arousal")
+    dev_dataset = AVEC16(root, sr=100, split="dev", category="arousal")
     print(train_dataset[0][0].shape, train_dataset[0][1])

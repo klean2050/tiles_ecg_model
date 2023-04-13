@@ -2,6 +2,8 @@ import torch, torch.nn as nn
 from pytorch_lightning import LightningModule
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
+from src.utils import CCCLoss, mean_ccc
+
 
 class ECGLearning(LightningModule):
     def __init__(self, args, encoder, output_dim):
@@ -32,7 +34,11 @@ class ECGLearning(LightningModule):
     def forward(self, x, y):
         preds = self.model(x.unsqueeze(1))
         preds = preds.squeeze() if preds.shape[0] != 1 else preds
-        y = y.float() if "ptb" in self.args.dataset_dir else y.long()
+        if "ptb" in self.args.dataset_dir or "avec" in self.args.dataset_dir:
+            y = y.float()
+        else:
+            y = y.long()
+        # y = y.float() if "ptb" in self.args.dataset_dir else y.long()
         return preds, y
 
     def training_step(self, batch, _):
@@ -50,14 +56,19 @@ class ECGLearning(LightningModule):
         if "ptb" in self.args.dataset_dir:
             auroc = roc_auc_score(y.cpu(), preds.cpu())
             preds = (torch.sigmoid(preds).detach() > 0.5) * 1
+            f1 = f1_score(y.cpu(), preds.cpu(), average="macro", zero_division=0)
+            self.log("Valid/f1", f1, sync_dist=True, batch_size=self.bs)
             self.log("Valid/auroc", auroc, sync_dist=True, batch_size=self.bs)
+        elif "avec" in self.args.dataset_dir:
+            ccc = mean_ccc(preds.cpu(), y.cpu())
+            self.log("Valid/ccc", ccc, sync_dist=True, batch_size=self.bs)
         else:
             y, preds = y.long(), preds.argmax(dim=1)
             acc = accuracy_score(y.cpu(), preds.cpu())
+            f1 = f1_score(y.cpu(), preds.cpu(), average="macro", zero_division=0)
+            self.log("Valid/f1", f1, sync_dist=True, batch_size=self.bs)
             self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
 
-        f1 = f1_score(y.cpu(), preds.cpu(), average="macro", zero_division=0)
-        self.log("Valid/f1", f1, sync_dist=True, batch_size=self.bs)
         self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
         return loss
 
@@ -72,6 +83,8 @@ class ECGLearning(LightningModule):
     def compute_loss(self, preds, y, val=False):
         if "ptb" in self.args.dataset_dir:
             loss = nn.BCEWithLogitsLoss()
+        elif "avec" in self.args.dataset_dir:
+            loss = CCCLoss()
         else:
             weight = None if val else len(y) / torch.bincount(y)
             loss = nn.CrossEntropyLoss(weight=weight)
