@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset
 
 
-class LUDBDataset(Dataset):
+class LUDB(Dataset):
     def __init__(self, root):
         self.data_dir = root + "data/"
         self.dat_files = sorted(
@@ -51,5 +51,5 @@ class LUDBDataset(Dataset):
 
 if __name__ == "__main__":
     path = "/data/avramidi/LUDB/"
-    dataset = LUDBDataset(path)
+    dataset = LUDB(path)
     print(dataset[0][0].shape, dataset[0][1])

@@ -4,7 +4,8 @@ from .swell_kw import SWELL_KW
 from .wesad import WESAD
 from .mirise import MIRISE
 from .ptb_xl import PTB_XL
-from .ludb import LUDBDataset
+from .ludb import LUDB
+from .avec16 import AVEC16
 
 
 def get_dataset(dataset, dataset_dir, sr=100, split="train"):
@@ -20,6 +21,8 @@ def get_dataset(dataset, dataset_dir, sr=100, split="train"):
     elif dataset == "ptb_xl":
         return PTB_XL(root=dataset_dir, sr=sr, split=split)
     elif dataset == "LUDB":
-        return LUDBDataset(root=dataset_dir)
+        return LUDB(root=dataset_dir)
+    elif dataset == "AVEC16":
+        return AVEC16(root=dataset_dir, sr=sr, split=split)
     else:
         raise NotImplementedError("Dataset not implemented")
