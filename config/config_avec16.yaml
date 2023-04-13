@@ -18,7 +18,7 @@ groups: 1
 n_block: 10
 n_classes: 256
 projection_dim: 128
-output_dim: 5
+output_dim: 1
 
 # S4
 d_input: 1
