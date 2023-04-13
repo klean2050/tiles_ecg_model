@@ -4,6 +4,7 @@ from .swell_kw import SWELL_KW
 from .wesad import WESAD
 from .mirise import MIRISE
 from .ptb_xl import PTB_XL
+from .ludb import LUDBDataset
 
 
 def get_dataset(dataset, dataset_dir, sr=100, split="train"):
@@ -18,5 +19,7 @@ def get_dataset(dataset, dataset_dir, sr=100, split="train"):
         return MIRISE(root=dataset_dir, sr=sr)
     elif dataset == "ptb_xl":
         return PTB_XL(root=dataset_dir, sr=sr, split=split)
+    elif dataset == "LUDB":
+        return LUDBDataset(root=dataset_dir)
     else:
         raise NotImplementedError("Dataset not implemented")
