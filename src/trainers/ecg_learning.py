@@ -30,7 +30,7 @@ class ECGLearning(LightningModule):
         )
         # putting it all together
         self.model = nn.Sequential(self.encoder, self.project_cls)
-        
+
         self.validation_true = list()
         self.validation_pred = list()
 
@@ -51,10 +51,14 @@ class ECGLearning(LightningModule):
         self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
         return loss
 
-    def validation_epoch_end(self, outputs):
+    def validation_epoch_end(self, _):
         if "avec" in self.args.dataset_dir:
+            cccloss = self.compute_loss(
+                torch.stack(self.validation_pred), torch.stack(self.validation_true)
+            )
             ccc = mean_ccc(self.validation_pred, self.validation_true)
             self.log("Valid/ccc", ccc, sync_dist=True, batch_size=self.bs)
+            self.log("Valid/cccloss", cccloss, sync_dist=True, batch_size=self.bs)
             self.validation_true = list()
             self.validation_pred = list()
 
@@ -73,6 +77,7 @@ class ECGLearning(LightningModule):
             for idx in range(len(preds.cpu())):
                 self.validation_pred.append(preds.cpu()[idx])
                 self.validation_true.append(y.cpu()[idx])
+
         else:
             y, preds = y.long(), preds.argmax(dim=1)
             acc = accuracy_score(y.cpu(), preds.cpu())

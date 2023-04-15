@@ -147,7 +147,14 @@ if __name__ == "__main__":
     model_ckpt_callback = ModelCheckpoint(
         monitor="Valid/loss", mode="min", save_top_k=1
     )
-    early_stop_callback = EarlyStopping(monitor="Valid/loss", mode="min", patience=20)
+    if "avec" in args.dataset_dir:
+        early_stop_callback = EarlyStopping(
+            monitor="Valid/cccloss", mode="min", patience=20
+        )
+    else:
+        early_stop_callback = EarlyStopping(
+            monitor="Valid/loss", mode="min", patience=20
+        )
 
     trainer = Trainer.from_argparse_args(
         args,
@@ -181,7 +188,7 @@ if __name__ == "__main__":
         dataset_name=args.dataset,
     )
 
-    output = f"results/{args.dataset}_init_050.txt"
+    output = f"results/{args.dataset}_{args.gtruth}_frozen.txt"
     with open(output, "w") as f:
         for m, v in metrics.items():
             f.write("{}: {:.3f}\n".format(m, np.mean(v), np.std(v)))

@@ -68,8 +68,8 @@ class AVEC16(data.Dataset):
             np.save(f"data/avec16/{split}_ecg.npy", ecg_data)
             np.save(f"data/avec16/{split}_lab_{category}.npy", ecg_labels)
 
-        self.samples = ecg_data
-        self.labels = ecg_labels
+        self.samples = ecg_data[::1] if split == "train" else ecg_data
+        self.labels = ecg_labels[::1] if split == "train" else ecg_labels
         print(f"Loaded {len(self.labels)} ECG samples in total.")
 
     def __len__(self):

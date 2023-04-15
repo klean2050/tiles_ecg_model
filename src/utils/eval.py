@@ -2,6 +2,8 @@ import os, torch, numpy as np
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
+from .ccc import mean_ccc
+
 
 def evaluate(model, dataset, dataset_name, aggregate="majority"):
     """
@@ -24,7 +26,7 @@ def evaluate(model, dataset, dataset_name, aggregate="majority"):
         label = label.to(model.device)
         with torch.no_grad():
             preds, _ = model(ecg, label)
-            if "ptb" not in dataset_name:
+            if "ptb" not in dataset_name and "AVEC" not in dataset_name:
                 preds = preds.argmax(dim=1).detach()
 
             # save labels and predictions
@@ -43,6 +45,9 @@ def evaluate(model, dataset, dataset_name, aggregate="majority"):
         y_pred = 1 / (1 + np.exp(-y_pred)) > 0.5
         f1 = f1_score(y_true, y_pred * 1, average="macro", zero_division=0)
         metrics = {"AUROC": auc, "F1-macro": f1}
+    elif "AVEC" in dataset_name:
+        ccc = mean_ccc(y_pred, y_true)
+        metrics = {"CCC": ccc}
     else:
         acc = accuracy_score(y_true, y_pred)
         f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
@@ -52,7 +57,7 @@ def evaluate(model, dataset, dataset_name, aggregate="majority"):
 
     # aggregate predictions
     y_true_agg, y_pred_agg = [], []
-    if "ptb" in dataset_name:
+    if "ptb" in dataset_name or "AVEC" in dataset_name:
         metrics_agg = None
     else:
         for name in np.unique(y_name):

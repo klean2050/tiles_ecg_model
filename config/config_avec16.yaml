@@ -28,7 +28,7 @@ n_layers: 6
 dropout: 0.2
 
 # training options
-use_pretrained: 0
+use_pretrained: 1
 unfreeze: True
 batch_size: 128
 m_epochs: 100
