@@ -2,7 +2,7 @@
 dataset: "ptb_xl"
 dataset_dir: "/data/avramidi/ptb-xl"
 streams: ["ECG"]
-gtruth: None
+gtruth: ""
 seed: 42
 sr: 100
 
