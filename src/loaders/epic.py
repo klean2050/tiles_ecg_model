@@ -47,6 +47,19 @@ class EPIC(data.Dataset):
                         ecg_labels.append(label_values[i])
                 ecg_labels = np.array(ecg_labels)
                 np.save(f"data/epic/{scenario}_{self.split}_{category}.npy", ecg_labels)
+
+            # handle metadata
+            names = list()
+            for csv_file in tqdm(os.listdir(self.root + "annotations")):
+                label_path = os.path.join(self.root, "annotations", csv_file)
+                labels = pd.read_csv(label_path)
+                label_times = labels["time"].values
+                for i, time in enumerate(label_times):
+                    # annotation every 50 ms
+                    if time < 10000:
+                        continue
+                    names.append(csv_file[:-4])
+            names = np.array(names)
         else:
             print("Loading ECG data...")
             ecg_data, ecg_labels = list(), list()
@@ -89,18 +102,26 @@ class EPIC(data.Dataset):
             np.save(f"data/epic/{scenario}_{self.split}_ecg.npy", ecg_data)
             np.save(f"data/epic/{scenario}_{self.split}_{category}.npy", ecg_labels)
 
-        # shuffle data and labels
-        shuffle_idx = np.random.permutation(len(ecg_data))
-        ecg_data = ecg_data[shuffle_idx]
-        ecg_labels = ecg_labels[shuffle_idx]
-        
-        threshold = int(len(ecg_data) * 0.9)
-        if split == "dev":
-            ecg_data = ecg_data[threshold:]
-            ecg_labels = ecg_labels[threshold:]
-        elif split == "train":
-            ecg_data = ecg_data[:threshold]
-            ecg_labels = ecg_labels[:threshold]
+        # partition validation set
+        if scenario == 1 and split != "test":
+            val_indices = list()
+            i = 0
+            while i < len(names):
+                # identify all samples with the same name
+                indices = np.where(names == names[i])[0]
+                # isolate 10% of the samples as validation set
+                num_val_samples = int(len(indices) * 0.1)
+                # select 10% of the samples in the end
+                val_indices.append(indices[-num_val_samples:])
+                i += len(indices)
+            val_indices = np.concatenate(val_indices)
+
+            if split == "dev":
+                ecg_data = ecg_data[val_indices]
+                ecg_labels = ecg_labels[val_indices]
+            else:
+                ecg_data = np.delete(ecg_data, val_indices, axis=0)
+                ecg_labels = np.delete(ecg_labels, val_indices, axis=0)
 
         # low data regime
         self.samples = ecg_data[::1] if split == "train" else ecg_data
