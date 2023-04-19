@@ -6,6 +6,7 @@ from .mirise import MIRISE
 from .ptb_xl import PTB_XL
 from .ludb import LUDB
 from .avec16 import AVEC16
+from .epic import EPIC
 
 
 def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train"):
@@ -24,5 +25,7 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train"):
         return LUDB(root=dataset_dir)
     elif dataset == "AVEC16":
         return AVEC16(root=dataset_dir, sr=sr, split=split, category=gtruth)
+    elif dataset == "epic":
+        return EPIC(root=dataset_dir, sr=sr, split=split)
     else:
         raise NotImplementedError("Dataset not implemented")

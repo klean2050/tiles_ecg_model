@@ -37,7 +37,11 @@ class ECGLearning(LightningModule):
     def forward(self, x, y):
         preds = self.model(x.unsqueeze(1))
         preds = preds.squeeze() if preds.shape[0] != 1 else preds
-        if "ptb" in self.args.dataset_dir or "avec" in self.args.dataset_dir:
+        if (
+            "ptb" in self.args.dataset_dir
+            or "avec" in self.args.dataset_dir
+            or "epic" in self.args.dataset_dir
+        ):
             y = y.float()
         else:
             y = y.long()
@@ -52,7 +56,7 @@ class ECGLearning(LightningModule):
         return loss
 
     def validation_epoch_end(self, _):
-        if "avec" in self.args.dataset_dir:
+        if "avec" in self.args.dataset_dir or "epic" in self.args.dataset_dir:
             cccloss = self.compute_loss(
                 torch.stack(self.validation_pred), torch.stack(self.validation_true)
             )
@@ -73,7 +77,7 @@ class ECGLearning(LightningModule):
             f1 = f1_score(y.cpu(), preds.cpu(), average="macro", zero_division=0)
             self.log("Valid/f1", f1, sync_dist=True, batch_size=self.bs)
             self.log("Valid/auroc", auroc, sync_dist=True, batch_size=self.bs)
-        elif "avec" in self.args.dataset_dir:
+        elif "avec" in self.args.dataset_dir or "epic" in self.args.dataset_dir:
             for idx in range(len(preds.cpu())):
                 self.validation_pred.append(preds.cpu()[idx])
                 self.validation_true.append(y.cpu()[idx])
@@ -99,7 +103,7 @@ class ECGLearning(LightningModule):
     def compute_loss(self, preds, y, val=False):
         if "ptb" in self.args.dataset_dir:
             loss = nn.BCEWithLogitsLoss()
-        elif "avec" in self.args.dataset_dir:
+        elif "avec" in self.args.dataset_dir or "epic" in self.args.dataset_dir:
             loss = CCCLoss()
         else:
             weight = None if val else len(y) / torch.bincount(y)

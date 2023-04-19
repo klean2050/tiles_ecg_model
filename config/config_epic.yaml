@@ -1,0 +1,51 @@
+# dataset options
+dataset: "EPIC"
+dataset_dir: "data/epic/"
+streams: ["ECG"]
+scenario: 1
+gtruth: "arousal"
+seed: 42
+sr: 100
+
+### model options
+model_type: "s4"    # [resnet, s4]
+
+# ResNet
+in_channels: 1
+base_filters: 64
+kernel_size: 3
+stride: 2
+groups: 1
+n_block: 10
+n_classes: 256
+projection_dim: 128
+output_dim: 1
+
+# S4
+d_input: 1
+d_output: 128
+d_model: 128
+n_layers: 6
+dropout: 0.2
+
+# training options
+use_pretrained: 1
+unfreeze: False
+batch_size: 256
+m_epochs: 100
+optimizer: "Adam"
+learning_rate: 0.001
+weight_decay: 1e-6
+
+val_freq: 1     # how often to validate (runs validation every val_freq epochs)
+log_freq: 2     # how often to log (logs every log_freq steps)
+workers: 4
+n_cuda: "2"
+bit_precision: 16
+ckpt_path: null     # not used if set to null
+ssl_ckpt_path: "ckpt/s4_trans.ckpt" #"ckpt/epoch=51-step=50596.ckpt"
+
+# logging options:
+log_dir: "runs"
+experiment_name: "pred_epic"
+experiment_version: null
