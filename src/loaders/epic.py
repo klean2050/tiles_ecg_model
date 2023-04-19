@@ -93,12 +93,14 @@ class EPIC(data.Dataset):
         shuffle_idx = np.random.permutation(len(ecg_data))
         ecg_data = ecg_data[shuffle_idx]
         ecg_labels = ecg_labels[shuffle_idx]
+        
+        threshold = int(len(ecg_data) * 0.9)
         if split == "dev":
-            ecg_data = ecg_data[: len(ecg_data) // 10]
-            ecg_labels = ecg_labels[: len(ecg_data) // 10]
+            ecg_data = ecg_data[threshold:]
+            ecg_labels = ecg_labels[threshold:]
         elif split == "train":
-            ecg_data = ecg_data[len(ecg_data) // 10 :]
-            ecg_labels = ecg_labels[len(ecg_data) // 10 :]
+            ecg_data = ecg_data[:threshold]
+            ecg_labels = ecg_labels[:threshold]
 
         # low data regime
         self.samples = ecg_data[::1] if split == "train" else ecg_data
