@@ -7,59 +7,34 @@ from scipy.signal import resample_poly
 
 
 class EPIC(data.Dataset):
-    def __init__(self, root, sr, scenario=1, split="train", category="arousal"):
+    def __init__(self, root, sr, scenario=1, split="train", category="arousal", fold=0):
         super().__init__()
         self.sr = sr
         self.win = sr * 10
 
         # sanity checks
         assert scenario in [1, 2, 3, 4], "Scenario must be in [1, 2, 3, 4]"
-        if scenario == 1:
-            assert split in [
-                "train",
-                "dev",
-                "test",
-            ], "Split must be in [train, dev, test]"
-            self.split = split if split != "dev" else "train"
+        assert split in ["train", "dev", "test"], "Split must be in [train, dev, test]"
+        self.split = split if split != "dev" else "train"
+
+        # setup scenario
+        if scenario != 1:
+            self.root = root + f"/scenario_{scenario}/fold_{fold}/{self.split}/"
+            self.sc = f"{scenario}_{fold}"
         else:
-            assert split in [0, 1, 2, 3, 4], "Split must be in [0, 1, 2, 3, 4]"
-            self.split = f"fold_{split}"
+            self.root = root + f"/scenario_{scenario}/{self.split}/"
+            self.sc = f"{scenario}"
 
-        self.root = root + f"/scenario_{scenario}/{self.split}/"
-        if os.path.exists(f"data/epic/{scenario}_{self.split}_ecg.npy"):
+        if os.path.exists(f"data/epic/{self.sc}_{self.split}_ecg.npy"):
             print("Loading from cache...")
-            ecg_data = np.load(f"data/epic/{scenario}_{self.split}_ecg.npy")
-            if os.path.exists(f"data/epic/{scenario}_{self.split}_{category}.npy"):
-                ecg_labels = np.load(
-                    f"data/epic/{scenario}_{self.split}_{category}.npy"
-                )
+            ecg_data = np.load(f"data/epic/{self.sc}_{self.split}_ecg.npy")
+            if os.path.exists(f"data/epic/{self.sc}_{self.split}_{category}.npy"):
+                ecg_labels = np.load(f"data/epic/{self.sc}_{self.split}_{category}.npy")
+                names = np.load(f"data/epic/{self.sc}_names.npy")
             else:
-                ecg_labels = list()
-                for csv_file in tqdm(os.listdir(self.root + "annotations")):
-                    label_path = os.path.join(self.root, "annotations", csv_file)
-                    labels = pd.read_csv(label_path)
-                    label_values = labels[category].values
-                    label_times = labels["time"].values
-                    for i, time in enumerate(label_times):
-                        # annotation every 50 ms
-                        if time < 10000:
-                            continue  # skip first 10 seconds
-                        ecg_labels.append(label_values[i])
-                ecg_labels = np.array(ecg_labels)
-                np.save(f"data/epic/{scenario}_{self.split}_{category}.npy", ecg_labels)
-
-            # handle metadata
-            names = list()
-            for csv_file in tqdm(os.listdir(self.root + "annotations")):
-                label_path = os.path.join(self.root, "annotations", csv_file)
-                labels = pd.read_csv(label_path)
-                label_times = labels["time"].values
-                for i, time in enumerate(label_times):
-                    # annotation every 50 ms
-                    if time < 10000:
-                        continue
-                    names.append(csv_file[:-4])
-            names = np.array(names)
+                ecg_labels, names = self.get_labels(scenario, category)
+                np.save(f"data/epic/{self.sc}_{self.split}_names.npy", names)
+                np.save(f"data/epic/{self.sc}_{self.split}_{category}.npy", ecg_labels)
         else:
             print("Loading ECG data...")
             ecg_data, ecg_labels = list(), list()
@@ -75,14 +50,13 @@ class EPIC(data.Dataset):
 
                 # Read data and labels
                 labels = pd.read_csv(label_path)
-                label_values = labels[category].values
                 label_times = labels["time"].values
                 for i, time in enumerate(label_times):
                     # annotation every 50 ms
                     if time < 10000:
                         continue  # skip first 10 seconds
 
-                    # divide by 10 == multiply by 100 and divide by 1000
+                    # divide by 10 = (multiply by 100 + divide by 1000)
                     start_idx = int(time / 10 - self.win)
                     end_idx = int(time / 10)
                     data = ecg[start_idx:end_idx]
@@ -92,30 +66,24 @@ class EPIC(data.Dataset):
                     mean, std = np.mean(data, axis=0), np.std(data, axis=0)
                     data = (data - mean) / (std + 1e-5)
 
+                    # saving
                     ecg_data.append(data)
-                    ecg_labels.append(label_values[i])
 
             ecg_data = np.array(ecg_data)
-            ecg_labels = np.array(ecg_labels)
+            ecg_labels, names = self.get_labels(scenario, category)
 
             os.makedirs("data/epic", exist_ok=True)
-            np.save(f"data/epic/{scenario}_{self.split}_ecg.npy", ecg_data)
-            np.save(f"data/epic/{scenario}_{self.split}_{category}.npy", ecg_labels)
+            np.save(f"data/epic/{self.sc}_{self.split}_names.npy", names)
+            np.save(f"data/epic/{self.sc}_{self.split}_ecg.npy", ecg_data)
+            np.save(f"data/epic/{self.sc}_{self.split}_{category}.npy", ecg_labels)
 
         # partition validation set
-        if scenario == 1 and split != "test":
-            val_indices = list()
-            i = 0
-            while i < len(names):
-                # identify all samples with the same name
-                indices = np.where(names == names[i])[0]
-                # isolate 10% of the samples as validation set
-                num_val_samples = int(len(indices) * 0.1)
-                # select 10% of the samples in the end
-                val_indices.append(indices[-num_val_samples:])
-                i += len(indices)
-            val_indices = np.concatenate(val_indices)
+        if split != "test":
+            ecg_data = ecg_data[::5]
+            ecg_labels = ecg_labels[::5]
+            names = names[::5]
 
+            val_indices = self.define_validation(names, scenario)
             if split == "dev":
                 ecg_data = ecg_data[val_indices]
                 ecg_labels = ecg_labels[val_indices]
@@ -128,6 +96,49 @@ class EPIC(data.Dataset):
         self.labels = ecg_labels[::1] if split == "train" else ecg_labels
         print(f"Loaded {len(self.labels)} ECG samples in total.")
 
+    def get_labels(self, category):
+        print("Loading labels...")
+        ecg_labels, names = list(), list()
+        for csv_file in tqdm(os.listdir(self.root + "annotations")):
+            label_path = os.path.join(self.root, "annotations", csv_file)
+            labels = pd.read_csv(label_path)
+            label_values = labels[category].values
+            label_times = labels["time"].values
+            for i, time in enumerate(label_times):
+                # annotation every 50 ms
+                if time < 10000:
+                    continue  # skip first 10 seconds
+                ecg_labels.append(label_values[i])
+                names.append(csv_file[:-4])
+        return np.array(ecg_labels), np.array(names)
+
+    def define_validation(self, names, scenario):
+        if scenario == 2:
+            names = [n.split("_")[1] for n in names]
+            shuffle(names)
+        elif scenario > 2:
+            names = [n.split("_")[3] for n in names]
+            shuffle(names)
+
+        val_indices, i = list(), 0
+        while i < len(names):
+            # identify all samples with the same name
+            indices = np.where(names == names[i])[0]
+
+            if scenario == 1:
+                # isolate 10% of the samples as validation set
+                num_val_samples = int(len(indices) * 0.1)
+                # select 10% of the samples in the end
+                selected_indices = indices[-num_val_samples:]
+            else:
+                # decide if name is in the validation set
+                selected_indices = indices if i < len(names) / 10 else []
+
+            val_indices.append(selected_indices)
+            # jump to the next session
+            i += len(indices)
+        return np.concatenate(val_indices)
+
     def __len__(self):
         return len(self.samples)
 
@@ -139,6 +150,10 @@ class EPIC(data.Dataset):
 
 if __name__ == "__main__":
     root = "/home/kavra/Datasets/physio/epic_challenge/"
-    train_dataset = EPIC(root, sr=100, scenario=1, split="train", category="valence")
-    test_dataset = EPIC(root, sr=100, scenario=1, split="dev", category="valence")
+    train_dataset = EPIC(
+        root, sr=100, scenario=1, split="train", category="valence", fold=0
+    )
+    test_dataset = EPIC(
+        root, sr=100, scenario=1, split="dev", category="arousal", fold=1
+    )
     print(train_dataset[0][0].shape, train_dataset[0][1])
