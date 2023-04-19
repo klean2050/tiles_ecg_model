@@ -39,6 +39,9 @@ def evaluate(model, dataset, dataset_name, aggregate="majority"):
     y_pred = torch.cat(y_pred, dim=0).squeeze().cpu().numpy()
     y_name = np.array(y_name)
 
+    if "EPIC" in dataset_name:
+        return y_pred, None
+
     # chunk-wise predictions
     if "ptb" in dataset_name:
         auc = roc_auc_score(y_true, y_pred)

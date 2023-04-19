@@ -180,7 +180,10 @@ if __name__ == "__main__":
         dataset_name=args.dataset,
     )
 
-    output = f"results/{args.dataset}_{args.gtruth}_init.txt"
-    with open(output, "w") as f:
-        for m, v in metrics.items():
-            f.write("{}: {:.3f}\n".format(m, v))
+    if "epic" in args.dataset_dir:
+        np.save(f"results/{args.dataset}_{args.gtruth}_frozen.npy", metrics)
+    else:
+        output = f"results/{args.dataset}_{args.gtruth}_frozen.txt"
+        with open(output, "w") as f:
+            for m, v in metrics.items():
+                f.write("{}: {:.3f}\n".format(m, v))

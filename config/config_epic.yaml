@@ -40,7 +40,7 @@ weight_decay: 1e-6
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
 log_freq: 2     # how often to log (logs every log_freq steps)
 workers: 4
-n_cuda: "0"
+n_cuda: "1"
 bit_precision: 16
 ckpt_path: null     # not used if set to null
 ssl_ckpt_path: "ckpt/s4_trans.ckpt" #"ckpt/epoch=51-step=50596.ckpt"
