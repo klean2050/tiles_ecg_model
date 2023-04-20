@@ -44,6 +44,8 @@ class EPIC(data.Dataset):
         else:
             print(f"Loading ECG {split} data...")
             for csv_file in tqdm(os.listdir(self.root + "physiology")):
+                if csv_file.startswith("."):
+                    continue
 
                 label_path = os.path.join(self.root, "annotations", csv_file)
                 ecg_path = os.path.join(self.root, "physiology", csv_file)
@@ -98,8 +100,6 @@ class EPIC(data.Dataset):
         # low data regime
         self.samples = ecg_data[::1] if split == "train" else ecg_data
         self.labels = ecg_labels[::1] if split == "train" else ecg_labels
-        if split == "test":
-            self.labels = np.zeros(len(self.samples))
         print(f"Loaded {len(self.samples)} ECG samples in total.")
 
     def get_labels(self, category, jump):
