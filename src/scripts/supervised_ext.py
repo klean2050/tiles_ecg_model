@@ -1,4 +1,5 @@
-import os, argparse, pytorch_lightning as pl, numpy as np
+import argparse, pytorch_lightning as pl
+import torch, os, numpy as np
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -73,7 +74,7 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=args.workers,
-        drop_last=True,
+        drop_last=False,
     )
 
     test_loader = DataLoader(
@@ -81,7 +82,7 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=args.workers,
-        drop_last=True,
+        drop_last=False,
     )
 
     # --------------
@@ -173,17 +174,21 @@ if __name__ == "__main__":
     # ----------
     # EVALUATION
     # ----------
+    v = "scratch" if args.use_pretrained else "init" if args.unfreeze else "frozen"
 
     metrics, _ = evaluate(
-        model,
+        model.to(torch.device("cuda")),
         dataset=test_loader,
         dataset_name=args.dataset,
     )
 
     if "epic" in args.dataset_dir:
-        np.save(f"results/{args.dataset}_{args.gtruth}_frozen.npy", metrics)
+        np.save(
+            f"results/{args.dataset}_{args.scenario}_{args.fold}_{args.gtruth}_{v}.npy",
+            metrics,
+        )
     else:
-        output = f"results/{args.dataset}_{args.gtruth}_frozen.txt"
+        output = f"results/{args.dataset}_{args.gtruth}_{v}.txt"
         with open(output, "w") as f:
             for m, v in metrics.items():
                 f.write("{}: {:.3f}\n".format(m, v))

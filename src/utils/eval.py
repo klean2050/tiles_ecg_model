@@ -26,7 +26,11 @@ def evaluate(model, dataset, dataset_name, aggregate="majority"):
         label = label.to(model.device)
         with torch.no_grad():
             preds, _ = model(ecg, label)
-            if "ptb" not in dataset_name and "AVEC" not in dataset_name:
+            if (
+                "ptb" not in dataset_name
+                and "AVEC" not in dataset_name
+                and "EPIC" not in dataset_name
+            ):
                 preds = preds.argmax(dim=1).detach()
 
             # save labels and predictions
