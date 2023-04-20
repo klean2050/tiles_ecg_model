@@ -98,6 +98,8 @@ class EPIC(data.Dataset):
         # low data regime
         self.samples = ecg_data[::1] if split == "train" else ecg_data
         self.labels = ecg_labels[::1] if split == "train" else ecg_labels
+        if split == "test":
+            self.labels = np.zeros(len(self.samples))
         print(f"Loaded {len(self.samples)} ECG samples in total.")
 
     def get_labels(self, category, jump):
