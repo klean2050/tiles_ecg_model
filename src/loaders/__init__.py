@@ -6,10 +6,9 @@ from .mirise import MIRISE
 from .ptb_xl import PTB_XL
 from .ludb import LUDB
 from .avec16 import AVEC16
-from .epic import EPIC
+from .epic import EPIC, MULTI_EPIC
 
-
-def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train"):
+def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=True):
 
     if dataset == "DriveDB":
         return DriveDB(root=dataset_dir, sr=sr, streams="ECG")
@@ -25,9 +24,13 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train"):
         return LUDB(root=dataset_dir)
     elif dataset == "AVEC16":
         return AVEC16(root=dataset_dir, sr=sr, split=split, category=gtruth)
-    elif dataset == "EPIC":
+    elif dataset == "EPIC" and ecg_only:
         return EPIC(
             root=dataset_dir, sr=sr, scenario=4, split=split, category=gtruth, fold=0
+        )
+    elif dataset == "EPIC" and not ecg_only:
+        return MULTI_EPIC(
+            root=dataset_dir, sr=sr, scenario=1, split=split, category=gtruth, fold=0
         )
     else:
         raise NotImplementedError("Dataset not implemented")
