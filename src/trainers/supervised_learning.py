@@ -1,113 +1,144 @@
 import torch, torch.nn as nn
 from pytorch_lightning import LightningModule
 from simclr.modules import NT_Xent
-from src.models import ResNet1D
+from src.models import ResNet1D, S4Model
+
+import torch, torch.nn as nn
+from pytorch_lightning import LightningModule
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+
+from src.utils import CCCLoss, mean_ccc
 
 
 class SupervisedLearning(LightningModule):
-    def __init__(self, args, encoder, output_dim, gtruth=0):
+    def __init__(self, args, encoder, output_dim):
         super().__init__()
         self.save_hyperparameters(args)
-        self.modalities = args.streams
-        self.ground_truth = gtruth
-
-        # configure criterion
-        self.cls_loss = (
-            nn.MSELoss() if "drivedb" in args.dataset_dir else nn.CrossEntropyLoss()
-        )
-        self.ssl_loss = NT_Xent(
-            self.hparams.batch_size, self.hparams.temperature, world_size=1
-        )
+        self.ground_truth = args.gtruth
+        self.accuracy = accuracy_score
+        self.bs = args.batch_size
+        self.args = args
 
         # freezing trained ECG encoder
-        self.encoder = encoder
-        self.encoder.eval()
+        self.ecg_encoder = encoder
+        self.ecg_encoder.eval()
         for param in self.encoder.parameters():
-            param.requires_grad = False
+            param.requires_grad = self.args.unfreeze
 
         # create model for other modalities
-        self.net = ResNet1D(
-            in_channels=args.in_channels,
-            base_filters=args.base_filters,
-            kernel_size=args.kernel_size,
-            stride=args.stride,
-            groups=args.groups,
-            n_block=args.n_block - 1,
-            n_classes=args.n_classes,
-        )
-
-        # create 2 branches for the multi-task
-        self.project_ssl = nn.Sequential(
-            nn.Dropout(0.2),
-            nn.Linear(128, self.hparams.projection_dim),
-        )
-        self.project_cls = nn.Sequential(
-            nn.Linear(128, self.hparams.projection_dim),
+        if args.model_type == "resnet":
+            self.net = ResNet1D(
+                in_channels=args.in_channels,
+                base_filters=args.base_filters,
+                kernel_size=args.kernel_size,
+                stride=args.stride,
+                groups=args.groups,
+                n_block=args.n_block - 1,
+                n_classes=args.n_classes,
+            )
+        elif args.model_type == "s4":
+            self.net = S4Model(
+                d_input=args.d_input,
+                d_output=args.d_output,
+                d_model=args.d_model,
+                n_layers=args.n_layers - 2,
+                dropout=args.dropout,
+                prenorm=True,
+            )
+        else:
+            raise ValueError("Model type not supported.")
+        
+        self.models = {}
+        for m in self.modalities:
+            self.models[m] = self.encoder if m == "ECG" else self.net
+        
+        # attention projector
+        self.n_features = self.encoder.output_size
+        self.att_projector = nn.Sequential(
+            nn.Linear(self.n_features, self.hparams.projection_dim),
             nn.ReLU(),
             nn.Dropout(0.5),
-            nn.Linear(self.hparams.projection_dim, output_dim),
         )
+        # attention mechanism
+        self.att_dim = self.hparams.projection_dim
+        self.query = nn.Linear(3 * self.att_dim, self.att_dim)
+        self.key = nn.Linear(3 * self.att_dim, self.att_dim)
 
-        # putting it all together
-        models = {m: {} for m in self.modalities}
-        for m in self.modalities:
-            models[m]["net"] = self.encoder if m == "ECG" else self.net
-            models[m]["project_cls"] = self.project_cls
-            models[m]["project_ssl"] = self.project_ssl
-        self.models = models
+        # classification projector
+        self.classifier = nn.Linear(self.att_dim, output_dim)
+
+        self.validation_true = list()
+        self.validation_pred = list()
 
     def forward(self, x, y):
         # extract vector representations
-        vectors = {m: [] for m in x.keys()}
+        all_vectors = []
         for m in x.keys():
-            if m == "ECG":
-                temp_vec = []
-                for i in range(x[m].shape[1]):
-                    temp = x[m][:, i, :].unsqueeze(1)
-                    temp_vec.append(self.models[m]["net"](temp))
-                vectors[m] = torch.mean(torch.stack(temp_vec), dim=0)
-            else:
-                x[m] = x[m].unsqueeze(1)
-                vectors[m] = self.models[m]["net"](x[m])
+            x[m] = x[m].unsqueeze(1)
+            all_vectors.extend(self.models[m](x[m]))
+
+        # attention mechanism
+        att_vector = torch.randn(3 * self.att_dim, 1)
+        weights = torch.matmul(self.key(all_vectors), self.query(att_vector).T)
+        weights = weights / self.att_dim ** 0.5
+        fused_vector = (all_vectors * weights.softmax(0)).sum(0)  
 
         # extract cls predictions
-        preds = {m: [] for m in x.keys()}
-        for m in x.keys():
-            preds[m] = self.models[m]["project_cls"](vectors[m])
+        preds = self.classifier(fused_vector).squeeze()
+        if (
+            "ptb" in self.args.dataset_dir
+            or "avec" in self.args.dataset_dir
+            or "epic" in self.args.dataset_dir
+        ):
+            y = y.float()
+        else:
+            y = y.long()
 
-        # extract ssl representations
-        reprs = {m: [] for m in x.keys()}
-        for m in x.keys():
-            reprs[m] = self.models[m]["project_ssl"](vectors[m])
-
-        # compute the cls objective
-        y = torch.mean(y, dim=1).unsqueeze(1).float()
-        # ERROR HERE: find good objective for DriveDB
-        cls_loss = [self.cls_loss(preds[m], y) for m in x.keys()]
-        cls_loss = sum(cls_loss).float() / len(cls_loss)
-
-        # compute the ssl objective
-        ssl_keys = [m for m in x.keys() if x != "ECG"]
-        ssl_loss = [self.ssl_loss(reprs[m], reprs["ECG"]) for m in ssl_keys]
-        ssl_loss = sum(ssl_loss).float() / len(ssl_loss)
-
-        # compute the multi-objective
-        return cls_loss + 0.01 * ssl_loss
+        return preds, y
 
     def training_step(self, batch, _):
-        data, _ = batch
+        data, y, _ = batch
         x = {key: data[key] for key in self.modalities}
-        y = data[self.ground_truth]
-        loss = self.forward(x, y)
-        self.log("Train/loss", loss, sync_dist=True)
+        preds, y = self.forward(x, y)
+        loss = self.compute_loss(preds, y)
+        self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
         return loss
 
+    def validation_epoch_end(self, _):
+        if "avec" in self.args.dataset_dir or "epic" in self.args.dataset_dir:
+            cccloss = self.compute_loss(
+                torch.stack(self.validation_pred), torch.stack(self.validation_true)
+            )
+            ccc = mean_ccc(self.validation_pred, self.validation_true)
+            self.log("Valid/ccc", ccc, sync_dist=True, batch_size=self.bs)
+            self.log("Valid/cccloss", cccloss, sync_dist=True, batch_size=self.bs)
+            self.validation_true = list()
+            self.validation_pred = list()
+
     def validation_step(self, batch, _):
-        data, _ = batch
+        data, y, _ = batch
         x = {key: data[key] for key in self.modalities}
-        y = data[self.ground_truth]
-        loss = self.forward(x, y)
-        self.log("Valid/loss", loss, sync_dist=True)
+        preds, y = self.forward(x, y)
+        loss = self.compute_loss(preds, y, val=True)
+
+        if "ptb" in self.args.dataset_dir:
+            auroc = roc_auc_score(y.cpu(), preds.cpu())
+            preds = (torch.sigmoid(preds).detach() > 0.5) * 1
+            f1 = f1_score(y.cpu(), preds.cpu(), average="macro", zero_division=0)
+            self.log("Valid/f1", f1, sync_dist=True, batch_size=self.bs)
+            self.log("Valid/auroc", auroc, sync_dist=True, batch_size=self.bs)
+        elif "avec" in self.args.dataset_dir or "epic" in self.args.dataset_dir:
+            for idx in range(len(preds.cpu())):
+                self.validation_pred.append(preds.cpu()[idx])
+                self.validation_true.append(y.cpu()[idx])
+        else:
+            y, preds = y.long(), preds.argmax(dim=1)
+            acc = accuracy_score(y.cpu(), preds.cpu())
+            f1 = f1_score(y.cpu(), preds.cpu(), average="macro", zero_division=0)
+            self.log("Valid/f1", f1, sync_dist=True, batch_size=self.bs)
+            self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
+
+        self.log("Valid/loss", loss, sync_dist=True, batch_size=self.bs)
         return loss
 
     def configure_optimizers(self):
@@ -116,23 +147,14 @@ class SupervisedLearning(LightningModule):
             lr=self.hparams.learning_rate,
             weight_decay=float(self.hparams.weight_decay),
         )
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer,
-            mode="min",
-            factor=0.1,
-            patience=5,
-            threshold=0.0001,
-            threshold_mode="rel",
-            cooldown=0,
-            min_lr=0,
-            eps=1e-08,
-            verbose=False,
-        )
-        if scheduler:
-            return {
-                "optimizer": optimizer,
-                "lr_scheduler": scheduler,
-                "monitor": "Valid/loss",
-            }
+        return {"optimizer": optimizer}
+
+    def compute_loss(self, preds, y, val=False):
+        if "ptb" in self.args.dataset_dir:
+            loss = nn.BCEWithLogitsLoss()
+        elif "avec" in self.args.dataset_dir or "epic" in self.args.dataset_dir:
+            loss = CCCLoss()
         else:
-            return {"optimizer": optimizer}
+            weight = None if val else len(y) / torch.bincount(y)
+            loss = nn.CrossEntropyLoss(weight=weight)
+        return loss(preds, y)
