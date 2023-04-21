@@ -174,7 +174,7 @@ if __name__ == "__main__":
     # ----------
     # EVALUATION
     # ----------
-    v = "scratch" if args.use_pretrained else "init" if args.unfreeze else "frozen"
+    v = "scratch" if not args.use_pretrained else "init" if args.unfreeze else "frozen"
 
     metrics, _ = evaluate(
         model.to(torch.device("cuda")),

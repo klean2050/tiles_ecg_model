@@ -27,7 +27,7 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train"):
         return AVEC16(root=dataset_dir, sr=sr, split=split, category=gtruth)
     elif dataset == "EPIC":
         return EPIC(
-            root=dataset_dir, sr=sr, scenario=1, split=split, category=gtruth, fold=0
+            root=dataset_dir, sr=sr, scenario=4, split=split, category=gtruth, fold=0
         )
     else:
         raise NotImplementedError("Dataset not implemented")
