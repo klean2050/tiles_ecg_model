@@ -132,7 +132,7 @@ if __name__ == "__main__":
     model_ckpt_callback = ModelCheckpoint(monitor=monitor, mode="min", save_top_k=1)
     early_stop_callback = EarlyStopping(monitor=monitor, mode="min", patience=15)
 
-    # train and save model 
+    # train and save model
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,

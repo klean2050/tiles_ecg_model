@@ -17,7 +17,7 @@ class SupervisedLearning(LightningModule):
         self.ground_truth = args.gtruth
         self.accuracy = accuracy_score
         self.bs = args.batch_size
-        self.modalities = ["ecg", "eda", "rsp"]
+        self.modalities = ["ecg", "eda", "rsp", "skt"]
         self.args = args
 
         # freezing trained ECG encoder
@@ -51,7 +51,10 @@ class SupervisedLearning(LightningModule):
 
         self.models = {}
         for m in self.modalities:
-            self.models[m] = self.ecg_encoder if m == "ECG" else self.net
+            if m == "ecg":
+                self.models[m] = self.ecg_encoder
+            elif m != "skt":
+                self.models[m] = self.net
 
         # attention projector
         self.n_features = self.ecg_encoder.output_size
@@ -61,9 +64,10 @@ class SupervisedLearning(LightningModule):
             nn.Dropout(0.5),
         )
         # attention mechanism
-        self.att_dim = self.hparams.projection_dim
+        self.att_dim = int(3 * self.hparams.projection_dim + 4)
         self.query = nn.Linear(3 * self.att_dim + 4, self.att_dim)
         self.key = nn.Linear(3 * self.att_dim + 4, self.att_dim)
+        self.attention = nn.Linear(self.att_dim, 1)
 
         # classification projector
         self.classifier = nn.Linear(self.att_dim, output_dim)
@@ -75,17 +79,24 @@ class SupervisedLearning(LightningModule):
         # extract embeddings
         all_vectors = []
         for m in x.keys():
-            x[m] = x[m].unsqueeze(1)
-            all_vectors.extend(self.models[m](x[m]))
+            if m != "skt":
+                x[m] = x[m].unsqueeze(1)
+                all_vectors.append(self.models[m](x[m]))
 
-        all_vectors.extend(x["skt"])
-        all_vectors = torch.Tensor(all_vectors).to(self.ecg_encoder.device)
+        all_vectors.append(x["skt"])
+        fused_vector = torch.cat(all_vectors, dim=-1).half()
 
-        # attention mechanism
-        att_vector = torch.randn(3 * self.att_dim + 4, 1)
-        weights = torch.matmul(self.key(all_vectors), self.query(att_vector).T)
-        weights = weights / self.att_dim**0.5
-        fused_vector = (all_vectors * weights.softmax(0)).sum(0)
+        # vanilla attention mechanism
+        weights = self.attention(fused_vector)
+        weights = torch.softmax(weights, dim=1)
+        fused_vector = weights.mul(fused_vector)
+
+        # att_vector = torch.randn(3 * self.att_dim + 4, 1).to("cuda")
+        # print(self.key(all_vectors).shape)
+        # print(self.query(att_vector).shape)
+        # weights = torch.matmul(self.key(all_vectors), self.query(att_vector).T)
+        # weights = weights / self.att_dim ** 0.5
+        # fused_vector = (all_vectors * weights.softmax(0)).sum(0)
 
         # extract cls predictions
         preds = self.classifier(fused_vector).squeeze()

@@ -408,7 +408,7 @@ class MULTI_EPIC(data.Dataset):
         return np.concatenate(val_indices)
 
     def __len__(self):
-        return len(self.samples)
+        return len(self.samples["ecg"])
 
     def __getitem__(self, idx):
         d = {
