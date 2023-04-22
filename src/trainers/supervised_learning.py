@@ -17,12 +17,13 @@ class SupervisedLearning(LightningModule):
         self.ground_truth = args.gtruth
         self.accuracy = accuracy_score
         self.bs = args.batch_size
+        self.modalities = ["ecg", "eda", "rsp"]
         self.args = args
 
         # freezing trained ECG encoder
         self.ecg_encoder = encoder
         self.ecg_encoder.eval()
-        for param in self.encoder.parameters():
+        for param in self.ecg_encoder.parameters():
             param.requires_grad = self.args.unfreeze
 
         # create model for other modalities
@@ -47,13 +48,13 @@ class SupervisedLearning(LightningModule):
             )
         else:
             raise ValueError("Model type not supported.")
-        
+
         self.models = {}
         for m in self.modalities:
-            self.models[m] = self.encoder if m == "ECG" else self.net
-        
+            self.models[m] = self.ecg_encoder if m == "ECG" else self.net
+
         # attention projector
-        self.n_features = self.encoder.output_size
+        self.n_features = self.ecg_encoder.output_size
         self.att_projector = nn.Sequential(
             nn.Linear(self.n_features, self.hparams.projection_dim),
             nn.ReLU(),
@@ -61,8 +62,8 @@ class SupervisedLearning(LightningModule):
         )
         # attention mechanism
         self.att_dim = self.hparams.projection_dim
-        self.query = nn.Linear(3 * self.att_dim, self.att_dim)
-        self.key = nn.Linear(3 * self.att_dim, self.att_dim)
+        self.query = nn.Linear(3 * self.att_dim + 4, self.att_dim)
+        self.key = nn.Linear(3 * self.att_dim + 4, self.att_dim)
 
         # classification projector
         self.classifier = nn.Linear(self.att_dim, output_dim)
@@ -71,17 +72,20 @@ class SupervisedLearning(LightningModule):
         self.validation_pred = list()
 
     def forward(self, x, y):
-        # extract vector representations
+        # extract embeddings
         all_vectors = []
         for m in x.keys():
             x[m] = x[m].unsqueeze(1)
             all_vectors.extend(self.models[m](x[m]))
 
+        all_vectors.extend(x["skt"])
+        all_vectors = torch.Tensor(all_vectors).to(self.ecg_encoder.device)
+
         # attention mechanism
-        att_vector = torch.randn(3 * self.att_dim, 1)
+        att_vector = torch.randn(3 * self.att_dim + 4, 1)
         weights = torch.matmul(self.key(all_vectors), self.query(att_vector).T)
-        weights = weights / self.att_dim ** 0.5
-        fused_vector = (all_vectors * weights.softmax(0)).sum(0)  
+        weights = weights / self.att_dim**0.5
+        fused_vector = (all_vectors * weights.softmax(0)).sum(0)
 
         # extract cls predictions
         preds = self.classifier(fused_vector).squeeze()

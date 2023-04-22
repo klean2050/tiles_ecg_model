@@ -168,7 +168,7 @@ class MULTI_EPIC(data.Dataset):
         ecg_data = list()
         eda_data = list()
         rsp_data = list()
-        other_data = list()
+        skt_data = list()
         labels = list()
 
         # sanity checks
@@ -184,9 +184,11 @@ class MULTI_EPIC(data.Dataset):
             self.root = root + f"/scenario_{scenario}/{self.split}/"
             self.sc = f"{scenario}"
 
-        if os.path.exists(f"data/multi_epic/{self.sc}_{self.split}_ecg.npy"):
+        if os.path.exists(f"data/multi_epic/{self.sc}_{self.split}.npy"):
             print("Loading from cache...")
-            data = np.load(f"data/multi_epic/{self.sc}_{self.split}_ecg.npy")
+            all_data = np.load(
+                f"data/multi_epic/{self.sc}_{self.split}.npy", allow_pickle=True
+            )[()]
             if self.split == "train":
                 if os.path.exists(
                     f"data/multi_epic/{self.sc}_{self.split}_{category}.npy"
@@ -216,13 +218,13 @@ class MULTI_EPIC(data.Dataset):
                 ecg_data.extend(self.extract_ecg(this_data, this_times))
                 eda_data.extend(self.extract_eda(this_data, this_times))
                 rsp_data.extend(self.extract_rsp(this_data, this_times))
-                other_data.extend(self.extract_other(this_data, this_times))
+                skt_data.extend(self.extract_skt(this_data, this_times))
 
             all_data = {
                 "ecg": np.array(ecg_data),
                 "eda": np.array(eda_data),
                 "rsp": np.array(rsp_data),
-                "other": np.array(other_data),
+                "skt": np.array(skt_data),
             }
             os.makedirs("data/multi_epic", exist_ok=True)
             np.save(f"data/multi_epic/{self.sc}_{self.split}.npy", all_data)
@@ -237,20 +239,20 @@ class MULTI_EPIC(data.Dataset):
         # partition validation set
         if self.split == "train":
             val_indices = self.define_validation(names, scenario)
-            for m in ["ecg", "eda", "rsp"]:
-                if split == "dev":
-                    labels = labels[val_indices]
+            if split == "dev":
+                labels = labels[val_indices]
+                for m in ["ecg", "eda", "rsp"]:
                     all_data[m] = all_data[m][val_indices]
-                    labels = labels[val_indices]
-                else:
-                    labels = np.delete(labels, val_indices, axis=0)
+            else:
+                labels = np.delete(labels, val_indices, axis=0)
+                for m in ["ecg", "eda", "rsp"]:
                     all_data[m] = np.delete(all_data[m], val_indices, axis=0)
 
         self.samples = all_data
         self.labels = labels
         if split == "test":
             self.labels = np.zeros(len(self.samples))
-        print(f"Loaded {len(self.samples)} ECG samples in total.")
+        print(f"Loaded {len(self.samples['ecg'])} samples in total.")
 
     def extract_ecg(self, this_data, label_times):
         ecg = this_data["ecg"].values
@@ -284,7 +286,7 @@ class MULTI_EPIC(data.Dataset):
         this_sr = self.sr // 5
         this_win = self.win // 5
 
-        eda = this_data["eda"].values
+        eda = this_data["gsr"].values
         label_times = label_times["time"].values
 
         new_len = int((len(eda) / 1000) * this_sr)
@@ -298,14 +300,15 @@ class MULTI_EPIC(data.Dataset):
             # annotation every 50 ms
             if time < 10000:
                 continue
-            index = time * this_sr / 1000
-            this_win = int(0.2 * this_win)
+            index = int(time * this_sr / 1000)
             # for EDA consider also some time after
-            data = eda[index - 4 * this_win : index + this_win]
-
-            # SCR extraction
+            data = eda[index - this_win : index + this_win // 2]
+            if data.shape[-1] != 1.5 * this_win:
+                data = np.pad(
+                    data, (0, int(1.5 * this_win) - data.shape[-1]), "constant"
+                )
             data = nk.eda_phasic(nk.standardize(data), sampling_rate=this_sr)
-            samples.append(data)
+            samples.append(data["EDA_Phasic"].values)
         return samples
 
     def extract_rsp(self, this_data, label_times):
@@ -326,18 +329,18 @@ class MULTI_EPIC(data.Dataset):
             # annotation every 50 ms
             if time < 10000:
                 continue
-            index = time * this_sr / 1000
-            data = rsp[index - this_win : index]
+            index = int(time * this_sr / 1000)
+            data = rsp[index - this_win : index + this_win // 2]
+            if data.shape[-1] != 1.5 * this_win:
+                data = np.pad(
+                    data, (0, int(1.5 * this_win) - data.shape[-1]), "constant"
+                )
 
-            # RSP data cleaning
-            data, _ = nk.rsp_process(data, sampling_rate=this_sr)
-            data = np.stack(
-                [data["RSP_Amplitude"], data["RSP_Rate"], data["RSP_RVT"]], axis=1
-            )
+            data = nk.rsp_clean(data, sampling_rate=this_sr)
             samples.append(data)
         return samples
 
-    def extract_other(self, this_data, label_times):
+    def extract_skt(self, this_data, label_times):
         label_times = label_times["time"].values
         if self.split == "train":
             label_times = label_times[:: self.jump]
@@ -348,40 +351,15 @@ class MULTI_EPIC(data.Dataset):
             if time < 10000:
                 continue
 
-            feat_list = []  # 16 features in total (4x4)
-            for stream in ["emg_zygo", "emg_coru", "emg_trap"]:
-                data = this_data[stream].values
-                data = data[time - 10000 : time]
-                signals, _ = nk.emg_process(data, sampling_rate=self.sr)
-
-                amplitude = signals["EMG_Amplitude"][signals["EMG_Activity"] == 1]
-                feat_list.append(amplitude.mean())
-                feat_list.append(amplitude.std())
-                num_bursts = sum(signals["EMG_Onsets"])
-                # calculate duration of bursts
-                if num_bursts:
-                    burst_durations = []
-                    for i in range(len(signals["EMG_Onsets"])):
-                        if signals["EMG_Onsets"][i] == 1:
-                            duration = 0
-                            while (
-                                j < len(signals["EMG_Onsets"])
-                                and not signals["EMG_Offsets"][j]
-                            ):
-                                duration += 1
-                            burst_durations.append(duration)
-                    feat_list.append(np.mean(burst_durations))
-                feat_list.append(num_bursts)
-
-            # temperature features
+            feat_list = []
             data = this_data["skt"].values
             data = data[time - 10000 : time]
             feat_list.append(data.mean())
             feat_list.append(data.std())
-            feat_list.append(np.diff(data).mean())
+            feat_list.append(np.diff(data).max())
             feat_list.append(np.diff(data).std())
-
             samples.append(feat_list)
+
         return samples
 
     def get_labels(self, category, jump):
@@ -437,7 +415,7 @@ class MULTI_EPIC(data.Dataset):
             "ecg": self.samples["ecg"][idx],
             "eda": self.samples["eda"][idx],
             "rsp": self.samples["rsp"][idx],
-            "other": self.samples["other"][idx],
+            "skt": self.samples["skt"][idx],
         }
         return d, self.labels[idx], 0
 
@@ -446,7 +424,7 @@ if __name__ == "__main__":
     root = "/home/kavra/Datasets/physio/epic_challenge"
     ###################################################################
     sample_dataset = MULTI_EPIC(
-        root, sr=100, scenario=1, split="train", category="valence", fold=0
+        root, sr=100, scenario=1, split="test", category="arousal", fold=0
     )
     ###################################################################
-    print(sample_dataset[0][0].shape, sample_dataset[0][1])
+    print(sample_dataset[0][0].keys(), sample_dataset[0][1])

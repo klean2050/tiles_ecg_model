@@ -1,8 +1,8 @@
 # dataset options
 dataset: "EPIC"
 dataset_dir: "data/epic/"
-streams: ["ECG"]
-scenario: 4
+streams: ["ECG", "EDA", "RSP", "SKT"]
+scenario: 1
 gtruth: "valence"
 seed: 42
 fold: 0
