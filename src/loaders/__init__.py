@@ -8,6 +8,7 @@ from .ludb import LUDB
 from .avec16 import AVEC16
 from .epic import EPIC, MULTI_EPIC
 
+
 def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=True):
 
     if dataset == "DriveDB":
@@ -26,7 +27,7 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=Tr
         return AVEC16(root=dataset_dir, sr=sr, split=split, category=gtruth)
     elif dataset == "EPIC" and ecg_only:
         return EPIC(
-            root=dataset_dir, sr=sr, scenario=4, split=split, category=gtruth, fold=0
+            root=dataset_dir, sr=sr, scenario=1, split=split, category=gtruth, fold=0
         )
     elif dataset == "EPIC" and not ecg_only:
         return MULTI_EPIC(

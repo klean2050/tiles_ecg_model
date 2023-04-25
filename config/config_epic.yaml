@@ -1,9 +1,9 @@
 # dataset options
 dataset: "EPIC"
 dataset_dir: "data/epic/"
-streams: ["ECG", "EDA", "RSP", "SKT"]
+streams: ["ecg", "eda", "rsp", "skt"]
 scenario: 1
-gtruth: "arousal"
+gtruth: "valence"
 seed: 42
 fold: 0
 sr: 100
