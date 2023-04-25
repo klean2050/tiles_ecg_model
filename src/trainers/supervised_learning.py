@@ -75,7 +75,7 @@ class SupervisedLearning(LightningModule):
         self.validation_true = list()
         self.validation_pred = list()
 
-    def forward(self, x, y):
+    def forward(self, x, y, flag=False):
         # extract embeddings
         all_vectors = []
         for m in self.modalities:
@@ -85,7 +85,10 @@ class SupervisedLearning(LightningModule):
 
         if "skt" in self.modalities:
             all_vectors.append(x["skt"])
-        fused_vector = torch.cat(all_vectors, dim=-1).half()
+
+        fused_vector = torch.cat(all_vectors, dim=-1)
+        if flag:
+            fused_vector = fused_vector.half()
 
         # attention (Q, K, V) mechanism
         fused_vector = fused_vector / fused_vector.norm(dim=1, keepdim=True)
@@ -111,7 +114,7 @@ class SupervisedLearning(LightningModule):
     def training_step(self, batch, _):
         data, y, _ = batch
         x = {key: data[key] for key in self.modalities}
-        preds, y = self.forward(x, y)
+        preds, y = self.forward(x, y, True)
         loss = self.compute_loss(preds, y)
         self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
         return loss
@@ -137,7 +140,7 @@ class SupervisedLearning(LightningModule):
     def validation_step(self, batch, _):
         data, y, _ = batch
         x = {key: data[key] for key in self.modalities}
-        preds, y = self.forward(x, y)
+        preds, y = self.forward(x, y, True)
         loss = self.compute_loss(preds, y, val=True)
 
         if "ptb" in self.args.dataset_dir:
