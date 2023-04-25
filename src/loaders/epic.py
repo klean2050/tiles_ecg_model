@@ -251,7 +251,7 @@ class MULTI_EPIC(data.Dataset):
         self.samples = all_data
         self.labels = labels
         if split == "test":
-            self.labels = np.zeros(len(self.samples))
+            self.labels = np.zeros(len(self.samples["ecg"]))
         print(f"Loaded {len(self.samples['ecg'])} samples in total.")
 
     def extract_ecg(self, this_data, label_times):

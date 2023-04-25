@@ -162,8 +162,11 @@ if __name__ == "__main__":
         model.to(torch.device("cuda")),
         dataset=test_loader,
         dataset_name=args.dataset,
+        modalities=args.streams,
     )
 
+    if len(args.streams) > 1:
+        args.dataset += "_multi"
     if "epic" in args.dataset_dir:
         np.save(
             f"results/{args.dataset}_{args.scenario}_{args.fold}_{args.gtruth}_{v}.npy",
