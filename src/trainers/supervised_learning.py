@@ -1,6 +1,5 @@
 import torch, torch.nn as nn
 from pytorch_lightning import LightningModule
-from simclr.modules import NT_Xent
 from src.models import ResNet1D, S4Model
 
 import torch, torch.nn as nn
@@ -17,8 +16,9 @@ class SupervisedLearning(LightningModule):
         self.ground_truth = args.gtruth
         self.accuracy = accuracy_score
         self.bs = args.batch_size
-        self.modalities = ["ecg", "eda", "rsp", "skt"]
+        self.modalities = args.streams
         self.args = args
+        self.mse = nn.MSELoss()
 
         # freezing trained ECG encoder
         self.ecg_encoder = encoder
@@ -56,18 +56,18 @@ class SupervisedLearning(LightningModule):
             elif m != "skt":
                 self.models[m] = self.net
 
-        # attention projector
-        self.n_features = self.ecg_encoder.output_size
-        self.att_projector = nn.Sequential(
-            nn.Linear(self.n_features, self.hparams.projection_dim),
-            nn.ReLU(),
-            nn.Dropout(0.5),
-        )
         # attention mechanism
-        self.att_dim = int(3 * self.hparams.projection_dim + 4)
-        self.query = nn.Linear(3 * self.att_dim + 4, self.att_dim)
-        self.key = nn.Linear(3 * self.att_dim + 4, self.att_dim)
-        self.attention = nn.Linear(self.att_dim, 1)
+        if "skt" in self.modalities:
+            num = len(self.modalities) - 1
+            self.att_dim = int(num * self.hparams.projection_dim + 4)
+        else:
+            num = len(self.modalities)
+            self.att_dim = int(num * self.hparams.projection_dim)
+
+        # attention (Q, K, V) mechanism
+        self.attention = nn.Linear(self.att_dim, self.att_dim)
+        self.query = nn.Linear(self.att_dim, self.att_dim)
+        self.key = nn.Linear(self.att_dim, self.att_dim)
 
         # classification projector
         self.classifier = nn.Linear(self.att_dim, output_dim)
@@ -78,25 +78,22 @@ class SupervisedLearning(LightningModule):
     def forward(self, x, y):
         # extract embeddings
         all_vectors = []
-        for m in x.keys():
+        for m in self.modalities:
             if m != "skt":
                 x[m] = x[m].unsqueeze(1)
                 all_vectors.append(self.models[m](x[m]))
 
-        all_vectors.append(x["skt"])
+        if "skt" in self.modalities:
+            all_vectors.append(x["skt"])
         fused_vector = torch.cat(all_vectors, dim=-1).half()
 
-        # vanilla attention mechanism
-        weights = self.attention(fused_vector)
-        weights = torch.softmax(weights, dim=1)
-        fused_vector = weights.mul(fused_vector)
-
-        # att_vector = torch.randn(3 * self.att_dim + 4, 1).to("cuda")
-        # print(self.key(all_vectors).shape)
-        # print(self.query(att_vector).shape)
-        # weights = torch.matmul(self.key(all_vectors), self.query(att_vector).T)
-        # weights = weights / self.att_dim ** 0.5
-        # fused_vector = (all_vectors * weights.softmax(0)).sum(0)
+        # attention (Q, K, V) mechanism
+        fused_vector = fused_vector / fused_vector.norm(dim=1, keepdim=True)
+        attention_vector = self.attention(fused_vector)
+        weights = torch.matmul(self.query(attention_vector), self.key(fused_vector).T)
+        weights = (weights / attention_vector.shape[-1] ** 0.5).softmax(0)
+        fused_vector = torch.matmul(weights, fused_vector)
+        # print(weights)
 
         # extract cls predictions
         preds = self.classifier(fused_vector).squeeze()
@@ -125,8 +122,15 @@ class SupervisedLearning(LightningModule):
                 torch.stack(self.validation_pred), torch.stack(self.validation_true)
             )
             ccc = mean_ccc(self.validation_pred, self.validation_true)
+            rmse = torch.sqrt(
+                self.mse(
+                    torch.stack(self.validation_pred), torch.stack(self.validation_true)
+                )
+            )
             self.log("Valid/ccc", ccc, sync_dist=True, batch_size=self.bs)
             self.log("Valid/cccloss", cccloss, sync_dist=True, batch_size=self.bs)
+            self.log("Valid/rmse", rmse, sync_dist=True, batch_size=self.bs)
+
             self.validation_true = list()
             self.validation_pred = list()
 
