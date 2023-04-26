@@ -378,6 +378,19 @@ class MULTI_EPIC(data.Dataset):
                 names.append(csv_file[:-4])
         return np.array(ecg_labels), np.array(names)
 
+    def predict(self, preds_arousal, preds_valence):
+        j = 0
+        for csv_file in tqdm(os.listdir(self.root + "annotations")):
+            if "preds" in csv_file:
+                continue
+            label_path = os.path.join(self.root, "annotations", csv_file)
+            labels = pd.read_csv(label_path)
+            preds_to_assign = len(labels)
+            labels["arousal"] = preds_arousal[j : j + preds_to_assign]
+            labels["valence"] = preds_valence[j : j + preds_to_assign]
+            j += preds_to_assign
+            labels.to_csv(label_path.replace(".csv", "_preds.csv"), index=False)
+
     def define_validation(self, names, scenario):
         if scenario == 2:
             names = [n.split("_")[1] for n in names]
@@ -424,7 +437,7 @@ if __name__ == "__main__":
     root = "/home/kavra/Datasets/physio/epic_challenge"
     ###################################################################
     sample_dataset = MULTI_EPIC(
-        root, sr=100, scenario=1, split="test", category="arousal", fold=0
+        root, sr=100, scenario=2, split="test", category="valence", fold=1
     )
     ###################################################################
     print(sample_dataset[0][0].keys(), sample_dataset[0][1])
