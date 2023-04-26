@@ -31,7 +31,7 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=Tr
         )
     elif dataset == "EPIC" and not ecg_only:
         return MULTI_EPIC(
-            root=dataset_dir, sr=sr, scenario=1, split=split, category=gtruth, fold=0
+            root=dataset_dir, sr=sr, scenario=2, split=split, category=gtruth, fold=0
         )
     else:
         raise NotImplementedError("Dataset not implemented")

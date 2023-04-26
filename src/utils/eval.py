@@ -1,4 +1,4 @@
-import os, torch, numpy as np
+import torch, numpy as np
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 

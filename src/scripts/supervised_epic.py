@@ -118,7 +118,7 @@ if __name__ == "__main__":
     logger = TensorBoardLogger(
         save_dir=args.log_dir,
         name=f"{args.experiment_name}",
-        version=args.experiment_version,
+        version=f"{args.dataset}_{args.scenario}_{args.fold}_{args.gtruth}",
     )
 
     # --------
@@ -128,7 +128,11 @@ if __name__ == "__main__":
     # GPUs to use
     os.environ["CUDA_VISIBLE_DEVICES"] = args.n_cuda
     # create PyTorch Lightning trainer
-    monitor = "Valid/cccloss" if "avec" in args.dataset_dir else "Valid/loss"
+    monitor = (
+        "Valid/cccloss"
+        if "avec" in args.dataset_dir or "epic" in args.dataset_dir
+        else "Valid/loss"
+    )
     model_ckpt_callback = ModelCheckpoint(monitor=monitor, mode="min", save_top_k=1)
     early_stop_callback = EarlyStopping(monitor=monitor, mode="min", patience=15)
 
