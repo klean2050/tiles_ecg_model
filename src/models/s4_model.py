@@ -209,7 +209,7 @@ class S4Model(nn.Module):
             z = dropout(z)
 
             # Residual connection
-            x += z
+            x = x + z
 
             if not self.prenorm:
                 # Postnorm
