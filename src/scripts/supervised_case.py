@@ -98,6 +98,7 @@ def eval_model(args, model, test_loader):
         model,
         dataset=test_loader,
         dataset_name=f"{args.dataset}_{args.downstream_task_class}",
+        modalities=args.streams
     )
     return metrics, metrics_agg    
 
@@ -115,7 +116,10 @@ def update_metrics_dicts(metrics, all_metrics, metrics_agg=None, all_metrics_agg
 
 
 def log_results(args, all_metrics, all_metrics_agg=None):
-    output = f"results/{args.dataset}_{args.scenario}_{args.gtruth}_scratch_050.txt"
+    v = "scratch" if not args.use_pretrained else "init" if args.unfreeze else "frozen"
+    if len(args.streams) > 1:
+        args.experiment_name += "_multi"
+    output = f"results/{args.experiment_name}_{args.downstream_task_class}_{args.gtruth}_{args.gtruth}_{v}.txt"
     with open(output, "w") as f:
         for m, v in all_metrics.items():
             f.write("Chunk-wise {}: {:.3f} ({:.3f})\n".format(m, np.mean(v), np.std(v)))
@@ -133,7 +137,7 @@ def non_cv_training(args):
         split_strategy='train-val-test',
         gtruth=args.gtruth,
         downstream_task=args.downstream_task_class,
-        ecg_only=args.ecg_only,
+        signals=args.streams,
         separate_windows=args.separate_windows
     )
     valid_dataset = get_dataset(
@@ -144,7 +148,7 @@ def non_cv_training(args):
         split_strategy='train-val-test',
         gtruth=args.gtruth,
         downstream_task=args.downstream_task_class,
-        ecg_only=args.ecg_only,
+        signals=args.streams,
         separate_windows=args.separate_windows
     )
     test_dataset = get_dataset(
@@ -155,7 +159,7 @@ def non_cv_training(args):
         split_strategy='train-val-test',
         gtruth=args.gtruth,
         downstream_task=args.downstream_task_class,
-        ecg_only=args.ecg_only,
+        signals=args.streams,
         separate_windows=args.separate_windows
     )
     train_dataloader, valid_dataloader, test_dataloader = make_dataloaders(args, train_dataset, valid_dataset, test_dataset)

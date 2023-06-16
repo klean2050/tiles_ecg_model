@@ -34,13 +34,9 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=Tr
         return MULTI_EPIC(
             root=dataset_dir, sr=sr, scenario=4, split=split, category=gtruth, fold=1
         )
-    elif dataset == "CASE" and ecg_only:
+    elif dataset == "CASE":
         return CASE(
-            root=dataset_dir, sr=sr, split=split, category=gtruth, signals=["ecg"], **kwargs
-        )
-    elif dataset == "CASE" and not ecg_only:
-        return CASE(
-            root=dataset_dir, sr=sr, split=split, category=gtruth, signals=["ecg", "gsr", "rsp", "skt"], **kwargs
+            root=dataset_dir, sr=sr, split=split, category=gtruth, **kwargs
         )
     else:
         raise NotImplementedError("Dataset not implemented")
