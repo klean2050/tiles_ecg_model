@@ -3,7 +3,7 @@ dataset: "SWELL_KW"
 dataset_dir: "/home/kavra/Datasets/physio/SWELL_KW/"
 subject_agnostic: True
 streams: ["ECG"]
-gtruth: 3
+gtruth: 1
 splits: 5
 sr: 100
 seed: 42
@@ -30,12 +30,12 @@ n_layers: 6
 dropout: 0.2
 
 # training options
-use_pretrained: 0
+use_pretrained: 1
 unfreeze: True
 batch_size: 128
 m_epochs: 200
 optimizer: "Adam"
-learning_rate: 0.001
+learning_rate: 0.0001
 weight_decay: 1e-6
 
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)

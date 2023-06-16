@@ -17,6 +17,7 @@ VERSION = "0.1.0"
 REQUIRED = [
     "fire",
     "gdown",
+    "einops",
     "matplotlib",
     "numpy",
     "pandas",
@@ -30,6 +31,7 @@ REQUIRED = [
     "simclr",
     "torch",
     "torchaudio",
+    "tensorboard",
     "neurokit2",
     "torchinfo",
     "torchmetrics",

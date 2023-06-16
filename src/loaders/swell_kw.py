@@ -114,7 +114,7 @@ class SWELL_KW(data.Dataset):
         label = self.labels[index]
         label = label[self.gtruth] > 4.5
         name = self.names[index]
-        return ecg, label, name
+        return ecg, label * 1, name
 
 
 if __name__ == "__main__":

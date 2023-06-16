@@ -51,8 +51,8 @@ class WESAD(data.Dataset):
                 meditation = self.preprocess(meditation)
                 lab4 = np.ones(len(meditation)) * 4
 
-                ecg = np.concatenate([baseline, stress, amusement, meditation])
-                lab = np.concatenate([lab1, lab2, lab3, lab4])
+                ecg = np.concatenate([baseline, stress, amusement])
+                lab = np.concatenate([lab1, lab2, lab3])
 
                 np.save(f"data/wesad/{p}_ecg.npy", ecg)
                 np.save(f"data/wesad/{p}_lab.npy", lab)
@@ -85,7 +85,7 @@ class WESAD(data.Dataset):
         ecg = self.samples[idx]
         lab = self.labels[idx]
         nam = self.names[idx]
-        return ecg, lab, nam
+        return ecg, int(lab), nam
 
 
 if __name__ == "__main__":
