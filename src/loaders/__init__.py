@@ -7,9 +7,10 @@ from .ptb_xl import PTB_XL
 from .ludb import LUDB
 from .avec16 import AVEC16
 from .epic import EPIC, MULTI_EPIC
+from .case import CASE
 
 
-def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=True):
+def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=True, **kwargs):
 
     if dataset == "DriveDB":
         return DriveDB(root=dataset_dir, sr=sr, streams="ECG")
@@ -32,6 +33,14 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=Tr
     elif dataset == "EPIC" and not ecg_only:
         return MULTI_EPIC(
             root=dataset_dir, sr=sr, scenario=4, split=split, category=gtruth, fold=1
+        )
+    elif dataset == "CASE" and ecg_only:
+        return CASE(
+            root=dataset_dir, sr=sr, split=split, category=gtruth, signals=["ecg"], **kwargs
+        )
+    elif dataset == "CASE" and not ecg_only:
+        return CASE(
+            root=dataset_dir, sr=sr, split=split, category=gtruth, signals=["ecg", "gsr", "rsp", "skt"], **kwargs
         )
     else:
         raise NotImplementedError("Dataset not implemented")

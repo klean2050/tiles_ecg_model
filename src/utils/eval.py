@@ -34,6 +34,7 @@ def evaluate(model, dataset, dataset_name, aggregate="majority", modalities=["ec
                 "ptb" not in dataset_name
                 and "AVEC" not in dataset_name
                 and "EPIC" not in dataset_name
+                and "CASE_regression" not in dataset_name
             ):
                 preds = preds.argmax(dim=1).detach()
                 y = y.long().detach()
@@ -57,7 +58,7 @@ def evaluate(model, dataset, dataset_name, aggregate="majority", modalities=["ec
         y_pred = 1 / (1 + np.exp(-y_pred)) > 0.5
         f1 = f1_score(y_true, y_pred * 1, average="macro", zero_division=0)
         metrics = {"AUROC": auc, "F1-macro": f1}
-    elif "AVEC" in dataset_name:
+    elif "AVEC" in dataset_name or "CASE_regression" in dataset_name:
         ccc = mean_ccc(y_pred, y_true)
         metrics = {"CCC": ccc}
     else:
@@ -69,7 +70,7 @@ def evaluate(model, dataset, dataset_name, aggregate="majority", modalities=["ec
 
     # aggregate predictions
     y_true_agg, y_pred_agg = [], []
-    if "ptb" in dataset_name or "AVEC" in dataset_name:
+    if "ptb" in dataset_name or "AVEC" in dataset_name or "CASE_regression" in dataset_name:
         metrics_agg = None
     else:
         for name in np.unique(y_name):
