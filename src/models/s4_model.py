@@ -1,6 +1,6 @@
 import math, torch, torch.nn as nn
 from einops import rearrange, repeat
-
+from .s4_block import S4Block as S4
 
 # Dropout broke in PyTorch 1.11
 if tuple(map(int, torch.__version__.split(".")[:2])) == (1, 11):
@@ -162,6 +162,7 @@ class S4Model(nn.Module):
         n_layers=4,
         dropout=0.2,
         prenorm=True,
+        decoder=True,
     ):
         super().__init__()
         self.output_size = d_output
@@ -169,6 +170,7 @@ class S4Model(nn.Module):
 
         # Linear encoder (d_input = 1 for time-series)
         self.encoder = nn.Linear(d_input, d_model)
+        #self.encoder = nn.Conv1d(d_input, d_model, kernel_size=5, stride=1, padding="same") 
 
         # Stack S4 layers as residual blocks
         self.s4_layers = nn.ModuleList()
@@ -182,14 +184,14 @@ class S4Model(nn.Module):
             self.dropouts.append(dropout_fn(dropout))
 
         # Linear decoder
-        self.decoder = nn.Linear(d_model, d_output)
+        self.decoder = nn.Linear(d_model, d_output) if decoder else nn.Identity()
 
     def forward(self, x):
         """
         Input x is of shape (B, L, d_input)
         """
         x = x.transpose(-1, -2).float()  # (B, d_input, L) -> (B, L, d_input)
-        x = self.encoder(x)  # (B, L, d_input) -> (B, L, d_model)
+        x = self.encoder(x) #.transpose(1,2)).transpose(1,2)  # (B, L, d_input) -> (B, L, d_model)
 
         x = x.transpose(-1, -2)  # (B, L, d_model) -> (B, d_model, L)
         for layer, norm, dropout in zip(self.s4_layers, self.norms, self.dropouts):
