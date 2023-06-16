@@ -47,9 +47,7 @@ Tracking Individual Performance with Sensors (TILES) is a project holding multim
 
 ## Pre-Training Framework
 
-### Input ECG data
-
-Each TILES participant has their ECG recorded for 15 seconds every 5 minutes during their work hours, for a total of 10 weeks. Here we extract all available 15-sec ECG segments and eliminate those with quality (i.e., rate of R peak identification) less than 90%. We end up with ~275,000 samples which we downsample to 100Hz, filter with a 0.5-40Hz Butterworth and normalize per subject. To preprocess TILES data, navigate to the root directory and run the following:
+Each TILES participant has their ECG recorded for 15 seconds every 5 minutes during their work hours, for a total of 10 weeks. Here we extract all available 15-sec ECG segments and eliminate those with quality (i.e., rate of R peak identification) less than 90%. We end up with ~275,000 samples which we downsample to 100Hz, filter with a 0.5-40Hz Butterworth and normalize per subject. To preprocess TILES data, run the following command:
 ```
 python src/scripts/preprocess.py
 ```
@@ -59,11 +57,7 @@ We pre-train the model in a self-supervised manner, through transform identifica
 
 ## Fine-Tuning Framework
 
-We transfer the trained ECG encoder to the downstream tasks, ranging from clinical condition estimation, affect perception, stress and interaction analysis.
-
-## Results & Checkpoints
-
-Pre-trained models are shared and described at ``ckpt``. Detailed results will be posted along with the accompanying preprint. To view training logs in TensorBoard run:
+Pre-trained models are shared and described at ``ckpt``. We transfer the trained ECG encoder to the downstream tasks, ranging from clinical condition estimation, affect perception, stress and interaction analysis. Detailed results will be posted along with the accompanying preprint. To view training logs in TensorBoard run:
 ```
 tensorboard --logdir ./runs
 ```
