@@ -30,7 +30,9 @@ pip install -e ecg-augmentations
 ```
 tiles_ecg_model/
 ├── setup.py             # package installation script
+├── examples.ipynb       # temporary/demostrative code
 ├── config/              # configuration files for each train session
+├── ckpt/                # pre-trained models available for fine-tuning
 └── src/                 # main project directory
     ├── loaders/             # pytorch dataset classes
     ├── models/              # backbone neural network models
@@ -47,42 +49,21 @@ Tracking Individual Performance with Sensors (TILES) is a project holding multim
 
 ### Input ECG data
 
-Each TILES participant has their ECG recorded for 15 seconds every 5 minutes during their work hours, for a total of 10 weeks. In this experiment we consider a subset of 69 subjects, and for each of them we extract all available 15-sec ECG segments. We normalize the data per subject before feeding them to the model.
-
-To preprocess TILES ECG, navigate to the root directory and run the following command:
+Each TILES participant has their ECG recorded for 15 seconds every 5 minutes during their work hours, for a total of 10 weeks. Here we extract all available 15-sec ECG segments and eliminate those with quality (i.e., rate of R peak identification) less than 90%. We end up with ~275,000 samples which we downsample to 100Hz, filter with a 0.5-40Hz Butterworth and normalize per subject. To preprocess TILES data, navigate to the root directory and run the following:
 ```
 python src/scripts/preprocess.py
 ```
+The same preprocessing pipeline is used for every dataset during fine-tuning, implemented in ``loaders``.
 
-### Augmentation Strategy
-
-We pre-train the model in a self-supervised manner, through contrastive learning. In specific, we consider 2 augmented views of an input ECG signal and we train the network to identify these pairings among all possible pairs in a training batch. To augment the ECG samples we use the [PyTorch ECG Augmentations](https://github.com/klean2050/ecg-augmentations) package. First, the input ECG is randomly cropped to 10 seconds and a series of masks and signal transformations are randomly applied based on a set probability. This is applied online, twice during training, to produce the 2 augmented views.
-
-### Backbone \& Objective
-
-A lightweight ResNet encoder is used to extract latent representations from the augmented data inputs. We use a light architecture of 8 blocks and 16 filters at the first block, in order to abide by the domain literature and make the model applicable to real-time settings. The 256D output embeddings of a pair of augmented samples are projected to a 128D latent space, where all samples within a batch are contrasted using the NT-Xent loss, adapted from the SimCLR study. With this loss, the model is forced to identify the underlying association between augmented versions of the same sample. The network is trained for about 60K steps using an AdamW optimizer.
+We pre-train the model in a self-supervised manner, through transform identification. To transform the ECG samples we use the [PyTorch ECG Augmentations](https://github.com/klean2050/ecg-augmentations) package. First, the input ECG is randomly cropped to 10 seconds and a series of masks and signal transformations are randomly applied based on a set probability. The network is then trained to identify which transformations were applied. We use a lightweight [S4](https://github.com/HazyResearch/state-spaces) model as backbone.
 
 ## Fine-Tuning Framework
 
-We transfer the trained ECG encoder to the downstream tasks in a teacher-student setting, where additional sensor streams are trained from scratch for an estimation task, along with aligning their latent representations to those produced by the (frozen) ECG model. Hence each modality incorporates a separate network and a double objective to train upon. The final state estimation is done using late fusion of the different modalities (i.e., either by prediction fusion or majority voting - TBD).
-
-### Case: DriveDB
-
-The specific dataset contains raw sensor measurements like ECG, EDA, HR and respiration information. Since no annotations or behavioral or environmental variables are given, we model the state of each driver by predicting 5-min averaged EDA from ECG and HR streams. The framework we described is successfully trained to estimate the average EDA value per 5-minute intervals in a subject-independent setting.
-
-### Case: SWELL-KW
-
-### Case: WESAD
-
-The dataset for WEarable Stress and Affect Detection (WESAD) contains ECG data from 15 participants. RespiBAN Professional sensors were used to collect ECG at a sampling rate of 700 Hz. The goal was to study 4 different affective states (neutral, stressed, amused, and meditated). To perform this study, 4 different test scenarios were created. First, 20 minutes of neutral data were collected, during which participants were asked to do normal activities. During the amusement scenario, participants watched 11 funny video clips for a total of 392 seconds. Next, participants went through public speaking and arithmetic tasks for a total of 10 minutes as part of the stress scenario. Finally, participants went through a guided meditation session of 7 minutes in duration. Upon completion of each trial, the ground truth labels for the affect states were collected using PANAS.
-
-### Case: Toyota - MIRISE Dataset
-
-Initial experiment: differentiate between *sunny* and *rainy* conditions.
+We transfer the trained ECG encoder to the downstream tasks, ranging from clinical condition estimation, affect perception, stress and interaction analysis.
 
 ## Results & Checkpoints
 
-To view results in TensorBoard run:
+Pre-trained models are shared and described at ``ckpt``. Detailed results will be posted along with the accompanying preprint. To view training logs in TensorBoard run:
 ```
 tensorboard --logdir ./runs
 ```
