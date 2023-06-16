@@ -45,7 +45,6 @@ class ECGLearning(LightningModule):
             y = y.float()
         else:
             y = y.long()
-        # y = y.float() if "ptb" in self.args.dataset_dir else y.long()
         return preds, y
 
     def training_step(self, batch, _):
@@ -85,6 +84,9 @@ class ECGLearning(LightningModule):
         else:
             y, preds = y.long(), preds.argmax(dim=1)
             acc = accuracy_score(y.cpu(), preds.cpu())
+            for idx in range(len(preds.cpu())):
+                self.validation_pred.append(preds.cpu()[idx].item())
+                self.validation_true.append(y.cpu()[idx].item())
             f1 = f1_score(y.cpu(), preds.cpu(), average="macro", zero_division=0)
             self.log("Valid/f1", f1, sync_dist=True, batch_size=self.bs)
             self.log("Valid/acc", acc, sync_dist=True, batch_size=self.bs)
