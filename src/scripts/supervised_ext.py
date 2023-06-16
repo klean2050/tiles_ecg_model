@@ -12,7 +12,6 @@ from src.trainers import ContrastiveLearning, TransformLearning, ECGLearning
 
 
 if __name__ == "__main__":
-
     # --------------
     # CONFIGS PARSER
     # --------------
@@ -188,7 +187,7 @@ if __name__ == "__main__":
             metrics,
         )
     else:
-        output = f"results/{args.dataset}_{args.gtruth}_{v}.txt"
-        with open(output, "w") as f:
+        os.makedirs("results", exist_ok=True)
+        with open(f"results/{args.dataset}_{args.gtruth}_{v}.txt", "w") as f:
             for m, v in metrics.items():
                 f.write("{}: {:.3f}\n".format(m, v))

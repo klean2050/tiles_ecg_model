@@ -1,9 +1,9 @@
 # dataset options
 dataset: "MIRISE"
-dataset_dir: "/data/shared_folder/toyota/toyota_no_video/"
+dataset_dir: "/home/administator/Datasets/toyota_no_video"
 subject_agnostic: True
 streams: ["ecg", "eda"]
-gtruth: "str"
+gtruth: "ftg"
 splits: 5
 sr: 100
 seed: 42
@@ -41,7 +41,7 @@ weight_decay: 0.0
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
 log_freq: 2     # how often to log (logs every log_freq steps)
 workers: 4
-n_cuda: "0"
+n_cuda: "2"
 bit_precision: 16
 ckpt_path: null     # not used if set to null
 ssl_ckpt_path: "ckpt/s4_trans.ckpt"

@@ -120,6 +120,7 @@ class SupervisedLearning(LightningModule):
         preds, y = self.forward(x, y, True)
         loss = self.compute_loss(preds, y)
         self.log("Train/loss", loss, sync_dist=True, batch_size=self.bs)
+        return loss
 
     def validation_epoch_end(self, _):
         if "avec" in self.args.dataset_dir or "epic" in self.args.dataset_dir:
@@ -132,7 +133,7 @@ class SupervisedLearning(LightningModule):
 
             self.validation_true = list()
             self.validation_pred = list()
-        
+
     def validation_step(self, batch, _):
         data, y, _ = batch
         x = {key: data[key] for key in self.modalities}

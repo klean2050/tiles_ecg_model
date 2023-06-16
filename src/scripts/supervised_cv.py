@@ -12,9 +12,10 @@ from src.loaders import get_dataset
 from src.models import ResNet1D, S4Model
 from src.trainers import SupervisedLearning, TransformLearning, ECGLearning
 
+torch.set_float32_matmul_precision("high")
+
 
 if __name__ == "__main__":
-
     # --------------
     # CONFIGS PARSER
     # --------------
@@ -49,7 +50,10 @@ if __name__ == "__main__":
 
     # get full fine-tuning dataset
     full_dataset = get_dataset(
-        dataset=args.dataset, dataset_dir=args.dataset_dir, sr=args.sr, gtruth=args.gtruth
+        dataset=args.dataset,
+        dataset_dir=args.dataset_dir,
+        sr=args.sr,
+        gtruth=args.gtruth,
     )
 
     # setup k-fold cross-validation
@@ -80,7 +84,7 @@ if __name__ == "__main__":
         for ad in new_valid:
             train_idx = np.concatenate((train_idx, ad))
             valid_idx = valid_idx[~np.isin(valid_idx, ad)]
-        
+
         print(len(train_idx), len(valid_idx))
         """
 
@@ -214,9 +218,8 @@ if __name__ == "__main__":
     # -----------
     # LOG RESULTS
     # -----------
-
-    output = f"results/{exp_name}.txt"
-    with open(output, "w") as f:
+    os.makedirs("results", exist_ok=True)
+    with open(f"results/{exp_name}.txt", "w") as f:
         for m, v in all_metrics.items():
             f.write("Chunk-wise {}: {:.3f} ({:.3f})\n".format(m, np.mean(v), np.std(v)))
         for m, v in all_metrics_agg.items():
