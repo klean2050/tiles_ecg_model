@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
 from src.models import ResNet1D, S4Model
-from src.trainers import ContrastiveLearning, TransformLearning, ECGLearning
+from src.trainers import SupervisedLearning, TransformLearning, ECGLearning
 
 
 if __name__ == "__main__":
@@ -21,8 +21,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="tiles_ecg")
     parser = Trainer.add_argparse_args(parser)
 
+    # get dataset from command line:
+    parser.add_argument("--this", default="mirise", type=str)
+    args = parser.parse_args()
+
     # extract args from config file and add to parser:
-    config_file = "config/config_ptbxl.yaml"
+    config_file = f"config/config_{args.this}.yaml"
     config = yaml_config_hook(config_file)
     for key, value in config.items():
         parser.add_argument(f"--{key}", default=value, type=type(value))
@@ -31,6 +35,12 @@ if __name__ == "__main__":
     # set random seed if selected:
     if args.seed:
         pl.seed_everything(args.seed, workers=True)
+
+    # set experiment name
+    ld = str(args.low_data).strip(".") if args.low_data != 1 else ""
+    v = "scratch" if not args.use_pretrained else "init" if args.unfreeze else "frozen"
+    sa = f"sa{ld}" if args.subject_agnostic else f"sd{ld}"
+    exp_name = f"{args.dataset}_{sa}_{v}_{'_'.join(args.streams)}_{args.gtruth}"
 
     # ------------
     # DATA LOADERS
@@ -60,6 +70,14 @@ if __name__ == "__main__":
         split="test",
         gtruth=args.gtruth,
     )
+
+    # calculate random threshold for F1-macro
+    count_labels = np.unique(test_dataset.labels, return_counts=True)
+    f1_labels = []
+    for j in range(len(count_labels[0])):
+        r = count_labels[1][j] / count_labels[1].sum()
+        f1_labels.append(2 * r / (1 + r))
+    print(f"\nRandom F1-macro: {np.mean(f1_labels):.3f}\n")
 
     # create the dataloaders
     train_loader = DataLoader(
@@ -118,22 +136,17 @@ if __name__ == "__main__":
         pretrained_model = TransformLearning.load_from_checkpoint(
             args.ssl_ckpt_path, encoder=encoder
         )
-        model = ECGLearning(
-            args,
-            pretrained_model.encoder,
-            output_dim=args.output_dim,
-        )
+        encoder = pretrained_model.encoder
+
+    if args.streams == ["ecg"]:
+        model = ECGLearning(args, encoder)
     else:
-        model = ECGLearning(
-            args,
-            encoder,
-            output_dim=args.output_dim,
-        )
+        model = SupervisedLearning(args, encoder)
 
     # logger that saves to /save_dir/name/version/
     logger = TensorBoardLogger(
         save_dir=args.log_dir,
-        name=f"{args.experiment_name}",
+        name=f"{exp_name}",
         version=args.experiment_version,
     )
 
@@ -147,7 +160,7 @@ if __name__ == "__main__":
     # create PyTorch Lightning trainer
     monitor = "Valid/cccloss" if "avec" in args.dataset_dir else "Valid/loss"
     model_ckpt_callback = ModelCheckpoint(monitor=monitor, mode="min", save_top_k=1)
-    early_stop_callback = EarlyStopping(monitor=monitor, mode="min", patience=15)
+    early_stop_callback = EarlyStopping(monitor=monitor, mode="min", patience=10)
 
     trainer = Trainer.from_argparse_args(
         args,
@@ -170,6 +183,9 @@ if __name__ == "__main__":
         val_dataloaders=valid_loader,
         ckpt_path=args.ckpt_path,
     )
+    # load best model
+    ckpt = torch.load(model_ckpt_callback.best_model_path)
+    model.load_state_dict(ckpt['state_dict'])
 
     # ----------
     # EVALUATION

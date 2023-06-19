@@ -39,8 +39,9 @@ if __name__ == "__main__":
         pl.seed_everything(args.seed, workers=True)
 
     # set experiment name
+    ld = str(args.low_data).strip(".") if args.low_data != 1 else ""
     v = "scratch" if not args.use_pretrained else "init" if args.unfreeze else "frozen"
-    sa = "sa" if args.subject_agnostic else "sd"
+    sa = f"sa{ld}" if args.subject_agnostic else f"sd{ld}"
     exp_name = f"{args.dataset}_{sa}_{v}_{'_'.join(args.streams)}_{args.gtruth}"
 
     # ------------
@@ -51,6 +52,13 @@ if __name__ == "__main__":
     full_dataset = get_dataset(
         dataset=args.dataset, dataset_dir=args.dataset_dir, sr=args.sr, gtruth=args.gtruth
     )
+    # calculate random threshold for F1-macro
+    count_labels = np.unique(full_dataset.labels, return_counts=True)
+    f1_labels = []
+    for j in range(len(count_labels[0])):
+        r = count_labels[1][j] / count_labels[1].sum()
+        f1_labels.append(2 * r / (1 + r))
+    print(f"\nRandom F1-macro: {np.mean(f1_labels):.3f}\n")
 
     # setup k-fold cross-validation
     gcv = GroupKFold(n_splits=args.splits)
@@ -64,25 +72,12 @@ if __name__ == "__main__":
     # iterate over training splits
     all_metrics, all_metrics_agg = {}, {}
     for i, (train_idx, valid_idx) in enumerate(splits):
-        """
-        # create train and validation datasets
-        shuffle(train_idx)
-        print(len(train_idx), len(valid_idx))
-        valid_idx = np.array(valid_idx)
-        ind = 3
-        if len(valid_idx) != 2160:
-            ind = 2
-        add1 = [np.arange(720 * i, 720 * i + 12) for i in range(ind)]
-        add2 = [np.arange(720 * i - 12, 720 * i) for i in range(1, 1 + ind)]
-        add = np.concatenate((add1, add2))
-        # add these valid indices to train indices
-        new_valid = valid_idx[add]
-        for ad in new_valid:
-            train_idx = np.concatenate((train_idx, ad))
-            valid_idx = valid_idx[~np.isin(valid_idx, ad)]
-        
-        print(len(train_idx), len(valid_idx))
-        """
+ 
+        # apply low-data settings
+        if args.low_data != 1:
+            times = int(1 / args.low_data)
+            shuffle(train_idx)
+            train_idx = train_idx[:: times]
 
         train_dataset = Subset(full_dataset, train_idx)
         valid_dataset = Subset(full_dataset, valid_idx)
@@ -136,17 +131,12 @@ if __name__ == "__main__":
             pretrained_model = TransformLearning.load_from_checkpoint(
                 args.ssl_ckpt_path, encoder=encoder
             )
-            model = SupervisedLearning(
-                args,
-                pretrained_model.encoder,
-                output_dim=args.output_dim,
-            )
+            encoder = pretrained_model.encoder
+
+        if args.streams == ["ecg"]:
+            model = ECGLearning(args, encoder)
         else:
-            model = SupervisedLearning(
-                args,
-                encoder,
-                output_dim=args.output_dim,
-            )
+            model = SupervisedLearning(args, encoder)
 
         # logger that saves to /save_dir/name/version/
         logger = TensorBoardLogger(
@@ -164,10 +154,10 @@ if __name__ == "__main__":
 
         # create PyTorch Lightning trainer
         model_ckpt_callback = ModelCheckpoint(
-            monitor="Valid/loss", mode="min", save_top_k=1
+            monitor="Valid/f1", mode="max", save_top_k=1
         )
         early_stop_callback = EarlyStopping(
-            monitor="Valid/loss", mode="min", patience=10
+            monitor="Valid/loss", mode="min", patience=15
         )
 
         trainer = Trainer.from_argparse_args(
@@ -191,6 +181,9 @@ if __name__ == "__main__":
             val_dataloaders=valid_loader,
             ckpt_path=args.ckpt_path,
         )
+        # load best model
+        ckpt = torch.load(model_ckpt_callback.best_model_path)
+        model.load_state_dict(ckpt['state_dict'])
 
         # ----------
         # EVALUATION
