@@ -111,8 +111,8 @@ class SWELL_KW(data.Dataset):
 
     def __getitem__(self, index):
         ecg = self.samples[index]
-        label = self.labels[index]
-        label = label[self.gtruth] > 4.5
+        label = self.labels[index, self.gtruth]
+        label = label > np.mean(self.labels[:, self.gtruth])
         name = self.names[index]
         return ecg, label * 1, name
 

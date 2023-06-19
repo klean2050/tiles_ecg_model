@@ -36,7 +36,7 @@ temperature: 0.1
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
 log_freq: 10    # how often to log (logs every log_freq steps)
 workers: 4
-n_cuda: "3"
+n_cuda: "0"
 bit_precision: 16
 ckpt_path: null     # not used if set to null
 

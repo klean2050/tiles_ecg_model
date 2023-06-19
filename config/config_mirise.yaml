@@ -1,9 +1,11 @@
 # dataset options
 dataset: "MIRISE"
 dataset_dir: "/data/shared_folder/toyota/toyota_no_video/"
+type: "classification"
 subject_agnostic: True
-streams: ["ecg", "eda"]
-gtruth: "str"
+streams: ["ecg"]
+gtruth: "ftg"
+low_data: 1
 splits: 5
 sr: 100
 seed: 42
@@ -32,7 +34,7 @@ dropout: 0.2
 # training options
 use_pretrained: 1
 unfreeze: False
-batch_size: 128
+batch_size: 64
 m_epochs: 200
 optimizer: "Adam"
 learning_rate: 0.0001
