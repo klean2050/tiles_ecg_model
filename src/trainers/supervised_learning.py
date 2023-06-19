@@ -129,7 +129,7 @@ class SupervisedLearning(LightningModule):
 
             self.validation_true = list()
             self.validation_pred = list()
-        
+
     def validation_step(self, batch, _):
         data, y, _ = batch
         x = {key: data[key] for key in self.modalities}

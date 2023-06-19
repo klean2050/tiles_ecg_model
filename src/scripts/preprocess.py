@@ -13,7 +13,6 @@ def which_days(prcp):
 
 
 def process_prcp(prcp):
-
     # load ECG of participant
     df = pd.read_csv(os.path.join(path, prcp))
 
