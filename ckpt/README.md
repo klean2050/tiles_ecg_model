@@ -34,6 +34,6 @@ encoder = ResNet1D(
     n_classes=args.n_classes,
 )
 
-ckpt_path = "ckpt/main_epoch=49-step=57850.ckpt"
+ckpt_path = "ckpt/s4_trans.ckpt"
 model = ContrastiveLearning.load_from_checkpoint(ckpt_path, encoder)
 ```

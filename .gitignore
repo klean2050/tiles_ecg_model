@@ -5,7 +5,7 @@ runs/
 build/
 dist/
 results/
-ckpt/BIG*
+ckpt/*large*
 # experiments/
 *.egg-info
 
