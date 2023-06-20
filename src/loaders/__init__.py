@@ -7,7 +7,7 @@ from .ptb_xl import PTB_XL
 from .ludb import LUDB
 from .avec16 import AVEC16
 from .epic import EPIC, MULTI_EPIC
-from .case import CASE
+from .case import CASERegression, CASEClassification
 
 
 def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=True, **kwargs):
@@ -34,9 +34,13 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=Tr
         return MULTI_EPIC(
             root=dataset_dir, sr=sr, scenario=4, split=split, category=gtruth, fold=1
         )
-    elif dataset == "CASE":
-        return CASE(
-            root=dataset_dir, sr=sr, split=split, category=gtruth, **kwargs
+    elif dataset == "CASE_regression":
+        return CASERegression(
+            root=dataset_dir, sr=sr, category=gtruth, **kwargs
+        )
+    elif dataset == "CASE_classification":
+        return CASEClassification(
+            root=dataset_dir, sr=sr, category=gtruth, **kwargs
         )
     else:
         raise NotImplementedError("Dataset not implemented")

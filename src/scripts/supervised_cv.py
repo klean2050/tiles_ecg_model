@@ -55,6 +55,7 @@ if __name__ == "__main__":
         dataset_dir=args.dataset_dir,
         sr=args.sr,
         gtruth=args.gtruth,
+        args=args
     )
     # calculate random threshold for F1-macro
     count_labels = np.unique(full_dataset.labels, return_counts=True)
@@ -68,7 +69,7 @@ if __name__ == "__main__":
     gcv = GroupKFold(n_splits=args.splits)
     # separate subjects into splits
     a = full_dataset.names.copy()
-    if not args.subject_agnostic:
+    if not args.subject_agnostic and not 'case'in args.dataset_dir:
         shuffle(a)
     # get training splits
     splits = [s for s in gcv.split(full_dataset, groups=a)]
@@ -158,7 +159,7 @@ if __name__ == "__main__":
 
         # create PyTorch Lightning trainer
         model_ckpt_callback = ModelCheckpoint(
-            monitor="Valid/f1", mode="max", save_top_k=1
+            monitor="Valid/ccc" if args.type == "regression" else "Valid/f1", mode="max", save_top_k=1
         )
         early_stop_callback = EarlyStopping(
             monitor="Valid/loss", mode="min", patience=15

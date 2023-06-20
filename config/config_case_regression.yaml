@@ -1,0 +1,54 @@
+# dataset options
+dataset: "CASE_regression"
+dataset_dir: "data/case/"
+streams: ["ecg"] # "eda", "rsp", "skt"
+gtruth: "valence"
+seed: 42
+splits: 5
+sr: 100
+type: 'regression'
+low_data: 1
+subject_agnostic: True
+
+### model options
+model_type: "s4"    # [resnet, s4]
+
+# ResNet
+in_channels: 1
+base_filters: 64
+kernel_size: 3
+stride: 2
+groups: 1
+n_block: 10
+n_classes: 256
+projection_dim: 128
+output_dim: 1
+
+# S4
+d_input: 1
+d_output: 128
+d_model: 128
+n_layers: 6
+dropout: 0.2
+
+# training options
+use_pretrained: 1
+unfreeze: True
+batch_size: 200
+m_epochs: 100
+optimizer: "Adam"
+learning_rate: 0.001
+weight_decay: 1e-6
+
+val_freq: 1     # how often to validate (runs validation every val_freq epochs)
+log_freq: 2     # how often to log (logs every log_freq steps)
+workers: 4
+n_cuda: "0"
+bit_precision: 16
+ckpt_path: null     # not used if set to null
+ssl_ckpt_path: "ckpt/epoch=79-step=77840.ckpt" #"ckpt/epoch=51-step=50596.ckpt"
+
+# logging options:
+log_dir: "runs"
+experiment_name: "pred_case"
+experiment_version: null

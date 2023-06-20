@@ -4,6 +4,7 @@ from tqdm import tqdm
 from torch.utils import data
 from pathlib import Path
 from typing import Literal, Union, Iterable
+from copy import copy, deepcopy
 import numpy as np
 import pandas as pd
 import neurokit2 as nk
@@ -18,116 +19,95 @@ DEFAULT_SUBJECTS_ARR = np.arange(1, 31)
 DEFAULT_VIDEOS_ARR = np.arange(1, 9)
 
 
-class CASE(data.Dataset):
+class CASERegression(data.Dataset):
     def __init__(
             self,
             category: Literal["arousal", "valence"],
-            downstream_task: Literal["regression", "classification"],
-            split_strategy: Literal["train-test", "train-val-test", "cv"], 
-            split: Literal["train", "val", "test", "all"] = "train", 
-            fold_id: int = 0, 
             signals: list[str] = ['ecg'], 
             cached_data_dir: Union[str, Path] = CACHED_DATA_DIR,
             root: Union[str, Path] = RAW_DATA_DIR,
             rng_seed: int = 42,
-            num_folds: int = 5,
             sr: int = 100,
-            separate_windows: bool = False,
             window_len: float = 10.0,
             window_shift: float = 5.0,
+            args: dict = None
         ) -> None:
         """"""
         # save init params
         self.label_type = category
-        self.downstream_task = downstream_task
-        self.split_strategy = split_strategy
-        self.split = split
-        self.signals = signals
-        self.fold_id = fold_id
+        self.signals = args.streams if args is not None else signals
         self.cached_data_dir = Path(cached_data_dir)
         self.rng_seed = rng_seed
-        self.num_folds = num_folds
-        self.raw_data_dir = Path(root)
+        root = Path(root)
+        if root.name != "case_interpolated":
+            root = root / "case_interpolated"
+        self.raw_data_dir = root
         self.target_physio_fs = sr
-        self.separate_windows = separate_windows
         self.window_len = window_len
         self.window_shift = window_shift
+        self.subject_agnostic = args.subject_agnostic if args is not None else True
         # check if cached data
-        if not any(self.cached_data_dir.glob("*.npy")):
+        if not self.check_cached_dir():
             # load and prepare data if no chache found
             # prepare_dataset - load all data, divide based on subject and video info, cut to same len, save in one file per signal
             print("No cached data found - preparing the dataset.")
             self.case_reader_object = _CASEReader(self.raw_data_dir / "physiological", self.raw_data_dir / "annotations")
-            self.prepare_dataset()
+            (self.physiology_time, self.annotations_time), (self.physiology, self.annotations), (self.subjects, self.videos) = self.load_dataset()
+            for annotation_dim, annotations_data in self.annotations.items():
+                self.annotations[annotation_dim] = self.normalize_annotations(annotations_data) 
+            self.num_windows = num_windows
+            windows_idxs, num_windows = self.make_window_index(self.physiology_time, self.window_len, window_shift)
+            for signal_name, physio_signal in self.physiology.items():
+                # get only data for current split
+                # assign physiology based on specified windows
+                physio_signal = self.assign_physiology(physio_signal, windows_idxs, signal_name)
+                # if skt do not standardize - for skt we only have features, not time-series
+                if signal_name != 'skt':
+                    physio_signal = self.standardize_physio(physio_signal)
+                # replace all physio with physio from current split
+                self.physiology[signal_name] = physio_signal
+            self.annotations = self.assign_annotations(self.annotations, self.annotations_time, self.physiology_time[windows_idxs])
+            self.physiology, self.annotations, self.subjects, self.videos = self.extract_separate_windows(self.physiology, self.annotations, self.subjects, self.videos)
+            self.save_to_cache()
         # load cached data
         (self.physiology_time, self.annotations_time), (self.physiology, self.annotations), (self.subjects, self.videos) = self.load_cached_data()
         # normalize annotations to a 0-1 range (minmax normalization)
-        self.annotations = self.normalize_annotations(self.annotations)
         # make windows based on window length and window shift
-        windows_idxs, num_windows = self.make_window_index(self.physiology_time, self.window_len, window_shift)
-        self.num_windows = num_windows
-        # prepare train and test set ids placeholders (test is for both test and validation)
-        self.train_ids, self.test_ids = None, None
-        if self.downstream_task == 'classification':
-            # assign classes based on regression scores
-            self.annotations, selected_ids = self.assign_classes(self.annotations)
-            self.subjects = self.subjects[selected_ids]
-            self.videos = self.videos[selected_ids]
-            for signal_name, signal in self.physiology:
-                self.physiology[signal_name] = signal[selected_ids]
-            self.physiology = self.physiology[selected_ids]
-        # split data into train-test or folds if we don't want all data at once
-        if split != 'all':
-            # prepare cross-val
-            data_random_idxs, kfold_ids = self.prepare_cv()
-            # get specified fold
-            fold_ids = kfold_ids[self.fold_id if self.split_strategy == "cv" else 0]
-            # extract train and test ids
-            self.train_ids, self.test_ids = data_random_idxs[fold_ids[0]], data_random_idxs[fold_ids[1]]
-        else:
-            # assign all ids as train ids
-            self.train_ids = np.arange(len(self.subjects))
-        # if split strategy includes validation set, split test data
-        if split_strategy == 'train-val-test' and self.split in {'val', 'test'}:
-            val_ids, test_ids = self.get_validation_and_test_idxs(self.test_ids)
-            # if val split, assign val data to self.test
-            self.test_ids = val_ids if self.split == 'val' else test_ids
-        # specify current data_ids
-        data_ids = self.train_ids if self.split in {'train', 'all'} else self.test_ids
-        # for each physio signal
-        for signal_name, physio_signal in self.physiology.items():
-            # get only data for current split
-            physio_signal = physio_signal[data_ids]
-            # assign physiology based on specified windows
-            physio_signal = self.assign_physiology(physio_signal, windows_idxs, signal_name)
-            # if skt do not standardize - for skt we only have features, not time-series
-            if signal_name != 'skt':
-                physio_signal = self.standardize_physio(physio_signal)
-            # replace all physio with physio from current split
-            self.physiology[signal_name] = physio_signal
-        # assign annotations for specified windows and ids
-        self.annotations = self.assign_annotations(self.annotations[data_ids], self.annotations_time, self.physiology_time[windows_idxs])
-        # replace all subjects array with only subjects for current split
-        self.subjects = self.subjects[data_ids]
-        # replace all videos array with only subjects for current split
-        self.videos = self.videos[data_ids]
-        if self.separate_windows:
-            self.physiology, self.annotations, self.subjects, self.videos = self.extract_separate_windows(self.physiology, self.annotations, self.subjects, self.videos)
+        
 
-    def prepare_dataset(self):
+        # for each physio signal
+        
+        # assign annotations for specified windows and ids
+        # replace all subjects array with only subjects for current split
+
+    def check_cached_dir(self):
+        search_names = {'time', 'arousal', 'valence', 'subjects', 'videos', *self.signals}
+        for f_path in self.cached_data_dir.glob("*.npy"):
+            f_name = f_path.name[:-4]
+            lookup_name = f_name.split('-')[-1]
+            if lookup_name in search_names:
+                search_names.remove(lookup_name)
+        return len(search_names) == 0
+            
+
+    def load_dataset(self):
         "Prepare the dataset"
         # make cached data dir
         self.cached_data_dir.mkdir(parents=True, exist_ok=True)
         # prepare temp data storage
+        physiology_time = None
+        annotations_time = None
         physiology = dict()
         annotations = dict()
         subjects = list()
         videos = list()
         # iterate over initially processed data
-        for vid_annotations, vid_physiology, (subject, vid_id) in self.case_reader_object.processed_data_iter():
+        for vid_physiology, vid_annotations, (subject, vid_id) in self.case_reader_object.processed_data_iter():
             subjects.append(subject)
             videos.append(vid_id)
             for col_name, col_data in vid_physiology.items():
+                if col_name not in self.signals and col_name != 'time':
+                    continue
                 physiology.setdefault(col_name, list())
                 physiology[col_name].append(col_data.to_numpy())
             for col_name, col_data in vid_annotations.items():
@@ -137,18 +117,31 @@ class CASE(data.Dataset):
             signal_array = np.stack(signal_list)
             if signal_name == "time":
                 assert not np.any(signal_array - signal_array[0]), "Sth went wrong when reducing time in physio signals"
-                signal_array = signal_array[0]
-            np.save(self.cached_data_dir / f"physio-{signal_name}.npy", signal_array)
+                physiology_time = signal_array[0]
+                continue
+            physiology[signal_name] = signal_array
         for annotation_dim, annotations_list in annotations.items():
             annotation_array = np.stack(annotations_list)
             if annotation_dim == "time":
                 assert not np.any(annotation_array - annotation_array[0]), "Sth went wrong when reducing time in annotations"
-                annotation_array = annotation_array[0]
-            np.save(self.cached_data_dir / f"annotations-{annotation_dim}.npy", annotation_array)
+                annotations_time = annotation_array[0]
+                continue
+            annotations[annotation_dim] = annotation_array
+        del physiology['time']
+        del annotations['time']
         subjects = np.stack(subjects)
         videos = np.stack(videos)
-        np.save(self.cached_data_dir / "subjects.npy", subjects)
-        np.save(self.cached_data_dir / "videos.npy", videos)        
+        return (physiology_time, annotations_time), (physiology, annotations), (subjects, videos)     
+
+    def save_to_cache(self):
+        np.save(self.cached_data_dir / f"physio-time.npy", self.physiology_time)
+        np.save(self.cached_data_dir / f"annotations-time.npy", self.annotations_time)
+        for signal_name, signal_array in self.physiology.items():
+            np.save(self.cached_data_dir / f"physio-{signal_name}.npy", signal_array)
+        for annotation_dim, annotation_array in self.annotations.items():
+            np.save(self.cached_data_dir / f"annotations-{annotation_dim}.npy", annotation_array)
+        np.save(self.cached_data_dir / "subjects.npy", self.subjects)
+        np.save(self.cached_data_dir / "videos.npy", self.videos)  
 
     def prepare_cv(self):
         data_random_idxs, kfold_ids = self.setup_lkso_kfold(
@@ -156,28 +149,28 @@ class CASE(data.Dataset):
         )
         return data_random_idxs, kfold_ids
 
-    def get_validation_and_test_idxs(self, idxs):
-        """
-        Generate validation idxs so that validation dataset contains half the samples from the test set (subject-agnostic scenario)
-        or one sample from each subject (subject-dependent scenario)
-        """
-        rng = np.random.default_rng(seed=self.rng_seed)
-        permutation = rng.permutation(idxs)
-        validation_ids = permutation[:len(idxs)//2]
-        test_ids = permutation[len(idxs)//2:]
-        return validation_ids, test_ids
+    # def get_validation_and_test_idxs(self, idxs):
+    #     """
+    #     Generate validation idxs so that validation dataset contains half the samples from the test set (subject-agnostic scenario)
+    #     or one sample from each subject (subject-dependent scenario)
+    #     """
+    #     rng = np.random.default_rng(seed=self.rng_seed)
+    #     permutation = rng.permutation(idxs)
+    #     validation_ids = permutation[:len(idxs)//2]
+    #     test_ids = permutation[len(idxs)//2:]
+    #     return validation_ids, test_ids
     
-    def get_random_idxs(self):
-        rng = np.random.default_rng(seed=self.rng_seed)
-        idxs = np.arange(len(self.subjects))
-        idxs = rng.permutation(idxs)
-        return idxs
+    # def get_random_idxs(self):
+    #     rng = np.random.default_rng(seed=self.rng_seed)
+    #     idxs = np.arange(len(self.subjects))
+    #     idxs = rng.permutation(idxs)
+    #     return idxs
 
-    def setup_lkso_kfold(self, n_splits=5):
-        idxs = self.get_random_idxs()
-        # make kfold object for splitting data
-        kfold = GroupKFold(n_splits=n_splits)
-        return idxs, list(kfold.split(idxs, groups=self.subjects[idxs].astype(int)))
+    # def setup_lkso_kfold(self, n_splits=5):
+    #     idxs = self.get_random_idxs()
+    #     # make kfold object for splitting data
+    #     kfold = GroupKFold(n_splits=n_splits)
+    #     return idxs, list(kfold.split(idxs, groups=self.subjects[idxs].astype(int)))
 
     def load_cached_data(self):
         physiology = dict()
@@ -202,11 +195,13 @@ class CASE(data.Dataset):
             return data, mean, std
         return data
 
-    def normalize_annotations(self, data):
+    def normalize_annotations(self, annotations, inplace=False):
         # annotations range is 0.5 - 9.5
         # min - max normalization
-        data = (data - 0.5) / (9.5 - 0.5)
-        return data
+        if not inplace:
+            annotations = deepcopy(annotations)
+        annotations = (annotations - 0.5) / (9.5 - 0.5)
+        return annotations
 
     def filter_ecg(self, ecg, sr=None):
         # filtering
@@ -255,44 +250,26 @@ class CASE(data.Dataset):
         return windowed_index, num_windows
 
     def assign_annotations(self, annotations, annotations_times, physiology_widows_times, center_annotations=True):
-        windows_annotations = list()
-        annotations_index = np.arange(len(annotations_times))
-        for window_times in physiology_widows_times:
-            window_annotation = annotations_index[(annotations_times >= window_times[0]) & (annotations_times <= window_times[-1])]
-            mid_annotation = annotations[:, window_annotation[len(window_annotation)//2]]
-            windows_annotations.append(mid_annotation)
-        windows_annotations = np.stack(windows_annotations, -1)
-        return windows_annotations
+        for annotation_dim, annotation_array in annotations.items():
+            windows_annotations = list()
+            annotations_index = np.arange(len(annotations_times))
+            for window_times in physiology_widows_times:
+                window_annotation = annotations_index[(annotations_times >= window_times[0]) & (annotations_times <= window_times[-1])]
+                mid_annotation = annotation_array[:, window_annotation[len(window_annotation)//2]]
+                windows_annotations.append(mid_annotation)
+            annotations[annotation_dim] = np.stack(windows_annotations, -1)
+        return annotations
     
-    def assign_physiology(self, physiology, physiology_widows_idxs, signal_name, is_train=False):
+    def assign_physiology(self, physiology, physiology_widows_idxs, signal_name):
         processing_func = self.filtering_methods[signal_name]
         physiology = np.apply_along_axis(processing_func, -1, physiology[:, physiology_widows_idxs])
         return physiology
-            
-    def assign_classes(self, annotations, high_boundary=0.5, low_boundary=None):
-        # everything above or equal this value will have class 1 assigned
-        # everything below or equal this value will have class 0 assigned
-        # if conditioning on only one value (no "dead-zone"), provide low_boundary > high_boundary
-        if low_boundary is None:
-            low_boundary = np.inf
-        # prepare index storage
-        new_indexes = np.zeros(annotations.shape)
-        # match boundary scores
-        new_indexes[annotations < high_boundary] += 1
-        new_indexes[annotations > low_boundary] += 1
-        # zero those that are between low and high boundary (dead zone)
-        new_indexes[new_indexes == 2] = 0
-        # remove the dead zone from annotations
-        selected_annotations = annotations[new_indexes]
-        # assign classes to selected annotations
-        new_annotations = (selected_annotations >= high_boundary).astype(int)
-        # return annotations
-        return new_annotations, new_indexes
 
     def extract_separate_windows(self, physiology, annotations, subjects, videos):
         subjects = np.concatenate(subjects[:, None] + np.zeros(self.num_windows)[None, :])
         videos = np.concatenate(videos[:, None] + np.zeros(self.num_windows)[None, :])
-        annotations = np.concatenate(annotations)
+        for annotation_dim, annotation_array in annotations.items():
+            annotations[annotation_dim] = np.concatenate(annotation_array)
         for signal_name, physio in physiology.items():
             physiology[signal_name] = np.concatenate(physio)
         return physiology, annotations, subjects, videos
@@ -306,16 +283,69 @@ class CASE(data.Dataset):
             'skt': self.compute_skt_features,
         }
     
+    @property
+    def names(self):
+        if not self.subject_agnostic:
+            return 10*self.subjects + self.videos
+        return copy(self.subjects)
+    
+    @property
+    def labels(self):
+        return self.annotations
+
     def __len__(self):
         # TODO rethink it - maybe len of some other array
         return len(self.annotations)
 
     def __getitem__(self, idx):
-        ret_signals = {
-            signal: self.physiology[signal][idx] for signal in self.signals
-        }
+        if self.signals == ['ecg']:
+            ret_signals =  self.physiology['ecg'][idx]
+        else:
+            ret_signals = {
+                signal: self.physiology[signal][idx] for signal in self.signals
+            }
         ret_annotations = self.annotations[idx]
         return ret_signals, ret_annotations, 0
+
+
+class CASEClassification(CASERegression):
+    def __init__(
+            self, 
+            category: Literal['arousal', 'valence'],
+            signals: list[str] = ['ecg'], 
+            cached_data_dir: Union[str, Path] = CACHED_DATA_DIR,
+            root: Union[str, Path] = RAW_DATA_DIR,
+            rng_seed: int = 42, 
+            sr: int = 100, 
+            window_len: float = 10, 
+            window_shift: float = 5,
+            args: dict = None
+        ) -> None:
+        super().__init__(category, signals, cached_data_dir, root, rng_seed, sr, window_len, window_shift, args)
+        self.annotations, new_indexes = self.assign_classes(self.annotations)
+        for signal_name, signal in self.physiology.items():
+            self.physiology[signal_name] = signal[new_indexes]
+        self.subjects, self.videos = self.subjects[new_indexes], self.videos[new_indexes]
+    
+    def assign_classes(self, annotations, high_boundary=0.5, low_boundary=None):
+        # everything above or equal this value will have class 1 assigned
+        # everything below or equal this value will have class 0 assigned
+        # if conditioning on only one value (no "dead-zone"), provide low_boundary > high_boundary
+        if low_boundary is None:
+            low_boundary = np.inf
+        # prepare index storage
+        new_indexes = np.zeros(annotations.shape) + 2
+        # match boundary scores
+        new_indexes[annotations < high_boundary] -= 1
+        new_indexes[annotations > low_boundary] -= 1
+        # convert to bool = those that are between low and high boundary (dead zone) are False
+        new_indexes = new_indexes.astype(bool)
+        # remove the dead zone from annotations
+        selected_annotations = annotations[new_indexes]
+        # assign classes to selected annotations
+        new_annotations = (selected_annotations >= high_boundary).astype(int)
+        # return annotations
+        return new_annotations, new_indexes
 
 
 class _CASEReader:
@@ -324,7 +354,7 @@ class _CASEReader:
         self.subjects = np.array(subjects) or DEFAULT_SUBJECTS_ARR
         self.subjects_set = set(self.subjects)
         self.data_paths, self.sub_pathsid_map = self.generate_data_paths(
-            annotations_dir, physiology_dir
+            physiology_dir, annotations_dir
         )
         self.if_cut_data = cut_data
         self.if_resample_physio = resample_physio
@@ -350,14 +380,14 @@ class _CASEReader:
         # if res is not None, extract the number
         return int(res.group())
     
-    def generate_data_paths(self, annotations_dir, physiology_dir):
+    def generate_data_paths(self, physiology_dir, annotations_dir):
         "Generate tuples of (subject annotations, subject physiology)"
         paths_list = list()
         path_mapping = dict()
         # iterate over files in annotations and physiology dirs
-        for annot_path, physio_path in zip(
-            sorted(Path(annotations_dir).iterdir(), key=self.get_subject_num),
+        for physio_path, annot_path in zip(
             sorted(Path(physiology_dir).iterdir(), key=self.get_subject_num),
+            sorted(Path(annotations_dir).iterdir(), key=self.get_subject_num),
         ):
             # ensure that both files are for the same participant
             # if names do not match
@@ -373,8 +403,8 @@ class _CASEReader:
             # add (annotations_path, physiology_path) for current participant
             paths_list.append(
                 (
-                    annot_path,
                     physio_path,
+                    annot_path,
                 )
             )
             path_mapping.setdefault(subject_id, len(paths_list) - 1)
@@ -386,7 +416,7 @@ class _CASEReader:
         return data_load
     
     def get_subject_data(self, subject_id):
-        annotations_path, physiology_path = self.data_paths[
+        physiology_path, annotations_path = self.data_paths[
             self.sub_pathsid_map.get(subject_id)
         ]
         physiology, annotations = self.load_data(physiology_path), self.load_data(annotations_path)
@@ -399,7 +429,7 @@ class _CASEReader:
     def get_video_data(self, subject_data, video, fix_mismatched=True):
         "Get subject data for the specified video"
         # unpack subject's data
-        subject_annotations, subject_physiology = subject_data
+        subject_physiology, subject_annotations = subject_data
         # choose data only for the specified video
         video_annotations = subject_annotations[
             subject_annotations["video"] == video
@@ -412,7 +442,7 @@ class _CASEReader:
         video_annotations.drop(columns=['video'], inplace=True)
         # ensure that physiology and annotations timestamps match
         if fix_mismatched:
-            self.trim_to_same_time(video_annotations, video_physiology)
+            self.trim_to_same_time(video_physiology, video_annotations)
         # get starting time
         start_time = video_physiology["time"].iloc[0]
         # ensure that time is the first column
@@ -422,9 +452,9 @@ class _CASEReader:
         video_annotations.reset_index(drop=True, inplace=True)
         video_physiology.reset_index(drop=True, inplace=True)
         # return video data
-        return video_annotations, video_physiology
+        return video_physiology, video_annotations
     
-    def trim_to_same_time(self, annotations, physiology):
+    def trim_to_same_time(self, physiology, annotations):
         annotations.drop(
             axis="index",
             # get rows of annotations, where time < time at the beginning of physiology and rows of annotations, where time > time at the end of physiology
@@ -489,7 +519,7 @@ class _CASEReader:
     def processed_data_iter(self):
         for subject, subject_data in tqdm(self.iterate_subjects_data()):
             for video, video_data in self.iterate_videos_data(subject_data):
-                video_annotations, video_physiology = video_data
+                video_physiology, video_annotations = video_data
                 # cut data to same length
                 if self.if_cut_data:
                     video_annotations = self.cut_data(video_annotations, self.cut_length, from_end=self.cut_from_end)
@@ -498,4 +528,4 @@ class _CASEReader:
                     video_physiology['time'] = video_physiology['time'] - video_physiology['time'].iloc[0]
                 if self.if_resample_physio:
                     video_physiology = self.resample_data_simple(video_physiology)
-                yield video_annotations, video_physiology, (subject, video)
+                yield video_physiology, video_annotations, (subject, video)

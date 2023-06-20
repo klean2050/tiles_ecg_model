@@ -70,8 +70,10 @@ def evaluate(model, dataset, dataset_name, aggregate="majority", modalities=["ec
 
     # aggregate predictions
     y_true_agg, y_pred_agg = [], []
-    if "ptb" in dataset_name or "AVEC" in dataset_name or "CASE_regression" in dataset_name:
+    if "ptb" in dataset_name or "AVEC" in dataset_name:
         metrics_agg = None
+    elif "CASE_regression" in dataset_name:
+        metrics_agg = dict()
     else:
         for name in np.unique(y_name):
             idx = np.where(y_name == name)[0]
