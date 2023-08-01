@@ -4,6 +4,7 @@ data/
 runs/
 build/
 dist/
+figs/
 results/
 ckpt/*large*
 # experiments/
