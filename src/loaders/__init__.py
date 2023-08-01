@@ -14,7 +14,7 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=Tr
     if dataset == "DriveDB":
         return DriveDB(root=dataset_dir, sr=sr, streams="ECG")
     elif dataset == "SWELL_KW":
-        return SWELL_KW(root=dataset_dir, sr=sr)
+        return SWELL_KW(root=dataset_dir, sr=sr, gtruth=gtruth)
     elif dataset == "WESAD":
         return WESAD(root=dataset_dir, sr=sr)
     elif dataset == "MIRISE":

@@ -13,8 +13,8 @@ class TransformLearning(LightningModule):
         self.n_features = self.encoder.output_size
         # projection head
         self.projector = nn.Sequential(
-            #nn.Linear(self.n_features, self.n_features, bias=False),
-            #nn.ReLU(),
+            nn.Linear(self.n_features, self.n_features, bias=False),
+            nn.ReLU(),
             nn.Linear(self.n_features, self.hparams.projection_dim, bias=False),
         )
         self.model = nn.Sequential(self.encoder, self.projector)

@@ -19,7 +19,7 @@ class SWELL_KW(data.Dataset):
         if os.path.exists(self.cache_path):
             print("Loading cached dataset ...")
             self.samples = np.load(self.cache_path + "samples.npy")
-            self.labels = np.load(self.cache_path + "labels.npy")
+            self.labels = np.load(self.cache_path + "labels.npy", allow_pickle=True)
             self.names = np.load(self.cache_path + "names.npy")
         else:
             os.makedirs(self.cache_path, exist_ok=True)
@@ -111,10 +111,14 @@ class SWELL_KW(data.Dataset):
 
     def __getitem__(self, index):
         ecg = self.samples[index]
-        label = self.labels[index, self.gtruth]
-        label = label > np.mean(self.labels[:, self.gtruth])
+        thres = 0.5
+        if self.gtruth == 1:
+            thres = 6.5
+        elif self.gtruth == 2:
+            thres = 5
+        label = self.labels[index, self.gtruth] >= thres
         name = self.names[index]
-        return ecg, label * 1, name
+        return ecg, label * 1, name    
 
 
 if __name__ == "__main__":

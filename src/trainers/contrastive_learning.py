@@ -52,27 +52,9 @@ class ContrastiveLearning(LightningModule):
         return NT_Xent(batch_size, self.hparams.temperature, world_size=1)
 
     def configure_optimizers(self) -> dict:
-        scheduler = None
         if self.hparams.optimizer == "Adam":
             optimizer = torch.optim.AdamW(
                 self.model.parameters(), lr=self.hparams.learning_rate)
-        elif self.hparams.optimizer == "LARS":
-            # optimized using LARS with linear learning rate scaling
-            learning_rate = 0.3 * self.hparams.batch_size / 256
-            optimizer = LARS(
-                self.model.parameters(),
-                lr=learning_rate,
-                weight_decay=self.hparams.weight_decay,
-                exclude_from_weight_decay=["batch_normalization", "bias"],
-            )
-            # decay learning rate with cosine decay schedule w/o restarts
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, self.hparams.max_epochs, eta_min=0, last_epoch=-1
-            )
         else:
             raise NotImplementedError
-
-        if scheduler:
-            return {"optimizer": optimizer, "lr_scheduler": scheduler}
-        else:
-            return {"optimizer": optimizer}
+        return {"optimizer": optimizer}

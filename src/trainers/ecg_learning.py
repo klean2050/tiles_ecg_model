@@ -23,7 +23,7 @@ class ECGLearning(LightningModule):
         # create cls projector
         self.n_features = self.encoder.output_size
         self.project_cls = nn.Sequential(
-            nn.Linear(self.hparams.projection_dim, self.hparams.projection_dim),
+            nn.Linear(self.n_features, self.hparams.projection_dim),
             nn.BatchNorm1d(self.hparams.projection_dim),
             nn.GELU(),
             nn.Linear(self.hparams.projection_dim, self.args.output_dim),

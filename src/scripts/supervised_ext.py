@@ -4,11 +4,12 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
+from random import shuffle
 
 from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
 from src.models import ResNet1D, S4Model
-from src.trainers import SupervisedLearning, TransformLearning, ECGLearning
+from src.trainers import *
 
 
 if __name__ == "__main__":
@@ -40,6 +41,7 @@ if __name__ == "__main__":
     v = "scratch" if not args.use_pretrained else "init" if args.unfreeze else "frozen"
     sa = f"sa{ld}" if args.subject_agnostic else f"sd{ld}"
     exp_name = f"{args.dataset}_{sa}_{v}_{'_'.join(args.streams)}_{args.gtruth}"
+    exp_name = f"r{exp_name}" if args.model_type == "resnet" else exp_name
 
     # ------------
     # DATA LOADERS
@@ -70,13 +72,13 @@ if __name__ == "__main__":
         gtruth=args.gtruth,
     )
 
-    # calculate random threshold for F1-macro
-    count_labels = np.unique(test_dataset.labels, return_counts=True)
-    f1_labels = []
-    for j in range(len(count_labels[0])):
-        r = count_labels[1][j] / count_labels[1].sum()
-        f1_labels.append(2 * r / (1 + r))
-    print(f"\nRandom F1-macro: {np.mean(f1_labels):.3f}\n")
+    # apply low-data settings
+    if args.low_data != 1:
+        times = int(1 / args.low_data)
+        train_idx = np.arange(len(train_dataset.samples))
+        shuffle(train_idx)
+        train_dataset.samples = train_dataset.samples[train_idx[:: times]]
+        train_dataset.labels = train_dataset.labels[train_idx[:: times]]
 
     # create the dataloaders
     train_loader = DataLoader(
@@ -132,7 +134,9 @@ if __name__ == "__main__":
     # create supervised model
     if args.use_pretrained:
         # load pretrained ECG model from checkpoint
-        pretrained_model = TransformLearning.load_from_checkpoint(
+        pretrained_model = ContrastiveLearning.load_from_checkpoint(
+            args.ssl_ckpt_path, encoder=encoder
+        ) if args.contrastive else TransformLearning.load_from_checkpoint(
             args.ssl_ckpt_path, encoder=encoder
         )
         encoder = pretrained_model.encoder
@@ -189,21 +193,14 @@ if __name__ == "__main__":
     # ----------
     # EVALUATION
     # ----------
-    v = "scratch" if not args.use_pretrained else "init" if args.unfreeze else "frozen"
 
     metrics, _ = evaluate(
         model.to(torch.device("cuda")),
         dataset=test_loader,
         dataset_name=args.dataset,
     )
-
-    if "epic" in args.dataset_dir:
-        np.save(
-            f"results/{args.dataset}_{args.scenario}_{args.fold}_{args.gtruth}_{v}.npy",
-            metrics,
-        )
-    else:
-        os.makedirs("results", exist_ok=True)
-        with open(f"results/{args.dataset}_{args.gtruth}_{v}.txt", "w") as f:
-            for m, v in metrics.items():
-                f.write("{}: {:.3f}\n".format(m, v))
+    # log results
+    os.makedirs("results", exist_ok=True)
+    with open(f"results/{exp_name}.txt", "w") as f:
+        for m, v in metrics.items():
+            f.write("{}: {:.3f}\n".format(m, v))

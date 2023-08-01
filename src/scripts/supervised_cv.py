@@ -10,12 +10,13 @@ from random import shuffle
 from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
 from src.models import ResNet1D, S4Model
-from src.trainers import SupervisedLearning, TransformLearning, ECGLearning
+from src.trainers import ContrastiveLearning, TransformLearning, ECGLearning
 
 torch.set_float32_matmul_precision("high")
 
 
 if __name__ == "__main__":
+
     # --------------
     # CONFIGS PARSER
     # --------------
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     ld = str(args.low_data).strip(".") if args.low_data != 1 else ""
     v = "scratch" if not args.use_pretrained else "init" if args.unfreeze else "frozen"
     sa = f"sa{ld}" if args.subject_agnostic else f"sd{ld}"
-    exp_name = f"{args.dataset}_{sa}_{v}_{'_'.join(args.streams)}_{args.gtruth}"
+    exp_name = f"r{args.dataset}_{sa}_{v}_{'_'.join(args.streams)}_{args.gtruth}"
 
     # ------------
     # DATA LOADERS
@@ -56,13 +57,6 @@ if __name__ == "__main__":
         sr=args.sr,
         gtruth=args.gtruth,
     )
-    # calculate random threshold for F1-macro
-    count_labels = np.unique(full_dataset.labels, return_counts=True)
-    f1_labels = []
-    for j in range(len(count_labels[0])):
-        r = count_labels[1][j] / count_labels[1].sum()
-        f1_labels.append(2 * r / (1 + r))
-    print(f"\nRandom F1-macro: {np.mean(f1_labels):.3f}\n")
 
     # setup k-fold cross-validation
     gcv = GroupKFold(n_splits=args.splits)
@@ -132,7 +126,9 @@ if __name__ == "__main__":
         # create supervised model
         if args.use_pretrained:
             # load pretrained ECG model from checkpoint
-            pretrained_model = TransformLearning.load_from_checkpoint(
+            pretrained_model = ContrastiveLearning.load_from_checkpoint(
+                args.ssl_ckpt_path, encoder=encoder
+            ) if args.contrastive else TransformLearning.load_from_checkpoint(
                 args.ssl_ckpt_path, encoder=encoder
             )
             encoder = pretrained_model.encoder
@@ -211,6 +207,7 @@ if __name__ == "__main__":
     # -----------
     # LOG RESULTS
     # -----------
+    
     os.makedirs("results", exist_ok=True)
     with open(f"results/{exp_name}.txt", "w") as f:
         for m, v in all_metrics.items():

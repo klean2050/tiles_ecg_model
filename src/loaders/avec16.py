@@ -1,4 +1,4 @@
-import wfdb, ast, os, numpy as np
+import os, numpy as np
 import pandas as pd, neurokit2 as nk
 from tqdm import tqdm
 from pathlib import Path
@@ -13,11 +13,12 @@ class AVEC16(data.Dataset):
         self.sr = sr
         self.win = sr * 10
         split = "dev" if split == "test" else split
+        print(os.path.exists(f"data/avec16/{split}_lab_{category}.npy"))
 
         if os.path.exists(f"data/avec16/{split}_lab_{category}.npy"):
             print("Loading from cache...")
-            ecg_data = np.load(f"data/avec16/{split}_ecg.npy")
-            ecg_labels = np.load(f"data/avec16/{split}_lab_{category}.npy")
+            self.samples = np.load(f"data/avec16/{split}_ecg.npy")
+            self.labels = np.load(f"data/avec16/{split}_lab_{category}.npy")
         else:
             print("Loading ECG data...")
             data_path = Path(self.root)
@@ -41,7 +42,8 @@ class AVEC16(data.Dataset):
                         if f"{split}_{participant_id}" not in line:
                             continue
                         time = float(line.split(",")[-2].split("\n")[0])
-                        # We skip the first 10s of ECG data, and we select data frames every 20ms
+                        # We skip the first 10s of ECG data
+                        # We select data frames every 20ms
                         if time <= 10:
                             continue
                         if (time * 100) % 20:
@@ -61,15 +63,13 @@ class AVEC16(data.Dataset):
                         ecg_data.append(data)
                         ecg_labels.append(label)
 
-            ecg_data = np.array(ecg_data)
-            ecg_labels = np.array(ecg_labels)
+            self.samples = np.array(ecg_data)
+            self.labels = np.array(ecg_labels)
 
             os.makedirs("data/avec16", exist_ok=True)
-            np.save(f"data/avec16/{split}_ecg.npy", ecg_data)
-            np.save(f"data/avec16/{split}_lab_{category}.npy", ecg_labels)
+            np.save(f"data/avec16/{split}_ecg.npy", self.samples)
+            np.save(f"data/avec16/{split}_lab_{category}.npy", self.labels)
 
-        self.samples = ecg_data[::1] if split == "train" else ecg_data
-        self.labels = ecg_labels[::1] if split == "train" else ecg_labels
         print(f"Loaded {len(self.labels)} ECG samples in total.")
 
     def __len__(self):

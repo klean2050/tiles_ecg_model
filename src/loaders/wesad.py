@@ -71,7 +71,7 @@ class WESAD(data.Dataset):
         # downsample to 100Hz
         new_len = int((len(ecg) / 700) * self.sr)
         proc = resample_poly(ecg, self.sr, 700)[:new_len]
-        # BP filtering
+        # bandpass filtering
         proc = nk.ecg_clean(proc, sampling_rate=self.sr)
         # segment into 10 sec windows
         proc = [proc[i : i + self.win] for i in range(0, len(proc), self.win)]
@@ -83,7 +83,7 @@ class WESAD(data.Dataset):
 
     def __getitem__(self, idx):
         ecg = self.samples[idx]
-        lab = self.labels[idx]
+        lab = self.labels[idx] == 1
         nam = self.names[idx]
         return ecg, int(lab), nam
 
