@@ -118,7 +118,7 @@ if __name__ == "__main__":
     logger = TensorBoardLogger(
         save_dir=args.log_dir,
         name=f"{args.experiment_name}",
-        version=f"{args.dataset}_{args.scenario}_{args.fold}_{args.gtruth}",
+        version=f"{len(args.streams)}{args.dataset}_sc={args.scenario}_fold{args.fold}_{args.gtruth}",
     )
 
     # --------
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         else "Valid/loss"
     )
     model_ckpt_callback = ModelCheckpoint(monitor=monitor, mode="min", save_top_k=1)
-    early_stop_callback = EarlyStopping(monitor=monitor, mode="min", patience=15)
+    early_stop_callback = EarlyStopping(monitor=monitor, mode="min", patience=11)
 
     # train and save model
     trainer = Trainer.from_argparse_args(
@@ -149,6 +149,7 @@ if __name__ == "__main__":
         devices="auto",
         precision=args.bit_precision,
         callbacks=[model_ckpt_callback, early_stop_callback],
+        # resume_from_checkpoint='./checkpoints/blahblah.ckpt'
     )
     trainer.fit(
         model,

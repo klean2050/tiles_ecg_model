@@ -5,7 +5,7 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from .ccc import mean_ccc
 
 
-def evaluate(model, dataset, dataset_name, aggregate="majority", modalities=["ecg"]):
+def evaluate(model, dataset, dataset_name, aggregate="majority", modalities=["ecg", "eda"]):
     """
     Performs evaluation of trained supervised models
     Args:
@@ -29,16 +29,17 @@ def evaluate(model, dataset, dataset_name, aggregate="majority", modalities=["ec
 
         label = label.to(model.device)
         with torch.no_grad():
-            preds, _ = model(data, label)
+            preds, y = model(data, label)
             if (
                 "ptb" not in dataset_name
                 and "AVEC" not in dataset_name
                 and "EPIC" not in dataset_name
             ):
                 preds = preds.argmax(dim=1).detach()
+                y = y.long().detach()
 
             # save labels and predictions
-            y_true.append(label)
+            y_true.append(y)
             y_pred.append(preds)
             y_name.extend(name)
 

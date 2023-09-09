@@ -14,11 +14,11 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=Tr
     if dataset == "DriveDB":
         return DriveDB(root=dataset_dir, sr=sr, streams="ECG")
     elif dataset == "SWELL_KW":
-        return SWELL_KW(root=dataset_dir, sr=sr)
+        return SWELL_KW(root=dataset_dir, sr=sr, gtruth=gtruth)
     elif dataset == "WESAD":
         return WESAD(root=dataset_dir, sr=sr)
     elif dataset == "MIRISE":
-        return MIRISE(root=dataset_dir, sr=sr)
+        return MIRISE(root=dataset_dir, sr=sr, cat=gtruth)
     elif dataset == "ptb_xl":
         return PTB_XL(root=dataset_dir, sr=sr, split=split)
     elif dataset == "LUDB":
@@ -31,7 +31,7 @@ def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=Tr
         )
     elif dataset == "EPIC" and not ecg_only:
         return MULTI_EPIC(
-            root=dataset_dir, sr=sr, scenario=2, split=split, category=gtruth, fold=0
+            root=dataset_dir, sr=sr, scenario=4, split=split, category=gtruth, fold=1
         )
     else:
         raise NotImplementedError("Dataset not implemented")

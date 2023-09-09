@@ -1,6 +1,6 @@
 import math, torch, torch.nn as nn
 from einops import rearrange, repeat
-
+from .s4_block import S4Block as S4
 
 # Dropout broke in PyTorch 1.11
 if tuple(map(int, torch.__version__.split(".")[:2])) == (1, 11):
@@ -162,6 +162,7 @@ class S4Model(nn.Module):
         n_layers=4,
         dropout=0.2,
         prenorm=True,
+        decoder=False,
     ):
         super().__init__()
         self.output_size = d_output
@@ -176,13 +177,13 @@ class S4Model(nn.Module):
         self.dropouts = nn.ModuleList()
         for _ in range(n_layers):
             self.s4_layers.append(
-                S4D(d_model, dropout=dropout, transposed=True, lr=0.001)
+                S4(d_model, dropout=dropout, transposed=True, lr=0.001)
             )
             self.norms.append(nn.LayerNorm(d_model))
             self.dropouts.append(dropout_fn(dropout))
 
         # Linear decoder
-        self.decoder = nn.Linear(d_model, d_output)
+        self.decoder = nn.Linear(d_model, d_output) if decoder else nn.Identity()
 
     def forward(self, x):
         """

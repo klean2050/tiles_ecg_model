@@ -15,6 +15,7 @@ class MIRISE(data.Dataset):
         self.sr = sr
         self.win = sr * 10
         self.cat = cat
+        self.cat = cat
         self.pps = list(range(1, 20))
         self.pps.remove(7)
         self.pps.remove(8)
@@ -24,7 +25,7 @@ class MIRISE(data.Dataset):
         print("Loading participant data...")
         for p in tqdm(self.pps):
 
-            if os.path.exists(f"data/mirise/{p}_ecg.pkl"):
+            if os.path.exists(f"data/mirise/{p}_ecg.pkl"): # and False:
                 with open(f"data/mirise/{p}_ecg.pkl", "rb") as f:
                     ecg = pickle.load(f)
                 with open(f"data/mirise/{p}_eda.pkl", "rb") as f:

@@ -35,7 +35,9 @@ pip install -e ecg-augmentations
 ```bash
 tiles_ecg_model/
 ├── setup.py             # package installation script
+├── examples.ipynb       # temporary/demostrative code
 ├── config/              # configuration files for each train session
+├── ckpt/                # pre-trained models available for fine-tuning
 └── src/                 # main project directory
     ├── loaders/             # pytorch dataset classes
     ├── models/              # backbone neural network models
@@ -50,25 +52,21 @@ Tracking Individual Performance with Sensors (TILES) is a project holding multim
 
 ## Pre-Training Framework
 
-### Input ECG data
-
-Each TILES participant has their ECG recorded for 15 seconds every 5 minutes during their work hours, for a total of 10 weeks. In this experiment we consider a subset of 69 subjects, and for each of them we extract all available 15-sec ECG segments. We normalize the data per subject before feeding them to the model.
-
-To preprocess TILES ECG, navigate to the root directory and run the following command:
+Each TILES participant has their ECG recorded for 15 seconds every 5 minutes during their work hours, for a total of 10 weeks. Here we extract all available 15-sec ECG segments and eliminate those with quality (i.e., rate of R peak identification) less than 90%. We end up with ~275,000 samples which we downsample to 100Hz, filter with a 0.5-40Hz Butterworth and normalize per subject. To preprocess TILES data, run the following command:
 
 ```bash
 python src/scripts/preprocess.py
 ```
+The same preprocessing pipeline is used for every dataset during fine-tuning, implemented in ``loaders``.
 
-### pre-Training \& Fine-tuning
+We pre-train the model in a self-supervised manner, through transform identification. To transform the ECG samples we use the [PyTorch ECG Augmentations](https://github.com/klean2050/ecg-augmentations) package. First, the input ECG is randomly cropped to 10 seconds and a series of masks and signal transformations are randomly applied based on a set probability. The network is then trained to identify which transformations were applied. We use a lightweight [S4](https://github.com/HazyResearch/state-spaces) model as backbone. Command:
+```
+python src/scripts/ssl_pretrain.py
+```
+## Fine-Tuning Framework
 
-TBD
-
-## Results & Checkpoints
-
-To view results of your experiments in TensorBoard run:
-
-```bash
+Pre-trained models are shared and described at ``ckpt``. We transfer the trained ECG encoder to the downstream tasks, ranging from clinical condition estimation, affect perception, stress and interaction analysis. Detailed results will be posted along with the accompanying preprint. To view training logs in TensorBoard run:
+```
 tensorboard --logdir ./runs
 ```
 

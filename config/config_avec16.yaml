@@ -1,8 +1,13 @@
 # dataset options
 dataset: "AVEC16"
 dataset_dir: "data/avec16/"
-streams: ["ECG"]
-gtruth: "arousal"
+contrastive: 1
+subject_agnostic: True
+type: "regression"
+streams: ["ecg"]
+# arousal: 2MLP, valence: 1MLP
+gtruth: "valence"
+low_data: 1
 seed: 42
 sr: 100
 
@@ -11,12 +16,12 @@ model_type: "s4"    # [resnet, s4]
 
 # ResNet
 in_channels: 1
-base_filters: 64
+base_filters: 64 # 64
 kernel_size: 3
 stride: 2
 groups: 1
 n_block: 10
-n_classes: 256
+n_classes: 128
 projection_dim: 128
 output_dim: 1
 
@@ -30,16 +35,17 @@ dropout: 0.2
 # training options
 use_pretrained: 1
 unfreeze: True
-batch_size: 128
-m_epochs: 100
+batch_size: 256
+m_epochs: 200
 optimizer: "Adam"
+# 1e-4 for valence, 1e-3 for arousal
 learning_rate: 0.001
-weight_decay: 1e-6
+weight_decay: 0.0
 
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
 log_freq: 2     # how often to log (logs every log_freq steps)
 workers: 4
-n_cuda: "2"
+n_cuda: "1"
 bit_precision: 16
 ckpt_path: null     # not used if set to null
 ssl_ckpt_path: "ckpt/s4_trans.ckpt"

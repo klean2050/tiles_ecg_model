@@ -41,7 +41,7 @@ class TILES_ECG(data.Dataset):
         choice = np.random.choice(
             np.arange(8),
             size=4,
-            p=[0.05, 0.2, 0.2, 0.2, 0.15, 0.1, 0.05, 0.05]
+            p=[0.01, 0.2, 0.2, 0.2, 0.15, 0.1, 0.07, 0.07]
         )
         y = np.zeros(8)
 

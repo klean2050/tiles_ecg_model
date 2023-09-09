@@ -4,6 +4,7 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
+from random import shuffle
 
 from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
@@ -12,7 +13,6 @@ from src.trainers import *
 
 
 if __name__ == "__main__":
-
     # --------------
     # CONFIGS PARSER
     # --------------
@@ -21,8 +21,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="tiles_ecg")
     parser = Trainer.add_argparse_args(parser)
 
+    # get dataset from command line:
+    parser.add_argument("--this", default="mirise", type=str)
+    args = parser.parse_args()
+
     # extract args from config file and add to parser:
-    config_file = "config/config_epic.yaml"
+    config_file = f"config/config_{args.this}.yaml"
     config = yaml_config_hook(config_file)
     for key, value in config.items():
         parser.add_argument(f"--{key}", default=value, type=type(value))
@@ -31,6 +35,13 @@ if __name__ == "__main__":
     # set random seed if selected:
     if args.seed:
         pl.seed_everything(args.seed, workers=True)
+
+    # set experiment name
+    ld = str(args.low_data).strip(".") if args.low_data != 1 else ""
+    v = "scratch" if not args.use_pretrained else "init" if args.unfreeze else "frozen"
+    sa = f"sa{ld}" if args.subject_agnostic else f"sd{ld}"
+    exp_name = f"{args.dataset}_{sa}_{v}_{'_'.join(args.streams)}_{args.gtruth}"
+    exp_name = f"r{exp_name}" if args.model_type == "resnet" else exp_name
 
     # ------------
     # DATA LOADERS
@@ -61,6 +72,14 @@ if __name__ == "__main__":
         gtruth=args.gtruth,
     )
 
+    # apply low-data settings
+    if args.low_data != 1:
+        times = int(1 / args.low_data)
+        train_idx = np.arange(len(train_dataset.samples))
+        shuffle(train_idx)
+        train_dataset.samples = train_dataset.samples[train_idx[:: times]]
+        train_dataset.labels = train_dataset.labels[train_idx[:: times]]
+
     # create the dataloaders
     train_loader = DataLoader(
         train_dataset,
@@ -74,7 +93,7 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=args.workers,
-        drop_last=False,
+        drop_last=True if "ptb" in args.dataset_dir else False,
     )
 
     test_loader = DataLoader(
@@ -115,25 +134,22 @@ if __name__ == "__main__":
     # create supervised model
     if args.use_pretrained:
         # load pretrained ECG model from checkpoint
-        pretrained_model = TransformLearning.load_from_checkpoint(
+        pretrained_model = ContrastiveLearning.load_from_checkpoint(
+            args.ssl_ckpt_path, encoder=encoder
+        ) if args.contrastive else TransformLearning.load_from_checkpoint(
             args.ssl_ckpt_path, encoder=encoder
         )
-        model = ECGLearning(
-            args,
-            pretrained_model.encoder,
-            output_dim=args.output_dim,
-        )
+        encoder = pretrained_model.encoder
+
+    if args.streams == ["ecg"]:
+        model = ECGLearning(args, encoder)
     else:
-        model = ECGLearning(
-            args,
-            encoder,
-            output_dim=args.output_dim,
-        )
+        model = SupervisedLearning(args, encoder)
 
     # logger that saves to /save_dir/name/version/
     logger = TensorBoardLogger(
         save_dir=args.log_dir,
-        name=f"{args.experiment_name}",
+        name=f"{exp_name}",
         version=args.experiment_version,
     )
 
@@ -147,7 +163,7 @@ if __name__ == "__main__":
     # create PyTorch Lightning trainer
     monitor = "Valid/cccloss" if "avec" in args.dataset_dir else "Valid/loss"
     model_ckpt_callback = ModelCheckpoint(monitor=monitor, mode="min", save_top_k=1)
-    early_stop_callback = EarlyStopping(monitor=monitor, mode="min", patience=15)
+    early_stop_callback = EarlyStopping(monitor=monitor, mode="min", patience=10)
 
     trainer = Trainer.from_argparse_args(
         args,
@@ -170,25 +186,21 @@ if __name__ == "__main__":
         val_dataloaders=valid_loader,
         ckpt_path=args.ckpt_path,
     )
+    # load best model
+    ckpt = torch.load(model_ckpt_callback.best_model_path)
+    model.load_state_dict(ckpt['state_dict'])
 
     # ----------
     # EVALUATION
     # ----------
-    v = "scratch" if not args.use_pretrained else "init" if args.unfreeze else "frozen"
 
     metrics, _ = evaluate(
         model.to(torch.device("cuda")),
         dataset=test_loader,
         dataset_name=args.dataset,
     )
-
-    if "epic" in args.dataset_dir:
-        np.save(
-            f"results/{args.dataset}_{args.scenario}_{args.fold}_{args.gtruth}_{v}.npy",
-            metrics,
-        )
-    else:
-        output = f"results/{args.dataset}_{args.gtruth}_{v}.txt"
-        with open(output, "w") as f:
-            for m, v in metrics.items():
-                f.write("{}: {:.3f}\n".format(m, v))
+    # log results
+    os.makedirs("results", exist_ok=True)
+    with open(f"results/{exp_name}.txt", "w") as f:
+        for m, v in metrics.items():
+            f.write("{}: {:.3f}\n".format(m, v))

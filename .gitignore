@@ -4,8 +4,10 @@ data/
 runs/
 build/
 dist/
+figs/
 results/
-ckpt/BIG*
+ckpt/*large*
+ckpt/*big*
 # experiments/
 *.egg-info
 

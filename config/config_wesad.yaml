@@ -1,26 +1,29 @@
 # dataset options
 dataset: "WESAD"
 dataset_dir: "/home/kavra/Datasets/physio/WESAD/"
+contrastive: 0
+type: "classification"
 subject_agnostic: True
-streams: ["ECG"]
-gtruth: "None"
+streams: ["ecg"]
+gtruth: ""
+low_data: 1
 splits: 5
 sr: 100
 seed: 42
 
 ### model options
-model_type: "s4"    # [resnet, s4]
+model_type: "resnet"    # [resnet, s4]
 
 # ResNet
 in_channels: 1
-base_filters: 64
+base_filters: 16        # 64 for big, 16 for small
 kernel_size: 3
 stride: 2
 groups: 1
 n_block: 10
 n_classes: 256
 projection_dim: 128
-output_dim: 4
+output_dim: 3
 
 # S4
 d_input: 1
@@ -30,21 +33,22 @@ n_layers: 6
 dropout: 0.2
 
 # training options
-use_pretrained: 0
+use_pretrained: 1
 unfreeze: True
 batch_size: 128
 m_epochs: 200
 optimizer: "Adam"
-learning_rate: 0.0001
-weight_decay: 1e-6
+# 5e-4 for sa, 1e-3 for sd
+learning_rate: 0.0005
+weight_decay: 0
 
 val_freq: 1     # how often to validate (runs validation every val_freq epochs)
 log_freq: 2     # how often to log (logs every log_freq steps)
 workers: 4
-n_cuda: "1"
+n_cuda: "2"
 bit_precision: 16
 ckpt_path: null     # not used if set to null
-ssl_ckpt_path: "ckpt/s4_trans.ckpt" #"ckpt/BIG_epoch=99-step=97300.ckpt"
+ssl_ckpt_path: "ckpt/resnet-trans-small.ckpt" #"ckpt/epoch=79-step=77840.ckpt" #"ckpt/BIG_epoch=99-step=97300.ckpt"
 
 # logging options:
 log_dir: "runs"

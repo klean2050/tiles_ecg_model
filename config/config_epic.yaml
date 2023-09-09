@@ -2,10 +2,10 @@
 dataset: "EPIC"
 dataset_dir: "data/epic/"
 streams: ["ecg", "eda", "rsp", "skt"]
-scenario: 2
+scenario: 4
 gtruth: "arousal"
 seed: 42
-fold: 0
+fold: 1
 sr: 100
 
 ### model options
