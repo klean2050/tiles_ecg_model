@@ -57,16 +57,20 @@ Each TILES participant has their ECG recorded for 15 seconds every 5 minutes dur
 ```bash
 python src/scripts/preprocess.py
 ```
+
 The same preprocessing pipeline is used for every dataset during fine-tuning, implemented in ``loaders``.
 
 We pre-train the model in a self-supervised manner, through transform identification. To transform the ECG samples we use the [PyTorch ECG Augmentations](https://github.com/klean2050/ecg-augmentations) package. First, the input ECG is randomly cropped to 10 seconds and a series of masks and signal transformations are randomly applied based on a set probability. The network is then trained to identify which transformations were applied. We use a lightweight [S4](https://github.com/HazyResearch/state-spaces) model as backbone. Command:
-```
+
+```bash
 python src/scripts/ssl_pretrain.py
 ```
+
 ## Fine-Tuning Framework
 
 Pre-trained models are shared and described at ``ckpt``. We transfer the trained ECG encoder to the downstream tasks, ranging from clinical condition estimation, affect perception, stress and interaction analysis. Detailed results will be posted along with the accompanying preprint. To view training logs in TensorBoard run:
-```
+
+```bash
 tensorboard --logdir ./runs
 ```
 
