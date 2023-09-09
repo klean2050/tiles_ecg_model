@@ -10,7 +10,7 @@ from random import shuffle
 from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
 from src.models import ResNet1D, S4Model
-from src.trainers import ContrastiveLearning, TransformLearning, ECGLearning
+from src.trainers import *
 
 torch.set_float32_matmul_precision("high")
 
