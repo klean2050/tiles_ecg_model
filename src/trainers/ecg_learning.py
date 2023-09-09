@@ -45,7 +45,7 @@ class ECGLearning(LightningModule):
             y = y.float()
         else:
             y = y.long()
-        # y = y.float() if "ptb" in self.args.dataset_dir else y.long()
+            
         return preds, y
 
     def training_step(self, batch, _):

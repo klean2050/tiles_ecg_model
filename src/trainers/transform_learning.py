@@ -1,4 +1,4 @@
-import torch, torch.nn as nn, numpy as np
+import torch, torch.nn as nn
 from torch import Tensor
 from pytorch_lightning import LightningModule
 

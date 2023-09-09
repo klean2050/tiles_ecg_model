@@ -14,7 +14,7 @@ class AVEC16(data.Dataset):
         self.win = sr * 10
         split = "dev" if split == "test" else split
 
-        if os.path.exists(f"data/avec16/{split}_ecg.npy"):
+        if os.path.exists(f"data/avec16/{split}_lab_{category}.npy"):
             print("Loading from cache...")
             ecg_data = np.load(f"data/avec16/{split}_ecg.npy")
             ecg_labels = np.load(f"data/avec16/{split}_lab_{category}.npy")
@@ -83,6 +83,7 @@ class AVEC16(data.Dataset):
 
 if __name__ == "__main__":
     root = "/media/data/sail-data/Recola/AVEC16"
-    train_dataset = AVEC16(root, sr=100, split="train", category="arousal")
-    dev_dataset = AVEC16(root, sr=100, split="dev", category="arousal")
+    root = "/home/kavra/Datasets/physio/RECOLA/AVEC16"
+    train_dataset = AVEC16(root, sr=100, split="train", category="valence")
+    dev_dataset = AVEC16(root, sr=100, split="dev", category="valence")
     print(train_dataset[0][0].shape, train_dataset[0][1])

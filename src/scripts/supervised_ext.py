@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
 from src.models import ResNet1D, S4Model
-from src.trainers import ContrastiveLearning, TransformLearning, ECGLearning
+from src.trainers import *
 
 
 if __name__ == "__main__":

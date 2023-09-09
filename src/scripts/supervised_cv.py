@@ -10,7 +10,7 @@ from random import shuffle
 from src.utils import yaml_config_hook, evaluate
 from src.loaders import get_dataset
 from src.models import ResNet1D, S4Model
-from src.trainers import ContrastiveLearning, ECGLearning
+from src.trainers import *
 
 
 if __name__ == "__main__":
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
         # create train and validation datasets
         shuffle(train_idx)
-        train_dataset = Subset(full_dataset, train_idx[::2])
+        train_dataset = Subset(full_dataset, train_idx)
         valid_dataset = Subset(full_dataset, valid_idx)
 
         # create the dataloaders
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         # create supervised model
         if args.use_pretrained:
             # load pretrained ECG model from checkpoint
-            pretrained_model = ContrastiveLearning.load_from_checkpoint(
+            pretrained_model = TransformLearning.load_from_checkpoint(
                 args.ssl_ckpt_path, encoder=encoder
             )
             model = ECGLearning(
