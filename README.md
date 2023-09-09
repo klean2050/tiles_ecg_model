@@ -78,7 +78,7 @@ tensorboard --logdir ./runs
 
 In this study we made use of the following repositories:
 
-* [VCMR](https://github.com/klean2050/VCMR) --> repo template
+* [VCMR](https://github.com/klean2050/VCMR) (repo template)
 * [ecg-augmentations](https://github.com/klean2050/ecg-augmentations)
 
 ## Citation
