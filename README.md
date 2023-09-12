@@ -84,3 +84,4 @@ In this study we made use of the following repositories:
 ## Citation
 
 TBD: The accompanying paper has been submitted to IEEE Journal of Biomedical and Health Informatics (2023).
+The project is supported by Toyota Motor North America (TMNA) and MIRISE Technologies.
