@@ -83,6 +83,8 @@ In this study we made use of the following repositories:
 
 ## Citation
 
+If you use WildECG in your own study, please consider citing accordingly:
+
 ```
 @misc{avramidis2023scaling,
       title={Scaling Representation Learning from Ubiquitous ECG with State-Space Models}, 
@@ -90,6 +92,17 @@ In this study we made use of the following repositories:
       year={2023},
       eprint={2309.15292},
       archivePrefix={arXiv},
+}
+
+@article{mundnich2020tiles,
+  title={TILES-2018, a longitudinal physiologic and behavioral data set of hospital workers},
+  author={Mundnich, Karel and Booth, Brandon M and l’Hommedieu, Michelle and Feng, Tiantian and Girault, Benjamin and L’hommedieu, Justin and Wildman, Mackenzie and Skaaden, Sophia and Nadarajan, Amrutha and Villatte, Jennifer L and others},
+  journal={Scientific Data},
+  volume={7},
+  number={1},
+  pages={354},
+  year={2020},
+  publisher={Nature Publishing Group UK London}
 }
 ```
 The accompanying [paper](https://arxiv.org/abs/2309.15292) has been submitted to IEEE Journal of Biomedical and Health Informatics (2023).
