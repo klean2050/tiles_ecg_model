@@ -83,5 +83,14 @@ In this study we made use of the following repositories:
 
 ## Citation
 
-TBD: The accompanying paper has been submitted to IEEE Journal of Biomedical and Health Informatics (2023).
+```
+@misc{avramidis2023scaling,
+      title={Scaling Representation Learning from Ubiquitous ECG with State-Space Models}, 
+      author={Kleanthis Avramidis and Dominika Kunc and Bartosz Perz and Kranti Adsul and Tiantian Feng and Przemysław Kazienko and Stanisław Saganowski and Shrikanth Narayanan},
+      year={2023},
+      eprint={2309.15292},
+      archivePrefix={arXiv},
+}
+```
+The accompanying paper has been submitted to IEEE Journal of Biomedical and Health Informatics (2023).
 The project is supported by Toyota Motor North America (TMNA) and MIRISE Technologies.
