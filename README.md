@@ -92,5 +92,5 @@ In this study we made use of the following repositories:
       archivePrefix={arXiv},
 }
 ```
-The accompanying paper has been submitted to IEEE Journal of Biomedical and Health Informatics (2023).
+The accompanying [paper](https://arxiv.org/abs/2309.15292) has been submitted to IEEE Journal of Biomedical and Health Informatics (2023).
 The project is supported by Toyota Motor North America (TMNA) and MIRISE Technologies.
