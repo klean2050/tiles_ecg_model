@@ -1,5 +1,4 @@
 from .tiles import TILES_ECG
-from .drivedb import DriveDB
 from .swell_kw import SWELL_KW
 from .wesad import WESAD
 from .mirise import MIRISE
@@ -11,9 +10,7 @@ from .epic import EPIC, MULTI_EPIC
 
 def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=True):
 
-    if dataset == "DriveDB":
-        return DriveDB(root=dataset_dir, sr=sr, streams="ECG")
-    elif dataset == "SWELL_KW":
+    if dataset == "SWELL_KW":
         return SWELL_KW(root=dataset_dir, sr=sr, gtruth=gtruth)
     elif dataset == "WESAD":
         return WESAD(root=dataset_dir, sr=sr)

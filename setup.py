@@ -7,7 +7,7 @@ from setuptools import find_packages, setup, Command
 
 # Package metadata
 NAME = "tiles_ecg"
-DESCRIPTION = "In-the-Wild ECG Pre-Training using TILES"
+DESCRIPTION = "Ubiquitous ECG Pre-Training using TILES"
 URL = "https://github.com/klean2050/tiles_ecg_model"
 EMAIL = "k.avramidist@windowslive.com"
 AUTHOR = "Kleanthis Avramidis"

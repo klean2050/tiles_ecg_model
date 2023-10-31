@@ -16,7 +16,7 @@ class SWELL_KW(data.Dataset):
         self.cache_path = "data/swell_kw/"
         self.window_size = sr * 10
 
-        if os.path.exists(self.cache_path):
+        if os.path.exists(self.cache_path) and 0:
             print("Loading cached dataset ...")
             self.samples = np.load(self.cache_path + "samples.npy")
             self.labels = np.load(self.cache_path + "labels.npy", allow_pickle=True)
@@ -63,23 +63,28 @@ class SWELL_KW(data.Dataset):
                     label_set = np.asarray(
                         label_set[
                             [
+                                "Condition",
                                 "Valence_rc",
                                 "Arousal_rc",
                                 "Dominance",
                                 "Stress",
+                                "Effort",
                                 "Frustration",
                             ]
                         ]
                     )
 
+                    c = {"N": 0, "T": 1, "I": 2}
                     if not len(label_set):
                         these_wlabels = [self.labels[-1]] * len(these_windows)
                     else:
+                        label_set[0][0] = c[label_set[0][0]]
                         these_wlabels = [label_set[0]] * len(these_windows)
                     self.labels += these_wlabels
 
             self.samples = np.vstack(self.samples)
-            self.labels = np.vstack(self.labels)
+            self.labels = np.array(self.labels)
+            self.names = np.array(self.names)
 
             # save to cache
             np.save(self.cache_path + "samples.npy", self.samples)
@@ -103,8 +108,9 @@ class SWELL_KW(data.Dataset):
             ecg_array[i : i + self.window_size]
             for i in range(0, len(ecg_array), self.window_size)
         ]
-        # discard first and last window (distorted)
-        return np.stack(ecg_array[1:-1])
+        # rely only on the last 20 minutes
+        # last sample is not used (distorted)
+        return np.stack(ecg_array[-5*6:-1])
 
     def __len__(self):
         return len(self.samples)

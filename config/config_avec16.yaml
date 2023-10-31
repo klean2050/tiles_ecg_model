@@ -2,7 +2,7 @@
 dataset: "AVEC16"
 dataset_dir: "data/avec16/"
 subject_agnostic: True
-contrastive: 1
+contrastive: 0
 type: "regression"
 streams: ["ecg"]
 gtruth: "valence"   # arousal: 2MLP, valence: 1MLP
@@ -47,7 +47,7 @@ workers: 4
 n_cuda: "1"
 bit_precision: 16
 ckpt_path: null     # not used if set to null
-ssl_ckpt_path: "ckpt/s4-contr.ckpt" #"ckpt/epoch=79-step=77840.ckpt" #"ckpt/s4_trans.ckpt"
+ssl_ckpt_path: "ckpt/s4_trans.ckpt"
 
 # logging options:
 log_dir: "runs"

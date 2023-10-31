@@ -1,10 +1,6 @@
 # How to use pre-trained models
 
-### Attention
-
-Please access the latest ResNet checkpoints [here](https://drive.google.com/drive/folders/1L7T-fsCHiyh5XWaA7VyLHxyl_pcEK-Ar?usp=sharing) and copy to `ckpt` folder.
-
-One can load a pre-trained model for fine-tuning or testing as follows:
+Please access the latest ResNet checkpoints [here](https://drive.google.com/drive/folders/1L7T-fsCHiyh5XWaA7VyLHxyl_pcEK-Ar?usp=sharing) and copy to `ckpt` folder. One can load a pre-trained model (here, ResNet) for fine-tuning or testing as follows:
 
 ```python
 from src.models import ResNet1D
@@ -34,6 +30,6 @@ encoder = ResNet1D(
     n_classes=args.n_classes,
 )
 
-ckpt_path = "ckpt/s4_trans.ckpt"
+ckpt_path = "ckpt/model_of_choice.ckpt"
 model = ContrastiveLearning.load_from_checkpoint(ckpt_path, encoder)
 ```

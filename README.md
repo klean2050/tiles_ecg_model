@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# TILES ECG: In-the-Wild ECG Pre-Training
+# WildECG: Ubiquitous ECG Pre-Training
 This repo contains code implementation as well as trained models for ECG data analysis.
   
 </div>
@@ -10,24 +10,29 @@ This repo contains code implementation as well as trained models for ECG data an
 ## Installation
 
 We recommend using a conda environment with ``Python >= 3.9`` :
-```
+
+```bash
 conda create -n tiles_ecg python=3.9
 conda activate tiles_ecg
 ```
+
 Clone the repository and install the dependencies:
-```
+
+```bash
 git clone https://github.com/klean2050/tiles_ecg_model
 pip install -e tiles_ecg_model
 ```
+
 You will also need the ``ecg-augmentations`` library:
-```
+
+```bash
 git clone https://github.com/klean2050/ecg-augmentations
 pip install -e ecg-augmentations
 ```
 
 ## Project Structure
 
-```
+```bash
 tiles_ecg_model/
 ├── setup.py             # package installation script
 ├── examples.ipynb       # temporary/demostrative code
@@ -48,19 +53,24 @@ Tracking Individual Performance with Sensors (TILES) is a project holding multim
 ## Pre-Training Framework
 
 Each TILES participant has their ECG recorded for 15 seconds every 5 minutes during their work hours, for a total of 10 weeks. Here we extract all available 15-sec ECG segments and eliminate those with quality (i.e., rate of R peak identification) less than 90%. We end up with ~275,000 samples which we downsample to 100Hz, filter with a 0.5-40Hz Butterworth and normalize per subject. To preprocess TILES data, run the following command:
-```
+
+```bash
 python src/scripts/preprocess.py
 ```
+
 The same preprocessing pipeline is used for every dataset during fine-tuning, implemented in ``loaders``.
 
 We pre-train the model in a self-supervised manner, through transform identification. To transform the ECG samples we use the [PyTorch ECG Augmentations](https://github.com/klean2050/ecg-augmentations) package. First, the input ECG is randomly cropped to 10 seconds and a series of masks and signal transformations are randomly applied based on a set probability. The network is then trained to identify which transformations were applied. We use a lightweight [S4](https://github.com/HazyResearch/state-spaces) model as backbone. Command:
-```
+
+```bash
 python src/scripts/ssl_pretrain.py
 ```
+
 ## Fine-Tuning Framework
 
 Pre-trained models are shared and described at ``ckpt``. We transfer the trained ECG encoder to the downstream tasks, ranging from clinical condition estimation, affect perception, stress and interaction analysis. Detailed results will be posted along with the accompanying preprint. To view training logs in TensorBoard run:
-```
+
+```bash
 tensorboard --logdir ./runs
 ```
 
@@ -68,9 +78,32 @@ tensorboard --logdir ./runs
 
 In this study we made use of the following repositories:
 
-* [VCMR](https://github.com/klean2050/VCMR)
+* [VCMR](https://github.com/klean2050/VCMR) (repo template)
+* [ecg-augmentations](https://github.com/klean2050/ecg-augmentations)
 
+## Citation
 
-## Authors
-* [Kleanthis Avramidis](https://klean2050.github.io): PhD Student in Computer Science, USC SAIL
-* [Tiantian Feng](https://github.com/tiantiaf0627): PhD Student in Computer Science, USC SAIL
+If you use WildECG in your own study, please consider citing accordingly:
+
+```
+@misc{avramidis2023scaling,
+    title={Scaling Representation Learning from Ubiquitous ECG with State-Space Models}, 
+    author={Kleanthis Avramidis and Dominika Kunc and Bartosz Perz and Kranti Adsul and Tiantian Feng and Przemysław Kazienko and Stanisław Saganowski and Shrikanth Narayanan},
+    year={2023},
+    eprint={2309.15292},
+    archivePrefix={arXiv},
+}
+
+@article{mundnich2020tiles,
+    title={TILES-2018, a longitudinal physiologic and behavioral data set of hospital workers},
+    author={Mundnich, Karel and Booth, Brandon M and l’Hommedieu, Michelle and Feng, Tiantian and Girault, Benjamin and L’hommedieu, Justin and Wildman, Mackenzie and Skaaden, Sophia and Nadarajan, Amrutha and Villatte, Jennifer L and others},
+    journal={Scientific Data},
+    volume={7},
+    number={1},
+    pages={354},
+    year={2020},
+    publisher={Nature Publishing Group UK London}
+}
+```
+The accompanying [paper](https://arxiv.org/abs/2309.15292) has been submitted to IEEE Journal of Biomedical and Health Informatics (2023).
+The project is supported by Toyota Motor North America (TMNA) and MIRISE Technologies.
