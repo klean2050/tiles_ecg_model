@@ -7,7 +7,7 @@ dist/
 figs/
 results/
 ckpt/*large*
-ckpt/*big*
+ckpt/*BIG*
 # experiments/
 *.egg-info
 *.ipynb
