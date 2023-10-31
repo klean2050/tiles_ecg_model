@@ -7,8 +7,8 @@ type: "classification"
 streams: ["ecg"]
 gtruth: ""
 low_data: 1
-seed: 42
 sr: 100
+seed: 42
 
 ### model options
 model_type: "s4"    # [resnet, s4]

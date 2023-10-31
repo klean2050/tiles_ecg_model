@@ -2,6 +2,8 @@
 dataset: "MIRISE"
 dataset_dir: "/home/administator/Datasets/toyota_no_video"
 subject_agnostic: True
+contrastive: 0
+type: "classification"
 streams: ["ecg"]
 gtruth: "ftg"
 low_data: 1
@@ -14,7 +16,7 @@ model_type: "s4"    # [resnet, s4]
 
 # ResNet
 in_channels: 1
-base_filters: 64
+base_filters: 16        # 64 for big, 16 for small
 kernel_size: 3
 stride: 2
 groups: 1

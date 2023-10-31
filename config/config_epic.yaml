@@ -4,23 +4,12 @@ dataset_dir: "data/epic/"
 streams: ["ecg", "eda", "rsp", "skt"]
 scenario: 4
 gtruth: "arousal"
-seed: 42
 fold: 1
 sr: 100
+seed: 42
 
 ### model options
-model_type: "s4"    # [resnet, s4]
-
-# ResNet
-in_channels: 1
-base_filters: 64
-kernel_size: 3
-stride: 2
-groups: 1
-n_block: 10
-n_classes: 256
-projection_dim: 128
-output_dim: 1
+model_type: "s4"    # must be s4 for EPIC
 
 # S4
 d_input: 1

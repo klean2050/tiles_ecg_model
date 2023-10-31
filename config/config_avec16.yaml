@@ -1,15 +1,14 @@
 # dataset options
 dataset: "AVEC16"
 dataset_dir: "data/avec16/"
-contrastive: 1
 subject_agnostic: True
+contrastive: 1
 type: "regression"
 streams: ["ecg"]
-# arousal: 2MLP, valence: 1MLP
-gtruth: "valence"
+gtruth: "valence"   # arousal: 2MLP, valence: 1MLP
 low_data: 1
-seed: 42
 sr: 100
+seed: 42
 
 ### model options
 model_type: "s4"    # [resnet, s4]

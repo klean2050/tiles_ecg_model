@@ -10,6 +10,7 @@ ckpt/*large*
 ckpt/*big*
 # experiments/
 *.egg-info
+*.ipynb
 
 # Compiled source #
 ###################
