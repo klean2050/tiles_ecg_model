@@ -2,7 +2,7 @@
 dataset: "SWELL_KW"
 dataset_dir: "/home/kavra/Datasets/physio/SWELL_KW/"
 subject_agnostic: True
-contrastive: 1
+contrastive: 0
 type: "classification"
 streams: ["ecg"]
 gtruth: 0
