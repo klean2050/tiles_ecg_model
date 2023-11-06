@@ -68,7 +68,7 @@ python src/scripts/ssl_pretrain.py
 
 ## Fine-Tuning Framework
 
-Pre-trained models are shared and described at ``ckpt``. We transfer the trained ECG encoder to the downstream tasks, ranging from clinical condition estimation, affect perception, stress and interaction analysis. Detailed results will be posted along with the accompanying preprint. To view training logs in TensorBoard run:
+Pre-trained models, described at ``ckpt``, are shared to the research community, and should not be used for clinical purposes. One can transfer the trained ECG encoder to model downstream tasks, ranging from clinical condition estimation, affect perception, stress and interaction analysis. To view training logs in TensorBoard run:
 
 ```bash
 tensorboard --logdir ./runs
