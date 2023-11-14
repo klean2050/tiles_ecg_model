@@ -10,8 +10,10 @@ src/loaders/*mirise*
 config/*mirise*
 ckpt/*large*
 ckpt/*BIG*
+ckpt/*big*
 # experiments/
 *.egg-info
+*.ipynb
 
 # Compiled source #
 ###################

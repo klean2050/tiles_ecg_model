@@ -1,8 +1,9 @@
 # dataset options
 dataset: "LUDB"
 dataset_dir: "/data/avramidi/LUDB/"
+subject_agnostic: True     # must be True for LUDB
+contrastive: 1
 type: "classification"
-subject_agnostic: True     # must be True
 streams: ["ecg"]
 gtruth: "sinus"
 low_data: 1
@@ -15,7 +16,7 @@ model_type: "s4"    # [resnet, s4]
 
 # ResNet
 in_channels: 1
-base_filters: 64
+base_filters: 16        # 64 for big, 16 for small
 kernel_size: 3
 stride: 2
 groups: 1

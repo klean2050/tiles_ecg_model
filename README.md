@@ -68,7 +68,7 @@ python src/scripts/ssl_pretrain.py
 
 ## Fine-Tuning Framework
 
-Pre-trained models are shared and described at ``ckpt``. We transfer the trained ECG encoder to the downstream tasks, ranging from clinical condition estimation, affect perception, stress and interaction analysis. Detailed results will be posted along with the accompanying preprint. To view training logs in TensorBoard run:
+Pre-trained models, described at ``ckpt``, are shared to the research community, and should not be used for clinical purposes. One can transfer the trained ECG encoder to model downstream tasks, ranging from clinical condition estimation, affect perception, stress and interaction analysis. To view training logs in TensorBoard run:
 
 ```bash
 tensorboard --logdir ./runs
@@ -83,5 +83,27 @@ In this study we made use of the following repositories:
 
 ## Citation
 
-TBD: The accompanying paper has been submitted to IEEE Journal of Biomedical and Health Informatics (2023).
+If you use WildECG in your own study, please consider citing accordingly:
+
+```
+@misc{avramidis2023scaling,
+    title={Scaling Representation Learning from Ubiquitous ECG with State-Space Models}, 
+    author={Kleanthis Avramidis and Dominika Kunc and Bartosz Perz and Kranti Adsul and Tiantian Feng and Przemysław Kazienko and Stanisław Saganowski and Shrikanth Narayanan},
+    year={2023},
+    eprint={2309.15292},
+    archivePrefix={arXiv},
+}
+
+@article{mundnich2020tiles,
+    title={TILES-2018, a longitudinal physiologic and behavioral data set of hospital workers},
+    author={Mundnich, Karel and Booth, Brandon M and l’Hommedieu, Michelle and Feng, Tiantian and Girault, Benjamin and L’hommedieu, Justin and Wildman, Mackenzie and Skaaden, Sophia and Nadarajan, Amrutha and Villatte, Jennifer L and others},
+    journal={Scientific Data},
+    volume={7},
+    number={1},
+    pages={354},
+    year={2020},
+    publisher={Nature Publishing Group UK London}
+}
+```
+The accompanying [paper](https://arxiv.org/abs/2309.15292) has been submitted to IEEE Journal of Biomedical and Health Informatics (2023).
 The project is supported by Toyota Motor North America (TMNA) and MIRISE Technologies.

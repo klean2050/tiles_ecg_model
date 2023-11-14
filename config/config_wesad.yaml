@@ -1,9 +1,9 @@
 # dataset options
 dataset: "WESAD"
 dataset_dir: "/home/kavra/Datasets/physio/WESAD/"
+subject_agnostic: True
 contrastive: 0
 type: "classification"
-subject_agnostic: True
 streams: ["ecg"]
 gtruth: ""
 low_data: 1

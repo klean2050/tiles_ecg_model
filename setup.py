@@ -9,7 +9,7 @@ from setuptools import find_packages, setup, Command
 NAME = "tiles_ecg"
 DESCRIPTION = "Ubiquitous ECG Pre-Training using TILES"
 URL = "https://github.com/klean2050/tiles_ecg_model"
-EMAIL = "k.avramidist@windowslive.com"
+EMAIL = "k.avramidis@windowslive.com"
 AUTHOR = "Kleanthis Avramidis"
 REQUIRES_PYTHON = ">=3.9.0"
 VERSION = "0.1.0"
