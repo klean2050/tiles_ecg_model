@@ -6,6 +6,8 @@ build/
 dist/
 figs/
 results/
+src/loaders/*mirise*
+config/*mirise*
 ckpt/*large*
 ckpt/*BIG*
 # experiments/

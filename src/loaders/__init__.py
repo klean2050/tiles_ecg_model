@@ -9,7 +9,6 @@ from .epic import EPIC, MULTI_EPIC
 
 
 def get_dataset(dataset, dataset_dir, gtruth, sr=100, split="train", ecg_only=True):
-
     if dataset == "SWELL_KW":
         return SWELL_KW(root=dataset_dir, sr=sr, gtruth=gtruth)
     elif dataset == "WESAD":
